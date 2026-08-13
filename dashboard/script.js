@@ -219,8 +219,10 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             ${merchantProducts.map((p) => `
               <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                <div class="relative flex h-36 items-center justify-center bg-gradient-to-br ${p.color}">
-                  <svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>
+                <div class="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${p.color}">
+                  ${p.image
+                    ? `<img src="${p.image}" alt="${p.name}" class="h-full w-full object-cover" />`
+                    : `<svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>`}
                   <div class="absolute right-3 top-3">${badge(p.status)}</div>
                 </div>
                 <div class="p-4">
@@ -718,12 +720,12 @@
 
             <label class="block">
               <span class="text-sm font-semibold text-slate-700">Mahsulot nomi</span>
-              <input required type="text" placeholder="Masalan: AirPods Pro 2" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+              <input required id="productNameInput" type="text" placeholder="Masalan: AirPods Pro 2" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
             </label>
 
             <label class="block">
               <span class="text-sm font-semibold text-slate-700">Tavsifi</span>
-              <textarea rows="3" placeholder="Mahsulot haqida qisqacha ma'lumot..." class="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100"></textarea>
+              <textarea id="productDescInput" rows="3" placeholder="Mahsulot haqida qisqacha ma'lumot..." class="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100"></textarea>
             </label>
 
             <div class="grid grid-cols-2 gap-4">
@@ -733,7 +735,7 @@
               </label>
               <label class="block">
                 <span class="text-sm font-semibold text-slate-700">Sklad soni</span>
-                <input required type="number" value="10" min="0" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+                <input required id="stockInput" type="number" value="10" min="0" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
               </label>
             </div>
 
@@ -840,8 +842,35 @@
 
       $('#productForm').addEventListener('submit', (e) => {
         e.preventDefault();
+        const name = $('#productNameInput').value.trim();
+        const priceVal = Number(price.value) || 0;
+        const stockVal = Math.max(0, Number($('#stockInput').value) || 0);
+        const commissionVal = Number(slider.value) || 0;
+        if (!name || priceVal <= 0) {
+          toast("Mahsulot nomi va narxini to'g'ri kiriting");
+          return;
+        }
+        const palette = [
+          'from-indigo-100 to-indigo-50',
+          'from-emerald-100 to-teal-50',
+          'from-amber-100 to-orange-50',
+          'from-rose-100 to-pink-50',
+          'from-purple-100 to-fuchsia-50',
+          'from-sky-100 to-cyan-50',
+        ];
+        merchantProducts.unshift({
+          name,
+          price: priceVal,
+          stock: stockVal,
+          commission: commissionVal,
+          status: 'Moderatsiyada',
+          color: palette[Math.floor(Math.random() * palette.length)],
+          image: productImageDataUrl,
+        });
         closeModal();
         toast('Mahsulot moderatsiyaga yuborildi ✓');
+        // Mahsulotlar sahifasi ochiq bo'lsa, ro'yxatni darhol yangilaymiz
+        if (state.panel === 'seller' && state.view === 'products') renderView();
       });
     }
 
