@@ -81,10 +81,9 @@
   function activateTab(name) {
     tabBtns.forEach((b) => {
       const active = b.dataset.tab === name;
-      b.classList.toggle('bg-white', active);
-      b.classList.toggle('text-indigo-brand', active);
-      b.classList.toggle('shadow-sm', active);
-      b.classList.toggle('text-slate-500', !active);
+      b.classList.toggle('btn-grad', active);
+      b.classList.toggle('text-white', active);
+      b.classList.toggle('text-slate-400', !active);
     });
     panels.forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== name));
   }

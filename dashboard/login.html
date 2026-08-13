@@ -9,48 +9,76 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-          colors: { indigo: { brand: '#4338CA', deep: '#312E81' }, emerald: { brand: '#059669' } },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['Space Grotesk', 'Inter', 'sans-serif'] },
+          colors: { violet: { brand: '#7c3aed', deep: '#4f46e5' }, ink: { 900: '#07060d', 800: '#0d0b18' } },
         },
       },
     };
   </script>
+
+  <style>
+    body {
+      background:
+        radial-gradient(700px 420px at 50% -8%, rgba(124,58,237,.30), transparent 60%),
+        radial-gradient(600px 400px at 12% 100%, rgba(99,102,241,.18), transparent 55%),
+        #07060d;
+      color: #e6e3f0;
+    }
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .btn-grad {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9 55%, #4f46e5);
+      box-shadow: 0 12px 34px -10px rgba(124,58,237,0.7), inset 0 1px 0 rgba(255,255,255,0.22);
+    }
+    .btn-grad:hover { box-shadow: 0 16px 44px -8px rgba(124,58,237,0.9); }
+    .fld {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: #f1f0f7;
+    }
+    .fld::placeholder { color: #6b7280; }
+    .fld:focus { border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 3px rgba(124,58,237,0.18); }
+  </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-config.js"></script>
   <script src="auth.js"></script>
 </head>
 
-<body class="flex min-h-screen items-center justify-center bg-slate-100 p-4 font-sans text-slate-800">
+<body class="flex min-h-screen items-center justify-center p-4 font-sans text-slate-200 antialiased">
 
   <div class="w-full max-w-md">
     <!-- Logo -->
     <div class="mb-6 flex items-center justify-center gap-2">
-      <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-indigo-brand to-emerald-brand text-white">
+      <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-brand to-violet-deep text-white shadow-lg shadow-violet-500/30">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1.2" fill="currentColor" stroke="none"/></svg>
       </span>
-      <span class="text-2xl font-extrabold tracking-tight text-slate-900">sotibber<span class="text-emerald-brand">.uz</span></span>
+      <span class="font-display text-2xl font-bold tracking-tight text-white">sotibber<span class="text-violet-400">.uz</span></span>
     </div>
 
-    <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-xl sm:p-8">
+    <div class="glass rounded-3xl p-6 shadow-2xl sm:p-8">
 
       <!-- Panel tanlash -->
       <div class="mb-5">
-        <p class="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">Qaysi panelga kirmoqchisiz?</p>
-        <div id="panelToggle" class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+        <p class="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Qaysi panelga kirmoqchisiz?</p>
+        <div id="panelToggle" class="grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
           <button type="button" data-panel="seller" class="panel-opt rounded-lg py-2 text-sm font-semibold transition">Sotuvchi</button>
           <button type="button" data-panel="affiliate" class="panel-opt rounded-lg py-2 text-sm font-semibold transition">Sotib beruvchi</button>
         </div>
       </div>
 
       <!-- Tabs -->
-      <div class="mb-6 grid grid-cols-2 gap-2 border-b border-slate-100">
+      <div class="mb-6 grid grid-cols-2 gap-2 border-b border-white/10">
         <button type="button" data-tab="login" class="tab-btn border-b-2 pb-3 text-sm font-bold transition">Kirish</button>
         <button type="button" data-tab="register" class="tab-btn border-b-2 pb-3 text-sm font-bold transition">Ro'yxatdan o'tish</button>
       </div>
@@ -61,40 +89,40 @@
       <!-- LOGIN FORM -->
       <form id="loginForm" class="space-y-4">
         <label class="block">
-          <span class="text-sm font-semibold text-slate-700">Email</span>
-          <input required type="email" id="loginEmail" placeholder="email@misol.uz" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+          <span class="text-sm font-semibold text-slate-300">Email</span>
+          <input required type="email" id="loginEmail" placeholder="email@misol.uz" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
-          <span class="text-sm font-semibold text-slate-700">Parol</span>
-          <input required type="password" id="loginPassword" placeholder="••••••••" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+          <span class="text-sm font-semibold text-slate-300">Parol</span>
+          <input required type="password" id="loginPassword" placeholder="••••••••" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
-        <button type="submit" class="w-full rounded-xl bg-indigo-brand py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-deep">Kirish</button>
+        <button type="submit" class="btn-grad w-full rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.99]">Kirish</button>
       </form>
 
       <!-- REGISTER FORM -->
       <form id="registerForm" class="hidden space-y-4">
         <label class="block">
-          <span class="text-sm font-semibold text-slate-700">Ism familiya</span>
-          <input required type="text" id="regName" placeholder="Ism Familiya" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+          <span class="text-sm font-semibold text-slate-300">Ism familiya</span>
+          <input required type="text" id="regName" placeholder="Ism Familiya" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
-          <span class="text-sm font-semibold text-slate-700">Telefon raqami <span class="font-normal text-slate-400">(ixtiyoriy)</span></span>
-          <input type="tel" id="regPhone" placeholder="+998 90 123 45 67" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+          <span class="text-sm font-semibold text-slate-300">Telefon raqami <span class="font-normal text-slate-500">(ixtiyoriy)</span></span>
+          <input type="tel" id="regPhone" placeholder="+998 90 123 45 67" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
-          <span class="text-sm font-semibold text-slate-700">Email</span>
-          <input required type="email" id="regEmail" placeholder="email@misol.uz" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+          <span class="text-sm font-semibold text-slate-300">Email</span>
+          <input required type="email" id="regEmail" placeholder="email@misol.uz" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
-          <span class="text-sm font-semibold text-slate-700">Parol</span>
-          <input required type="password" id="regPassword" minlength="6" placeholder="Kamida 6 belgi" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+          <span class="text-sm font-semibold text-slate-300">Parol</span>
+          <input required type="password" id="regPassword" minlength="6" placeholder="Kamida 6 belgi" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
-        <button type="submit" class="w-full rounded-xl bg-emerald-brand py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:opacity-90">Ro'yxatdan o'tish</button>
+        <button type="submit" class="btn-grad w-full rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.99]">Ro'yxatdan o'tish</button>
       </form>
     </div>
 
     <p class="mt-6 text-center text-sm text-slate-500">
-      <a href="../landing/index.html" class="font-semibold text-indigo-brand hover:underline">← Bosh sahifaga qaytish</a>
+      <a href="../landing/index.html" class="font-semibold text-violet-300 hover:underline">← Bosh sahifaga qaytish</a>
     </p>
   </div>
 
@@ -113,7 +141,7 @@
       function paintPanelToggle() {
         document.querySelectorAll('.panel-opt').forEach((b) => {
           const on = b.dataset.panel === panel;
-          b.className = `panel-opt rounded-lg py-2 text-sm font-semibold transition ${on ? 'bg-white text-indigo-brand shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
+          b.className = `panel-opt rounded-lg py-2 text-sm font-semibold transition ${on ? 'btn-grad text-white' : 'text-slate-400 hover:text-slate-200'}`;
         });
       }
       paintPanelToggle();
@@ -126,7 +154,7 @@
       function paintTabs() {
         document.querySelectorAll('.tab-btn').forEach((b) => {
           const on = b.dataset.tab === activeTab;
-          b.className = `tab-btn border-b-2 pb-3 text-sm font-bold transition ${on ? 'border-indigo-brand text-indigo-brand' : 'border-transparent text-slate-400 hover:text-slate-600'}`;
+          b.className = `tab-btn border-b-2 pb-3 text-sm font-bold transition ${on ? 'border-violet-400 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`;
         });
         $('#loginForm').classList.toggle('hidden', activeTab !== 'login');
         $('#registerForm').classList.toggle('hidden', activeTab !== 'register');
@@ -140,7 +168,7 @@
       function showMsg(text, kind) {
         const el = $('#formMsg');
         el.textContent = text;
-        el.className = `mb-4 rounded-xl px-4 py-3 text-sm font-medium ${kind === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`;
+        el.className = `mb-4 rounded-xl px-4 py-3 text-sm font-medium ${kind === 'error' ? 'bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30' : 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30'}`;
         el.classList.remove('hidden');
       }
       function hideMsg() { $('#formMsg').classList.add('hidden'); }

@@ -890,12 +890,19 @@
         try {
           let imageUrl = null;
           if (productImageFile) {
-            const ext = (productImageFile.name.split('.').pop() || 'jpg').toLowerCase();
-            const path = `${user.id}/${Date.now()}.${ext}`;
-            const { error: upErr } = await window.sb.storage.from('product-images').upload(path, productImageFile);
-            if (upErr) throw upErr;
-            const { data: pub } = window.sb.storage.from('product-images').getPublicUrl(path);
-            imageUrl = pub && pub.publicUrl ? pub.publicUrl : null;
+            try {
+              const ext = (productImageFile.name.split('.').pop() || 'jpg').toLowerCase();
+              const path = `${user.id}/${Date.now()}.${ext}`;
+              const { error: upErr } = await window.sb.storage.from('product-images').upload(path, productImageFile);
+              if (upErr) throw upErr;
+              const { data: pub } = window.sb.storage.from('product-images').getPublicUrl(path);
+              imageUrl = pub && pub.publicUrl ? pub.publicUrl : null;
+            } catch (imgErr) {
+              // Rasm yuklab bo'lmadi (masalan, "product-images" bucket sozlanmagan) —
+              // mahsulotni rasm-siz baribir saqlaymiz, faqat ogohlantiramiz.
+              console.warn('Rasmni yuklab bo\'lmadi, mahsulot rasm-siz saqlanadi:', imgErr);
+              toast('Rasmni yuklab bo\'lmadi — mahsulot rasm-siz saqlanadi');
+            }
           }
 
           const { data, error } = await window.sb
@@ -931,8 +938,11 @@
           // Mahsulotlar sahifasi ochiq bo'lsa, ro'yxatni darhol yangilaymiz
           if (state.panel === 'seller' && state.view === 'products') renderView();
         } catch (err) {
-          console.error(err);
-          toast("Xatolik: mahsulotni saqlab bo'lmadi. Qayta urinib ko'ring");
+          console.error('Mahsulotni saqlashda xatolik:', err);
+          const detail = (err && (err.message || err.error_description || err.hint)) || '';
+          toast(detail
+            ? `Xatolik: ${detail}`
+            : "Xatolik: mahsulotni saqlab bo'lmadi. Qayta urinib ko'ring");
           submitBtn.disabled = false;
           submitBtn.textContent = origBtnText;
         }
