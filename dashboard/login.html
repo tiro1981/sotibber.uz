@@ -165,16 +165,47 @@
       }
       if (panel !== 'affiliate' && panel !== 'seller') panel = 'seller';
 
+      // Ro'yxatdan o'tishda kiritilgan ma'lumot (avtomatik kirish uchun)
+      let pendingCreds = null;
+
       // Ro'yxatdan o'tgandan keyingi rol tanlash ekrani
       function showRoleView() {
         hideMsg();
         $('#authView').classList.add('hidden');
         $('#roleView').classList.remove('hidden');
       }
+      function showAuthView() {
+        $('#roleView').classList.add('hidden');
+        $('#authView').classList.remove('hidden');
+      }
+
+      // Rol tanlanganda: sessiya bo'lsa dashboardga; bo'lmasa avtomatik
+      // kirishga urinamiz (email tasdiqlash o'chirilgan bo'lsa ishlaydi).
+      async function chooseRole(role) {
+        panel = role === 'affiliate' ? 'affiliate' : 'seller';
+        try { localStorage.setItem('sotibber_panel', panel); } catch (e) {}
+
+        let user = await window.SotibberAuth.getUser();
+        if (!user && pendingCreds) {
+          const { error } = await window.SotibberAuth.signIn(pendingCreds);
+          if (!error) user = await window.SotibberAuth.getUser();
+        }
+
+        if (user) {
+          goToDashboard();
+        } else {
+          // Email tasdiqlash yoqiq — sessiya olib bo'lmadi
+          showAuthView();
+          activeTab = 'login';
+          paintTabs();
+          showMsg("Hisobingiz yaratildi ✓ Emailingizga yuborilgan havolani tasdiqlang, so'ng shu email/parol bilan kiring — rolingiz saqlanadi.", 'success');
+        }
+      }
+
       document.querySelectorAll('[data-role-choice]').forEach((b) => {
         b.addEventListener('click', () => {
-          panel = b.dataset.roleChoice === 'affiliate' ? 'affiliate' : 'seller';
-          goToDashboard();
+          b.disabled = true;
+          chooseRole(b.dataset.roleChoice).finally(() => { b.disabled = false; });
         });
       });
 
@@ -250,25 +281,24 @@
       $('#registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         hideMsg();
+        const email = $('#regEmail').value.trim();
+        const password = $('#regPassword').value;
+
         setLoading(e.target, true);
-        const { data, error } = await window.SotibberAuth.signUp({
-          email: $('#regEmail').value.trim(),
-          password: $('#regPassword').value,
+        const { error } = await window.SotibberAuth.signUp({
+          email,
+          password,
           fullName: $('#regName').value.trim(),
           phone: $('#regPhone').value.trim(),
         });
         setLoading(e.target, false);
         if (error) return showMsg(window.SotibberAuth.translateError(error), 'error');
-        if (data && data.session) {
-          // Sessiya bor — qayta login so'ramasdan rol tanlashga o'tamiz
-          showRoleView();
-        } else {
-          // Supabase'da email tasdiqlash yoqilgan bo'lsa sessiya bo'lmaydi.
-          // Bu holda qayta login talab qilinadi (Supabase talabi).
-          showMsg("Ro'yxatdan o'tdingiz! Emailingizga yuborilgan havola orqali hisobingizni tasdiqlang, so'ng tizimga kiring.", 'success');
-          activeTab = 'login';
-          paintTabs();
-        }
+
+        // Ro'yxatdan o'tildi — endi DOIM rol tanlash ekranini ko'rsatamiz.
+        // Kiritilgan ma'lumotni saqlaymiz: rol tanlaganda sessiya bo'lmasa,
+        // shu bilan avtomatik kirishga urinamiz (chooseRole ичida).
+        pendingCreds = { email, password };
+        showRoleView();
       });
     })();
   </script>
