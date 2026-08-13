@@ -1,0 +1,14 @@
+/* ===== sotibber.uz — Dashboard custom styles ===== */
+
+html { -webkit-font-smoothing: antialiased; }
+
+/* Silliq scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Range slider rangi */
+input[type="range"] { accent-color: #4338CA; }
+
+/* View o'zgarganda animatsiya */
+.view-enter { animation: fadeUp 0.35s ease both; }

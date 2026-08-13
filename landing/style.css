@@ -1,0 +1,32 @@
+/* ===== sotibber.uz — Landing page custom styles ===== */
+
+html { scroll-behavior: smooth; }
+body { -webkit-font-smoothing: antialiased; }
+
+/* Subtle grid + gradient backdrop for hero */
+.hero-bg {
+  background:
+    radial-gradient(1000px 500px at 85% -10%, rgba(5, 150, 105, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 10% 0%, rgba(67, 56, 202, 0.14), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #f6f7ff 100%);
+}
+
+/* Accordion smooth height transition */
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.35s ease;
+  opacity: 0;
+}
+.faq-item.open .faq-answer { opacity: 1; }
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+/* Modal transitions */
+#roleModal.hidden-modal { opacity: 0; pointer-events: none; }
+#roleModal.hidden-modal .modal-card { transform: translateY(20px) scale(0.97); }
+.modal-card { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+#roleModal { transition: opacity 0.25s ease; }
+
+/* Reveal-on-scroll base state */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
