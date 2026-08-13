@@ -61,7 +61,9 @@
 
     const merchantTx = [];
 
-    const marketProducts = [];
+    // Sotuvchilar qo'shgan mahsulotlardan hosil qilinadi (affiliateViews.market() ichida
+    // har safar qayta hisoblanadi) — shuning uchun let, boshida bo'sh.
+    let marketProducts = [];
 
     const agentLinks = [];
 
@@ -399,7 +401,21 @@
             </div>`)}
         </div>`,
 
-      market: () => `
+      market: () => {
+        // Sotuvchilar (merchantProducts) qo'shgan, sklad mavjud mahsulotlarni
+        // sotib beruvchilar bozoriga chiqaramiz. Har render'da qayta hisoblanadi,
+        // shunda seller yangi mahsulot qo'shishi bilan shu yerda ham ko'rinadi.
+        marketProducts = merchantProducts
+          .filter((p) => p.stock > 0)
+          .map((p) => ({
+            name: p.name,
+            price: p.price,
+            merchant: 'Sotuvchi',
+            commission: Math.round(p.price * p.commission / 100),
+            color: p.color,
+            image: p.image,
+          }));
+        return `
         <div class="view-enter space-y-5">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -415,8 +431,10 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             ${marketProducts.map((p, i) => `
               <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                <div class="flex h-36 items-center justify-center bg-gradient-to-br ${p.color}">
-                  <svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>
+                <div class="flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${p.color}">
+                  ${p.image
+                    ? `<img src="${p.image}" alt="${p.name}" class="h-full w-full object-cover" />`
+                    : `<svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>`}
                 </div>
                 <div class="p-4">
                   <h3 class="truncate font-bold text-slate-900">${p.name}</h3>
@@ -441,7 +459,8 @@
                 <p class="mt-1 max-w-xs text-xs text-slate-400">Sotuvchilar mahsulot qo'shishi bilan shu yerda paydo bo'ladi</p>
               </div>`}
           </div>
-        </div>`,
+        </div>`;
+      },
 
       // "Mening do'konim" — agentning shaxsiy web-ilova do'koni.
       // Xaridor havola (sotibber.uz/shop/...) orqali kirganda shu do'konni
@@ -493,8 +512,10 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               ${agentLinks.map((l, i) => `
                 <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                  <div class="flex h-36 items-center justify-center bg-gradient-to-br from-indigo-100 to-emerald-50">
-                    <svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>
+                  <div class="flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-100 to-emerald-50">
+                    ${l.image
+                      ? `<img src="${l.image}" alt="${l.product}" class="h-full w-full object-cover" />`
+                      : `<svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>`}
                   </div>
                   <div class="p-4">
                     <h4 class="truncate font-bold text-slate-900">${l.product}</h4>
@@ -1014,6 +1035,18 @@
       const p = marketProducts[idx];
       const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 8) + (100 + idx);
       const link = `sotibber.uz/shop/mening-dokonim/${slug}`;
+      // Mahsulotni "Mening do'konim"ga qo'shamiz (agar avval qo'shilmagan bo'lsa)
+      if (!agentLinks.some((l) => l.product === p.name)) {
+        agentLinks.push({
+          product: p.name,
+          price: p.price,
+          commission: p.commission,
+          clicks: 0,
+          sales: 0,
+          slug,
+          image: p.image,
+        });
+      }
       openModal(`
         <div>
           <div class="flex flex-col items-center px-6 pt-8 text-center">
@@ -1066,8 +1099,10 @@
           <div class="space-y-4 p-6">
             <!-- Mahsulot ko'rinishi -->
             <div class="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
-              <span class="grid h-14 w-14 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-100 to-emerald-50">
-                <svg class="h-7 w-7 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${icon.box}</svg>
+              <span class="grid h-14 w-14 flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-100 to-emerald-50">
+                ${p.image
+                  ? `<img src="${p.image}" alt="${p.product}" class="h-full w-full object-cover" />`
+                  : `<svg class="h-7 w-7 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${icon.box}</svg>`}
               </span>
               <div class="min-w-0">
                 <p class="truncate font-bold text-slate-900">${p.product}</p>
