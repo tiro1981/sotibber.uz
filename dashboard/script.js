@@ -706,14 +706,15 @@
             </button>
           </div>
           <div class="flex-1 space-y-5 p-6">
-            <!-- Image upload placeholder -->
-            <div class="flex items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 py-8 text-center">
-              <div>
+            <!-- Image upload -->
+            <label id="imageDropZone" for="productImageInput" class="flex cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 py-8 text-center transition hover:border-indigo-brand hover:bg-indigo-50/30">
+              <input type="file" id="productImageInput" accept="image/png,image/jpeg" class="hidden" />
+              <div id="imageDropContent">
                 <svg class="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/><circle cx="9" cy="10" r="1.5"/></svg>
                 <p class="mt-2 text-sm font-medium text-slate-500">Rasm yuklash uchun bosing</p>
                 <p class="text-xs text-slate-400">PNG, JPG (max 5MB)</p>
               </div>
-            </div>
+            </label>
 
             <label class="block">
               <span class="text-sm font-semibold text-slate-700">Mahsulot nomi</span>
@@ -766,6 +767,77 @@
       };
       slider.addEventListener('input', recompute);
       price.addEventListener('input', recompute);
+
+      // ---- Rasm yuklash (image upload) ----
+      const dropZone = $('#imageDropZone');
+      const dropContent = $('#imageDropContent');
+      const imageInput = $('#productImageInput');
+      const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+      let productImageDataUrl = null;
+
+      function showImageError(msg) {
+        toast(msg);
+        imageInput.value = '';
+      }
+
+      function renderImagePreview(dataUrl, fileName) {
+        dropContent.innerHTML = `
+          <img src="${dataUrl}" alt="Mahsulot rasmi" class="mx-auto h-28 w-28 rounded-xl border border-slate-200 object-cover shadow-sm" />
+          <p class="mt-2 max-w-[220px] truncate text-xs font-semibold text-slate-600">${fileName}</p>
+          <p class="mt-0.5 text-xs font-semibold text-indigo-brand">Almashtirish uchun bosing</p>
+          <button type="button" id="removeImageBtn" class="mt-1 text-xs font-medium text-rose-500 hover:underline">Olib tashlash</button>
+        `;
+        // "Olib tashlash" tugmasi label'ning fayl tanlash click'ini ishga tushirmasligi kerak
+        $('#removeImageBtn')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          resetImageDropzone();
+        });
+      }
+
+      function resetImageDropzone() {
+        productImageDataUrl = null;
+        imageInput.value = '';
+        dropContent.innerHTML = `
+          <svg class="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/><circle cx="9" cy="10" r="1.5"/></svg>
+          <p class="mt-2 text-sm font-medium text-slate-500">Rasm yuklash uchun bosing</p>
+          <p class="text-xs text-slate-400">PNG, JPG (max 5MB)</p>
+        `;
+      }
+
+      function handleImageFile(file) {
+        if (!file) return;
+        if (!['image/png', 'image/jpeg'].includes(file.type)) {
+          return showImageError("Faqat PNG yoki JPG formatidagi rasm yuklang");
+        }
+        if (file.size > MAX_IMAGE_BYTES) {
+          return showImageError("Rasm hajmi 5MB dan oshmasligi kerak");
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          productImageDataUrl = reader.result;
+          renderImagePreview(productImageDataUrl, file.name);
+        };
+        reader.onerror = () => showImageError("Rasmni o'qib bo'lmadi, qayta urinib ko'ring");
+        reader.readAsDataURL(file);
+      }
+
+      imageInput.addEventListener('change', () => handleImageFile(imageInput.files && imageInput.files[0]));
+
+      // Drag & drop
+      ['dragover', 'dragenter'].forEach((evt) => dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-brand', 'bg-indigo-50/30');
+      }));
+      ['dragleave', 'drop'].forEach((evt) => dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-brand', 'bg-indigo-50/30');
+      }));
+      dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer?.files && e.dataTransfer.files[0];
+        if (file) handleImageFile(file);
+      });
+
       $('#productForm').addEventListener('submit', (e) => {
         e.preventDefault();
         closeModal();
