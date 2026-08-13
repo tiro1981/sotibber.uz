@@ -50,61 +50,27 @@
     }
 
     /* =========================================================
-       MOCK DATA
+       DATA
+       Backend/API ulanguncha bu massivlar bo'sh boshlanadi —
+       real hisob ochilgach yoki server ulanganda shu yerga
+       haqiqiy ma'lumotlar keladi.
     ========================================================= */
-    const merchantProducts = [
-      { name: 'AirPods Pro 2 (nusxa)', price: 320000, stock: 45, commission: 10, status: 'Sotuvda', color: 'from-indigo-100 to-indigo-50' },
-      { name: 'Smart Watch T900 Ultra', price: 189000, stock: 12, commission: 15, status: 'Sotuvda', color: 'from-emerald-100 to-teal-50' },
-      { name: 'Erkaklar krossovkasi', price: 259000, stock: 0, commission: 12, status: 'Tugagan', color: 'from-amber-100 to-orange-50' },
-      { name: 'Parfyum "Oud Royal"', price: 145000, stock: 30, commission: 20, status: 'Moderatsiyada', color: 'from-rose-100 to-pink-50' },
-      { name: 'LED lenta 5m RGB', price: 65000, stock: 88, commission: 18, status: 'Sotuvda', color: 'from-purple-100 to-fuchsia-50' },
-      { name: 'Termos-krujka 500ml', price: 89000, stock: 24, commission: 14, status: 'Sotuvda', color: 'from-sky-100 to-cyan-50' },
-    ];
+    const merchantProducts = [];
 
-    const merchantOrders = [
-      { id: '#10243', product: 'AirPods Pro 2', phone: '+998 90 *** 12 34', agent: 'Dilnoza R.', commission: 32000, total: 320000, date: '13.08.2026', status: 'Yangi' },
-      { id: '#10241', product: 'Smart Watch T900', phone: '+998 93 *** 55 21', agent: 'Sardor M.', commission: 28350, total: 189000, date: '13.08.2026', status: "Yo'lda" },
-      { id: '#10238', product: 'LED lenta 5m RGB', phone: '+998 94 *** 09 88', agent: 'Kamola T.', commission: 11700, total: 65000, date: '12.08.2026', status: 'Yetkazildi' },
-      { id: '#10235', product: 'Termos-krujka', phone: '+998 91 *** 44 10', agent: 'Jasur B.', commission: 12460, total: 89000, date: '12.08.2026', status: 'Yetkazildi' },
-      { id: '#10230', product: 'Parfyum Oud Royal', phone: '+998 88 *** 77 02', agent: 'Nilufar S.', commission: 29000, total: 145000, date: '11.08.2026', status: 'Rad etildi' },
-      { id: '#10228', product: 'AirPods Pro 2', phone: '+998 90 *** 61 40', agent: 'Bekzod A.', commission: 32000, total: 320000, date: '11.08.2026', status: "Yo'lda" },
-    ];
+    const merchantOrders = [];
 
-    const merchantTx = [
-      { date: '13.08.2026', id: 'TX-99120', type: 'in', label: "Sotuvdan tushum #10238", amount: 65000, status: 'Bajarildi' },
-      { date: '12.08.2026', id: 'TX-99011', type: 'out', label: "Pul yechish — Uzcard", amount: 1500000, status: 'Bajarildi' },
-      { date: '12.08.2026', id: 'TX-98940', type: 'in', label: "Sotuvdan tushum #10235", amount: 89000, status: 'Bajarildi' },
-      { date: '11.08.2026', id: 'TX-98871', type: 'out', label: "Pul yechish — Humo", amount: 800000, status: 'Kutilmoqda' },
-    ];
+    const merchantTx = [];
 
-    const marketProducts = [
-      { name: 'AirPods Pro 2 (nusxa)', price: 320000, merchant: 'TechStore UZ', commission: 32000, color: 'from-indigo-100 to-indigo-50' },
-      { name: 'Smart Watch T900 Ultra', price: 189000, merchant: 'GadgetHub', commission: 28350, color: 'from-emerald-100 to-teal-50' },
-      { name: 'Parfyum "Oud Royal"', price: 145000, merchant: 'AromaLux', commission: 29000, color: 'from-rose-100 to-pink-50' },
-      { name: 'LED lenta 5m RGB', price: 65000, merchant: 'HomeLight', commission: 11700, color: 'from-purple-100 to-fuchsia-50' },
-      { name: 'Termos-krujka 500ml', price: 89000, merchant: 'DailyGoods', commission: 12460, color: 'from-sky-100 to-cyan-50' },
-      { name: 'Simsiz quloqchin K8', price: 79000, merchant: 'GadgetHub', commission: 15800, color: 'from-teal-100 to-emerald-50' },
-    ];
+    const marketProducts = [];
 
-    const agentLinks = [
-      { product: 'AirPods Pro 2 (nusxa)', price: 320000, commission: 32000, clicks: 428, sales: 14, slug: 'airpods-pro2' },
-      { product: 'Smart Watch T900 Ultra', price: 189000, commission: 28350, clicks: 312, sales: 9, slug: 'watch-t900' },
-      { product: 'LED lenta 5m RGB', price: 65000, commission: 11700, clicks: 190, sales: 21, slug: 'led-5m' },
-      { product: 'Parfyum "Oud Royal"', price: 145000, commission: 29000, clicks: 96, sales: 3, slug: 'oud-royal' },
-    ];
+    const agentLinks = [];
 
-    const agentSales = [
-      { id: '#10243', product: 'AirPods Pro 2', date: '13.08.2026', customer: 'D. R.', status: "Yo'lda", commission: 32000 },
-      { id: '#10238', product: 'LED lenta 5m RGB', date: '12.08.2026', customer: 'K. T.', status: 'Yetkazildi', commission: 11700 },
-      { id: '#10231', product: 'Smart Watch T900', date: '12.08.2026', customer: 'A. M.', status: 'Yetkazildi', commission: 28350 },
-      { id: '#10225', product: 'Parfyum Oud Royal', date: '10.08.2026', customer: 'N. S.', status: 'Rad etildi', commission: 0 },
-      { id: '#10219', product: 'LED lenta 5m RGB', date: '09.08.2026', customer: 'B. X.', status: 'Yetkazildi', commission: 11700 },
-    ];
+    const agentSales = [];
 
     // Simple 7-day sales chart data (relative heights in %)
     const chartData = [
-      { d: 'Du', v: 42 }, { d: 'Se', v: 68 }, { d: 'Ch', v: 55 }, { d: 'Pa', v: 82 },
-      { d: 'Ju', v: 74 }, { d: 'Sh', v: 95 }, { d: 'Ya', v: 60 },
+      { d: 'Du', v: 0 }, { d: 'Se', v: 0 }, { d: 'Ch', v: 0 }, { d: 'Pa', v: 0 },
+      { d: 'Ju', v: 0 }, { d: 'Sh', v: 0 }, { d: 'Ya', v: 0 },
     ];
 
     /* =========================================================
@@ -202,10 +168,10 @@
         <div class="view-enter space-y-6">
           <!-- Summary cards -->
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            ${statCard({ label: 'Umumiy balans', value: uzs(8420000) + ' so\'m', accent: 'emerald', badgeText: 'Chiqarishga tayyor', icon: icon.wallet })}
-            ${statCard({ label: 'Muzlatilgan balans (Escrow)', value: uzs(1260000) + ' so\'m', sub: 'Yetkazilgach ochiladi', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>' })}
-            ${statCard({ label: 'Jami buyurtmalar', value: '1 284', trend: '+12.5%', accent: 'indigo', icon: icon.cart })}
-            ${statCard({ label: 'Muvaffaqiyatli sotuvlar', value: '94.2%', sub: '1 210 ta yetkazildi', accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
+            ${statCard({ label: 'Umumiy balans', value: uzs(0) + ' so\'m', accent: 'emerald', icon: icon.wallet })}
+            ${statCard({ label: 'Muzlatilgan balans (Escrow)', value: uzs(0) + ' so\'m', sub: 'Yetkazilgach ochiladi', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>' })}
+            ${statCard({ label: 'Jami buyurtmalar', value: '0', accent: 'indigo', icon: icon.cart })}
+            ${statCard({ label: 'Muvaffaqiyatli sotuvlar', value: '0%', sub: '0 ta yetkazildi', accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
           </div>
 
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -217,7 +183,6 @@
                     <h3 class="text-base font-bold text-slate-900">Sotuvlar dinamikasi</h3>
                     <p class="text-sm text-slate-500">So'nggi 7 kun</p>
                   </div>
-                  <span class="rounded-lg bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-600">+18.4%</span>
                 </div>
                 <div class="mt-6">${barChart()}</div>
               </div>`, 'lg:col-span-2')}
@@ -226,23 +191,13 @@
             ${card(`
               <div class="p-5 sm:p-6">
                 <h3 class="text-base font-bold text-slate-900">So'nggi harakatlar</h3>
-                <ul class="mt-4 space-y-4">
-                  ${[
-                    { i: icon.cart, c: 'indigo', t: 'Yangi buyurtma: #10243', s: 'AirPods Pro 2 — 320 000 so\'m', time: '5 daqiqa oldin' },
-                    { i: icon.wallet, c: 'emerald', t: 'Pul yechish tasdiqlandi', s: '1 500 000 so\'m — Uzcard', time: '2 soat oldin' },
-                    { i: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>', c: 'blue', t: 'Buyurtma yetkazildi: #10238', s: 'Komissiya hisoblandi', time: 'Kecha' },
-                  ].map((a) => `
-                    <li class="flex gap-3">
-                      <span class="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-${a.c}-50 text-${a.c}-600">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${a.i}</svg>
-                      </span>
-                      <div class="min-w-0">
-                        <p class="text-sm font-semibold text-slate-800">${a.t}</p>
-                        <p class="truncate text-xs text-slate-500">${a.s}</p>
-                        <p class="mt-0.5 text-[11px] text-slate-400">${a.time}</p>
-                      </div>
-                    </li>`).join('')}
-                </ul>
+                <div class="mt-6 flex flex-col items-center justify-center py-6 text-center">
+                  <span class="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-slate-400">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  </span>
+                  <p class="mt-3 text-sm font-medium text-slate-500">Hali harakatlar yo'q</p>
+                  <p class="mt-1 text-xs text-slate-400">Birinchi buyurtma yoki tranzaksiya shu yerda ko'rinadi</p>
+                </div>
               </div>`)}
           </div>
         </div>`,
@@ -283,7 +238,14 @@
                     <button class="flex-1 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">Statistika</button>
                   </div>
                 </div>
-              </div>`).join('')}
+              </div>`).join('') || `
+              <div class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-14 text-center">
+                <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
+                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.box}</svg>
+                </span>
+                <p class="mt-3 text-sm font-semibold text-slate-600">Hali mahsulot qo'shilmagan</p>
+                <p class="mt-1 max-w-xs text-xs text-slate-400">Birinchi mahsulotingizni qo'shish uchun yuqoridagi tugmani bosing</p>
+              </div>`}
           </div>
         </div>`,
 
@@ -334,23 +296,22 @@
               <div class="flex items-start justify-between">
                 <div>
                   <p class="text-sm text-indigo-100">Umumiy balans</p>
-                  <p class="mt-1 text-3xl font-extrabold sm:text-4xl">${uzs(8420000)} <span class="text-lg font-semibold text-indigo-200">so'm</span></p>
+                  <p class="mt-1 text-3xl font-extrabold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-indigo-200">so'm</span></p>
                 </div>
-                <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Chiqarishga tayyor</span>
               </div>
               <div class="mt-6 flex flex-wrap items-center gap-3">
                 <button data-action="withdraw" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-indigo-brand shadow-lg transition hover:bg-slate-50 active:scale-95">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6"/></svg>
                   Pul chiqarish
                 </button>
-                <div class="text-sm text-indigo-100">Escrow: <b class="text-white">${uzs(1260000)} so'm</b></div>
+                <div class="text-sm text-indigo-100">Escrow: <b class="text-white">${uzs(0)} so'm</b></div>
               </div>
             </div>
 
             <!-- Quick stats -->
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-1">
-              ${statCard({ label: 'Bu oy tushum', value: uzs(4200000), sub: '+22% o\'sish', accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/>' })}
-              ${statCard({ label: 'Bu oy yechilgan', value: uzs(2300000), sub: '2 ta operatsiya', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4m0 0l6-6m-6 6l6 6"/>' })}
+              ${statCard({ label: 'Bu oy tushum', value: uzs(0), accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/>' })}
+              ${statCard({ label: 'Bu oy yechilgan', value: uzs(0), sub: '0 ta operatsiya', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4m0 0l6-6m-6 6l6 6"/>' })}
             </div>
           </div>
 
@@ -385,7 +346,7 @@
                       </td>
                       <td class="px-5 py-3.5 font-bold ${t.type === 'in' ? 'text-emerald-600' : 'text-slate-900'}">${t.type === 'in' ? '+' : '−'}${uzs(t.amount)} so'm</td>
                       <td class="px-5 py-3.5">${badge(t.status)}</td>
-                    </tr>`).join('')}
+                    </tr>`).join('') || `<tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">Hali tranzaksiya yo'q</td></tr>`}
                 </tbody>
               </table>
             </div>`)}
@@ -402,14 +363,14 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div class="rounded-2xl bg-gradient-to-br from-emerald-brand to-teal-500 p-5 text-white shadow-lg">
               <p class="text-sm text-emerald-50">Mening balansim</p>
-              <p class="mt-1 text-3xl font-extrabold">${uzs(1840000)} <span class="text-base font-semibold text-emerald-100">so'm</span></p>
+              <p class="mt-1 text-3xl font-extrabold">${uzs(0)} <span class="text-base font-semibold text-emerald-100">so'm</span></p>
               <button data-action="wallet-withdraw" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold backdrop-blur transition hover:bg-white/25">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3"/></svg>
                 Pul chiqarish
               </button>
             </div>
-            ${statCard({ label: 'Kutilayotgan komissiya', value: uzs(214000) + ' so\'m', sub: "Yo'ldagi buyurtmalardan", accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
-            ${statCard({ label: 'Jami sotilgan mahsulotlar', value: '47 ta', trend: '+8', accent: 'indigo', icon: icon.box })}
+            ${statCard({ label: 'Kutilayotgan komissiya', value: uzs(0) + ' so\'m', sub: "Yo'ldagi buyurtmalardan", accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
+            ${statCard({ label: 'Jami sotilgan mahsulotlar', value: '0 ta', accent: 'indigo', icon: icon.box })}
           </div>
 
           <!-- Referral performance -->
@@ -422,15 +383,15 @@
               <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="rounded-xl bg-slate-50 p-4">
                   <div class="flex items-center gap-2 text-slate-500"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg><span class="text-xs font-medium">Bosishlar (Clicks)</span></div>
-                  <p class="mt-2 text-2xl font-extrabold text-slate-900">1 026</p>
+                  <p class="mt-2 text-2xl font-extrabold text-slate-900">0</p>
                 </div>
                 <div class="rounded-xl bg-slate-50 p-4">
                   <div class="flex items-center gap-2 text-slate-500"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-xs font-medium">Konversiyalar</span></div>
-                  <p class="mt-2 text-2xl font-extrabold text-slate-900">47 <span class="text-sm font-semibold text-emerald-600">(4.6%)</span></p>
+                  <p class="mt-2 text-2xl font-extrabold text-slate-900">0 <span class="text-sm font-semibold text-slate-400">(0%)</span></p>
                 </div>
                 <div class="rounded-xl bg-emerald-50 p-4">
                   <div class="flex items-center gap-2 text-emerald-600"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg><span class="text-xs font-medium">Ishlangan komissiya</span></div>
-                  <p class="mt-2 text-2xl font-extrabold text-emerald-700">${uzs(1235000)} so'm</p>
+                  <p class="mt-2 text-2xl font-extrabold text-emerald-700">${uzs(0)} so'm</p>
                 </div>
               </div>
             </div>`)}
@@ -469,15 +430,22 @@
                     Sotishni boshlash
                   </button>
                 </div>
-              </div>`).join('')}
+              </div>`).join('') || `
+              <div class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-14 text-center">
+                <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
+                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.store}</svg>
+                </span>
+                <p class="mt-3 text-sm font-semibold text-slate-600">Bozorda hali mahsulot yo'q</p>
+                <p class="mt-1 max-w-xs text-xs text-slate-400">Sotuvchilar mahsulot qo'shishi bilan shu yerda paydo bo'ladi</p>
+              </div>`}
           </div>
         </div>`,
 
       // "Mening do'konim" — agentning shaxsiy web-ilova do'koni.
-      // Xaridor havola (sotibber.uz/shop/azizbek) orqali kirganda shu do'konni
+      // Xaridor havola (sotibber.uz/shop/...) orqali kirganda shu do'konni
       // ko'radi va to'g'ridan-to'g'ri "Sotib olish" orqali buyurtma beradi.
       shop: () => {
-        const shopUrl = 'sotibber.uz/shop/azizbek';
+        const shopUrl = 'sotibber.uz/shop/mening-dokonim';
         const totalSales = agentLinks.reduce((s, l) => s + l.sales, 0);
         const totalClicks = agentLinks.reduce((s, l) => s + l.clicks, 0);
         return `
@@ -490,7 +458,7 @@
                   <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.shop}</svg>
                 </span>
                 <div>
-                  <h2 class="text-xl font-extrabold">Azizbek do'koni</h2>
+                  <h2 class="text-xl font-extrabold">Mening do'konim</h2>
                   <p class="text-sm text-indigo-100">Shaxsiy web-ilova do'koningiz</p>
                 </div>
               </div>
@@ -542,7 +510,14 @@
                       </button>
                     </div>
                   </div>
-                </div>`).join('')}
+                </div>`).join('') || `
+              <div class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-14 text-center">
+                <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
+                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.shop}</svg>
+                </span>
+                <p class="mt-3 text-sm font-semibold text-slate-600">Do'koningizda hali mahsulot yo'q</p>
+                <p class="mt-1 max-w-xs text-xs text-slate-400">"Mahsulotlar bozori"dan mahsulot tanlab, "Sotishni boshlash" tugmasini bosing</p>
+              </div>`}
             </div>
           </div>
         </div>`;
@@ -587,7 +562,7 @@
             <div class="space-y-4 lg:col-span-2">
               <div class="rounded-2xl bg-gradient-to-br from-emerald-brand to-teal-600 p-6 text-white shadow-xl">
                 <p class="text-sm text-emerald-50">Mavjud balans</p>
-                <p class="mt-1 text-3xl font-extrabold sm:text-4xl">${uzs(1840000)} <span class="text-lg font-semibold text-emerald-100">so'm</span></p>
+                <p class="mt-1 text-3xl font-extrabold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-emerald-100">so'm</span></p>
                 <button data-action="wallet-withdraw" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-lg transition hover:bg-emerald-50 active:scale-95">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16"/></svg>
                   Pul chiqarish
@@ -612,18 +587,14 @@
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                      ${[
-                        { date: '12.08.2026', card: 'Uzcard •• 4821', amount: 500000, status: 'Bajarildi' },
-                        { date: '05.08.2026', card: 'Humo •• 9037', amount: 320000, status: 'Bajarildi' },
-                        { date: '01.08.2026', card: 'Uzcard •• 4821', amount: 250000, status: 'Kutilmoqda' },
-                      ].map((w) => `
+                      ${[].map((w) => `
                         <tr class="transition hover:bg-slate-50">
                           <td class="px-5 py-3.5 text-slate-500">${w.date}</td>
                           <td class="px-5 py-3.5 font-medium text-slate-700">${w.card}</td>
                           <td class="px-5 py-3.5 font-bold text-slate-900">${uzs(w.amount)} so'm</td>
                           <td class="px-5 py-3.5 text-rose-500">−${uzs(Math.round(w.amount * 0.01))} so'm</td>
                           <td class="px-5 py-3.5">${badge(w.status)}</td>
-                        </tr>`).join('')}
+                        </tr>`).join('') || `<tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">Hali yechib olish tarixi yo'q</td></tr>`}
                     </tbody>
                   </table>
                 </div>`)}
@@ -632,27 +603,12 @@
             <!-- Saved cards -->
             <div class="space-y-4">
               <h3 class="font-bold text-slate-900">Mening kartalarim</h3>
-              <!-- Uzcard -->
-              <div class="rounded-2xl bg-gradient-to-br from-indigo-brand to-indigo-deep p-5 text-white shadow-lg">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold uppercase tracking-widest text-indigo-200">Uzcard</span>
-                  <svg class="h-6 w-6 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.wallet}</svg>
-                </div>
-                <p class="mt-6 font-mono text-lg tracking-widest">8600 •••• •••• 4821</p>
-                <div class="mt-3 flex items-center justify-between text-xs text-indigo-200">
-                  <span>AZIZBEK KARIMOV</span><span>09/28</span>
-                </div>
-              </div>
-              <!-- Humo -->
-              <div class="rounded-2xl bg-gradient-to-br from-teal-600 to-emerald-brand p-5 text-white shadow-lg">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold uppercase tracking-widest text-emerald-100">Humo</span>
-                  <svg class="h-6 w-6 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.wallet}</svg>
-                </div>
-                <p class="mt-6 font-mono text-lg tracking-widest">9860 •••• •••• 9037</p>
-                <div class="mt-3 flex items-center justify-between text-xs text-emerald-100">
-                  <span>AZIZBEK KARIMOV</span><span>04/27</span>
-                </div>
+              <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center">
+                <span class="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-slate-400">
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">${icon.wallet}</svg>
+                </span>
+                <p class="mt-3 text-sm font-semibold text-slate-600">Hali karta qo'shilmagan</p>
+                <p class="mt-1 max-w-[200px] text-xs text-slate-400">Pul chiqarish uchun karta qo'shing</p>
               </div>
               <button data-action="add-card" class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 py-4 text-sm font-semibold text-slate-500 transition hover:border-indigo-brand hover:text-indigo-brand">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
@@ -956,7 +912,7 @@
     function startSellingModal(idx) {
       const p = marketProducts[idx];
       const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 8) + (100 + idx);
-      const link = `sotibber.uz/shop/azizbek/${slug}`;
+      const link = `sotibber.uz/shop/mening-dokonim/${slug}`;
       openModal(`
         <div>
           <div class="flex flex-col items-center px-6 pt-8 text-center">
@@ -1000,7 +956,7 @@
           <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
             <div>
               <h3 class="text-lg font-bold text-slate-900">Buyurtma berish</h3>
-              <p class="text-xs text-slate-500">Azizbek do'koni · Xavfsiz to'lov</p>
+              <p class="text-xs text-slate-500">Xavfsiz to'lov</p>
             </div>
             <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
