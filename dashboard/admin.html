@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin panel — sotibber.uz</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['Space Grotesk', 'Inter', 'sans-serif'] },
+          colors: { violet: { brand: '#7c3aed', deep: '#4f46e5' }, ink: { 900: '#07060d', 800: '#0d0b18' } },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      background:
+        radial-gradient(900px 500px at 80% -10%, rgba(124,58,237,.20), transparent 60%),
+        radial-gradient(700px 500px at 5% 5%, rgba(99,102,241,.14), transparent 55%),
+        #07060d;
+      color: #e6e3f0;
+    }
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    .btn-grad {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9 55%, #4f46e5);
+      box-shadow: 0 10px 28px -10px rgba(124,58,237,0.7), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .nav-link { transition: background .2s, color .2s; }
+    .nav-link.active { background: linear-gradient(135deg, rgba(124,58,237,.35), rgba(79,70,229,.25)); color:#fff; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 8px; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+</head>
+
+<body class="min-h-screen font-sans text-slate-200 antialiased">
+
+  <div class="flex min-h-screen">
+    <!-- ================= SIDEBAR ================= -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-white/5 bg-ink-900/80 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0">
+      <div class="flex h-16 items-center gap-2 border-b border-white/5 px-6">
+        <span class="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-brand to-violet-deep text-white shadow-lg shadow-violet-500/30">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/></svg>
+        </span>
+        <span class="font-display text-lg font-bold text-white">sotibber<span class="text-violet-400">.uz</span></span>
+      </div>
+      <div class="px-6 pt-5">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-violet-300">Admin panel</p>
+      </div>
+      <nav class="flex-1 space-y-1 px-3 py-4">
+        <button data-view="stats" class="nav-link active flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M9 17V9m4 8V5m4 12v-6"/></svg>
+          Statistika
+        </button>
+        <button data-view="products" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          Mahsulotlar
+          <span id="pendingBadge" class="ml-auto hidden rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-bold text-amber-300"></span>
+        </button>
+        <button data-view="users" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg>
+          Foydalanuvchilar
+        </button>
+      </nav>
+      <div class="border-t border-white/5 p-3">
+        <button id="logoutBtn" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-300 hover:bg-rose-500/10">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Chiqish
+        </button>
+      </div>
+    </aside>
+
+    <!-- overlay for mobile -->
+    <div id="overlay" class="fixed inset-0 z-30 hidden bg-black/60 lg:hidden"></div>
+
+    <!-- ================= MAIN ================= -->
+    <div class="flex min-w-0 flex-1 flex-col lg:pl-64">
+      <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/5 bg-ink-900/70 px-4 backdrop-blur-xl sm:px-6">
+        <button id="openSidebar" class="grid h-10 w-10 place-items-center rounded-xl text-slate-300 hover:bg-white/10 lg:hidden" aria-label="Menyu">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1 id="viewTitle" class="min-w-0 flex-1 truncate font-display text-base font-bold text-white sm:text-lg">Statistika</h1>
+        <button id="refreshBtn" class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Yangilash
+        </button>
+        <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-sm font-bold text-white">A</span>
+      </header>
+
+      <main id="viewRoot" class="flex-1 p-4 sm:p-6 lg:p-8">
+        <div class="flex h-64 items-center justify-center text-slate-500">Yuklanmoqda...</div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="pointer-events-none fixed bottom-6 left-1/2 z-[60] hidden -translate-x-1/2">
+    <div class="glass flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-2xl">
+      <svg class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      <span id="toastMsg">Bajarildi</span>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ---- Maxfiy admin himoyasi: bayroq bo'lmasa loginga qaytaramiz ---- */
+    if (sessionStorage.getItem('sotibber_admin') !== '1') {
+      window.location.replace('login.html');
+      return;
+    }
+
+    const $ = (s) => document.querySelector(s);
+    const sb = window.sb;
+    const uzs = (n) => (Number(n) || 0).toLocaleString('ru-RU').replace(/,/g, ' ');
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    let PRODUCTS = [];
+    let PROFILES = [];
+    let currentView = 'stats';
+
+    /* ---------------- Toast ---------------- */
+    function toast(msg) {
+      $('#toastMsg').textContent = msg;
+      const t = $('#toast');
+      t.classList.remove('hidden');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => t.classList.add('hidden'), 2600);
+    }
+
+    /* ---------------- Sidebar (mobile) ---------------- */
+    const sidebar = $('#sidebar'), overlay = $('#overlay');
+    function openSb() { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+    function closeSb() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+    $('#openSidebar').addEventListener('click', openSb);
+    overlay.addEventListener('click', closeSb);
+
+    /* ---------------- Chiqish ---------------- */
+    $('#logoutBtn').addEventListener('click', () => {
+      try { sessionStorage.removeItem('sotibber_admin'); } catch (e) {}
+      window.location.replace('login.html');
+    });
+
+    /* ---------------- Status badge ---------------- */
+    function badge(status) {
+      const map = {
+        'Moderatsiyada': 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+        'Faol': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+        'Sotuvda': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+        'Rad etilgan': 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
+        'Tugadi': 'bg-slate-500/15 text-slate-300 ring-slate-500/30',
+      };
+      const cls = map[status] || 'bg-slate-500/15 text-slate-300 ring-slate-500/30';
+      return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${cls}">${esc(status)}</span>`;
+    }
+
+    /* ---------------- Ma'lumot yuklash ---------------- */
+    async function loadData() {
+      let loadError = false;
+      try {
+        const { data, error } = await sb.from('products').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        PRODUCTS = data || [];
+      } catch (e) { console.error('Mahsulotlar:', e); PRODUCTS = []; loadError = true; }
+
+      try {
+        const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        PROFILES = data || [];
+      } catch (e) { console.error('Foydalanuvchilar:', e); PROFILES = []; }
+
+      const pending = PRODUCTS.filter((p) => p.status === 'Moderatsiyada').length;
+      const badgeEl = $('#pendingBadge');
+      if (pending > 0) { badgeEl.textContent = pending; badgeEl.classList.remove('hidden'); }
+      else badgeEl.classList.add('hidden');
+
+      window.__ADMIN_LOAD_ERROR = loadError;
+      render();
+    }
+
+    /* ---------------- Empty-state / RLS ogohlantirishi ---------------- */
+    function policyHint() {
+      return `
+        <div class="glass mt-4 rounded-2xl p-5 text-sm">
+          <p class="font-semibold text-amber-300">Ma'lumot ko'rinmayaptimi?</p>
+          <p class="mt-1 text-slate-400">Admin panel Supabase'dagi <b>anon</b> kalit orqali o'qiydi. Barcha mahsulot va
+          foydalanuvchilarni ko'rish uchun Supabase'da tegishli <b>RLS siyosatlari</b> qo'shilishi kerak
+          (loyihadagi <code class="rounded bg-white/10 px-1">supabase_schema.sql</code> faylining oxiridagi "ADMIN" bo'limiga qarang).</p>
+        </div>`;
+    }
+
+    /* ---------------- Ko'rinishlar ---------------- */
+    function renderStats() {
+      const totalUsers = PROFILES.length;
+      const totalProducts = PRODUCTS.length;
+      const pending = PRODUCTS.filter((p) => p.status === 'Moderatsiyada').length;
+      const active = PRODUCTS.filter((p) => p.status === 'Faol' || p.status === 'Sotuvda').length;
+      const inventoryValue = PRODUCTS.reduce((s, p) => s + (Number(p.price) || 0) * (Number(p.stock) || 0), 0);
+
+      const card = (label, value, sub, svg, tint) => `
+        <div class="glass rounded-2xl p-5">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-slate-400">${label}</p>
+            <span class="grid h-9 w-9 place-items-center rounded-xl ${tint}">${svg}</span>
+          </div>
+          <p class="font-display mt-3 text-3xl font-bold text-white">${value}</p>
+          <p class="mt-1 text-xs text-slate-500">${sub}</p>
+        </div>`;
+
+      $('#viewRoot').innerHTML = `
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          ${card('Foydalanuvchilar', totalUsers, 'Ro\'yxatdan o\'tganlar', '<svg class="h-5 w-5 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg>', 'bg-violet-500/15')}
+          ${card('Mahsulotlar', totalProducts, 'Jami yuklangan', '<svg class="h-5 w-5 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7"/></svg>', 'bg-indigo-500/15')}
+          ${card('Moderatsiyada', pending, 'Tasdiq kutmoqda', '<svg class="h-5 w-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>', 'bg-amber-500/15')}
+          ${card('Sklad qiymati', uzs(inventoryValue) + ' <span class=\'text-base text-slate-500\'>so\'m</span>', active + ' ta faol mahsulot', '<svg class="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg>', 'bg-emerald-500/15')}
+        </div>
+
+        <div class="glass mt-5 rounded-2xl p-5">
+          <h3 class="font-display text-base font-bold text-white">So'nggi mahsulotlar</h3>
+          <div class="mt-3 space-y-2">
+            ${PRODUCTS.slice(0, 5).map((p) => `
+              <div class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                <span class="truncate text-sm font-medium text-slate-200">${esc(p.name)}</span>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-semibold text-emerald-300">${uzs(p.price)} so'm</span>
+                  ${badge(p.status)}
+                </div>
+              </div>`).join('') || '<p class="text-sm text-slate-500">Hozircha mahsulot yo\'q.</p>'}
+          </div>
+        </div>
+        ${(PRODUCTS.length === 0 && window.__ADMIN_LOAD_ERROR) ? policyHint() : ''}`;
+    }
+
+    function renderProducts() {
+      const rows = PRODUCTS.map((p) => {
+        const owner = PROFILES.find((u) => u.id === p.seller_id);
+        const ownerName = owner ? (owner.full_name || owner.phone || owner.id.slice(0, 8)) : (p.seller_id ? p.seller_id.slice(0, 8) : '—');
+        const isPending = p.status === 'Moderatsiyada';
+        return `
+          <tr class="border-b border-white/5">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <span class="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/5">
+                  ${p.image_url ? `<img src="${esc(p.image_url)}" class="h-full w-full object-cover" alt="" />` : '<svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z"/></svg>'}
+                </span>
+                <span class="text-sm font-medium text-slate-100">${esc(p.name)}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-400">${esc(ownerName)}</td>
+            <td class="px-4 py-3 text-sm font-semibold text-emerald-300">${uzs(p.price)}</td>
+            <td class="px-4 py-3 text-sm text-slate-300">${esc(p.stock)}</td>
+            <td class="px-4 py-3 text-sm text-slate-300">${esc(p.commission)}%</td>
+            <td class="px-4 py-3">${badge(p.status)}</td>
+            <td class="px-4 py-3">
+              <div class="flex justify-end gap-2">
+                ${isPending ? `
+                  <button data-approve="${p.id}" class="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/25">Tasdiqlash</button>
+                  <button data-reject="${p.id}" class="rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/30 hover:bg-rose-500/25">Rad etish</button>
+                ` : `
+                  <button data-delete="${p.id}" class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 ring-1 ring-white/10 hover:bg-white/10">O'chirish</button>
+                `}
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      $('#viewRoot').innerHTML = `
+        <div class="glass overflow-hidden rounded-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[720px]">
+              <thead>
+                <tr class="border-b border-white/10 text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th class="px-4 py-3 font-semibold">Mahsulot</th>
+                  <th class="px-4 py-3 font-semibold">Sotuvchi</th>
+                  <th class="px-4 py-3 font-semibold">Narx</th>
+                  <th class="px-4 py-3 font-semibold">Sklad</th>
+                  <th class="px-4 py-3 font-semibold">Komissiya</th>
+                  <th class="px-4 py-3 font-semibold">Holat</th>
+                  <th class="px-4 py-3 text-right font-semibold">Amal</th>
+                </tr>
+              </thead>
+              <tbody>${rows || `<tr><td colspan="7" class="px-4 py-10 text-center text-sm text-slate-500">Mahsulot topilmadi.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>
+        ${(PRODUCTS.length === 0 && window.__ADMIN_LOAD_ERROR) ? policyHint() : ''}`;
+    }
+
+    function renderUsers() {
+      const rows = PROFILES.map((u) => {
+        const count = PRODUCTS.filter((p) => p.seller_id === u.id).length;
+        const date = u.created_at ? new Date(u.created_at).toLocaleDateString('ru-RU') : '—';
+        return `
+          <tr class="border-b border-white/5">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc((u.full_name || 'U').slice(0, 1).toUpperCase())}</span>
+                <span class="text-sm font-medium text-slate-100">${esc(u.full_name || 'Nomsiz')}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-400">${esc(u.phone || '—')}</td>
+            <td class="px-4 py-3 text-sm text-slate-300">${count} ta</td>
+            <td class="px-4 py-3 text-sm text-slate-400">${esc(date)}</td>
+          </tr>`;
+      }).join('');
+
+      $('#viewRoot').innerHTML = `
+        <div class="glass overflow-hidden rounded-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[560px]">
+              <thead>
+                <tr class="border-b border-white/10 text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th class="px-4 py-3 font-semibold">Foydalanuvchi</th>
+                  <th class="px-4 py-3 font-semibold">Telefon</th>
+                  <th class="px-4 py-3 font-semibold">Mahsulotlari</th>
+                  <th class="px-4 py-3 font-semibold">Ro'yxatdan o'tgan</th>
+                </tr>
+              </thead>
+              <tbody>${rows || `<tr><td colspan="4" class="px-4 py-10 text-center text-sm text-slate-500">Foydalanuvchi topilmadi.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>
+        ${(PROFILES.length === 0 && window.__ADMIN_LOAD_ERROR) ? policyHint() : ''}`;
+    }
+
+    function render() {
+      const titles = { stats: 'Statistika', products: 'Mahsulotlar', users: 'Foydalanuvchilar' };
+      $('#viewTitle').textContent = titles[currentView] || 'Admin';
+      if (currentView === 'stats') renderStats();
+      else if (currentView === 'products') renderProducts();
+      else if (currentView === 'users') renderUsers();
+    }
+
+    /* ---------------- Moderatsiya amallari ---------------- */
+    async function setStatus(id, status) {
+      const { error } = await sb.from('products').update({ status }).eq('id', id);
+      if (error) { console.error(error); toast('Xatolik: ' + (error.message || 'yangilab bo\'lmadi')); return; }
+      const p = PRODUCTS.find((x) => x.id === id);
+      if (p) p.status = status;
+      toast(status === 'Faol' ? 'Mahsulot tasdiqlandi ✓' : 'Mahsulot rad etildi');
+      loadData();
+    }
+
+    async function removeProduct(id) {
+      if (!confirm('Mahsulotni o\'chirishni tasdiqlaysizmi?')) return;
+      const { error } = await sb.from('products').delete().eq('id', id);
+      if (error) { console.error(error); toast('Xatolik: ' + (error.message || 'o\'chirib bo\'lmadi')); return; }
+      toast('Mahsulot o\'chirildi');
+      loadData();
+    }
+
+    /* ---------------- Hodisalarni delegatsiya qilish ---------------- */
+    $('#viewRoot').addEventListener('click', (e) => {
+      const ap = e.target.closest('[data-approve]');
+      const rj = e.target.closest('[data-reject]');
+      const dl = e.target.closest('[data-delete]');
+      if (ap) setStatus(ap.dataset.approve, 'Faol');
+      else if (rj) setStatus(rj.dataset.reject, 'Rad etilgan');
+      else if (dl) removeProduct(dl.dataset.delete);
+    });
+
+    document.querySelectorAll('.nav-link').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentView = btn.dataset.view;
+        document.querySelectorAll('.nav-link').forEach((b) => b.classList.toggle('active', b === btn));
+        closeSb();
+        render();
+      });
+    });
+
+    $('#refreshBtn').addEventListener('click', () => { toast('Yangilanmoqda...'); loadData(); });
+
+    /* ---------------- Boshlash ---------------- */
+    if (!sb) {
+      $('#viewRoot').innerHTML = '<div class="glass rounded-2xl p-6 text-sm text-rose-300">Supabase ulanmagan — supabase-config.js tekshiring.</div>';
+    } else {
+      loadData();
+    }
+  })();
+  </script>
+</body>
+</html>

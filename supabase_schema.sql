@@ -128,3 +128,54 @@ create policy "Product images: o'zini o'chiradi"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'product-images' and owner = auth.uid());
+
+-- =====================================================================
+-- 4) ADMIN PANEL (dashboard/admin.html) uchun kirish
+--
+--   DIQQAT — XAVFSIZLIK OGOHLANTIRISHI:
+--   admin.html'ga kirish frontend'da yashirilgan login/parol (tiro/tiro19)
+--   orqali amalga oshiriladi. Bu HAQIQIY autentifikatsiya EMAS — u faqat
+--   UI'ni yashiradi. Quyidagi siyosatlar esa 'anon' (ochiq) kalitga barcha
+--   mahsulot va profil ma'lumotlarini (jumladan telefon raqamlari) O'QISH,
+--   hamda mahsulotlarni yangilash/o'chirish huquqini beradi.
+--
+--   Ya'ni: bu blokm ishga tushirilsa, ochiq anon kalitni bilgan HAR KIM shu
+--   ma'lumotlarni ko'ra oladi. Faqat sinov/kichik loyiha uchun ishlating.
+--
+--   TAVSIYA (xavfsizroq yo'l): admin uchun alohida haqiqiy Supabase hisobi
+--   oching, profiles jadvaliga `is_admin boolean default false` ustuni
+--   qo'shing va bu siyosatlarni `auth.uid() in (select id from profiles
+--   where is_admin)` sharti bilan cheklang. Kerak bo'lsa shu variantni
+--   qo'shib beramiz.
+--
+--   Agar admin panel kerak bo'lmasa — bu blokni umuman ishga tushirmang.
+-- ---------------------------------------------------------------
+
+-- Admin panel barcha mahsulotlarni ko'radi (anon o'qish)
+drop policy if exists "Admin: barcha mahsulotlarni ko'rish" on public.products;
+create policy "Admin: barcha mahsulotlarni ko'rish"
+  on public.products for select
+  to anon
+  using (true);
+
+-- Admin panel mahsulot holatini yangilaydi (moderatsiya)
+drop policy if exists "Admin: mahsulotni yangilash" on public.products;
+create policy "Admin: mahsulotni yangilash"
+  on public.products for update
+  to anon
+  using (true)
+  with check (true);
+
+-- Admin panel mahsulotni o'chiradi
+drop policy if exists "Admin: mahsulotni o'chirish" on public.products;
+create policy "Admin: mahsulotni o'chirish"
+  on public.products for delete
+  to anon
+  using (true);
+
+-- Admin panel barcha foydalanuvchilarni ko'radi (anon o'qish)
+drop policy if exists "Admin: barcha profillarni ko'rish" on public.profiles;
+create policy "Admin: barcha profillarni ko'rish"
+  on public.profiles for select
+  to anon
+  using (true);

