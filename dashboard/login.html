@@ -68,14 +68,8 @@
 
     <div class="glass rounded-3xl p-6 shadow-2xl sm:p-8">
 
-      <!-- Panel tanlash -->
-      <div class="mb-5">
-        <p class="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Qaysi panelga kirmoqchisiz?</p>
-        <div id="panelToggle" class="grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
-          <button type="button" data-panel="seller" class="panel-opt rounded-lg py-2 text-sm font-semibold transition">Sotuvchi</button>
-          <button type="button" data-panel="affiliate" class="panel-opt rounded-lg py-2 text-sm font-semibold transition">Sotib beruvchi</button>
-        </div>
-      </div>
+      <!-- ============ AUTH VIEW (kirish / ro'yxatdan o'tish) ============ -->
+      <div id="authView">
 
       <!-- Tabs -->
       <div class="mb-6 grid grid-cols-2 gap-2 border-b border-white/10">
@@ -119,10 +113,40 @@
         </label>
         <button type="submit" class="btn-grad w-full rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.99]">Ro'yxatdan o'tish</button>
       </form>
+
+      </div><!-- /authView -->
+
+      <!-- ============ ROLE VIEW (ro'yxatdan o'tgandan keyin) ============ -->
+      <div id="roleView" class="hidden">
+        <div class="text-center">
+          <h3 class="font-display text-xl font-bold text-white">Xush kelibsiz! 🎉</h3>
+          <p class="mt-1.5 text-sm text-slate-400">Platformadan qanday maqsadda foydalanasiz?</p>
+        </div>
+        <div class="mt-6 space-y-3">
+          <button type="button" data-role-choice="seller" class="group flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition hover:border-violet-400/60 hover:bg-violet-500/10">
+            <span class="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-brand to-violet-deep text-white shadow-lg shadow-violet-500/30 transition group-hover:scale-105">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-base font-bold text-white">Sotuvchi</span>
+              <span class="block text-xs text-slate-400">Mahsulotlarimni yuklayman va sotuvlarni oshiraman</span>
+            </span>
+          </button>
+          <button type="button" data-role-choice="affiliate" class="group flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition hover:border-emerald-400/60 hover:bg-emerald-500/10">
+            <span class="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 transition group-hover:scale-105">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-base font-bold text-white">Sotib beruvchi</span>
+              <span class="block text-xs text-slate-400">Sarmoyasiz ijtimoiy tarmoqlarda sotib pul ishlayman</span>
+            </span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <p class="mt-6 text-center text-sm text-slate-500">
-      <a href="../landing/index.html" class="font-semibold text-violet-300 hover:underline">← Bosh sahifaga qaytish</a>
+      <a href="/" class="font-semibold text-violet-300 hover:underline">← Bosh sahifaga qaytish</a>
     </p>
   </div>
 
@@ -132,21 +156,26 @@
       const $ = (sel) => document.querySelector(sel);
 
       const params = new URLSearchParams(window.location.search);
+      // Panel (sotuvchi/sotib beruvchi) endi login paytida emas, ro'yxatdan
+      // o'tgandan keyin tanlanadi. Login uchun oldingi/standart qiymatdan
+      // foydalanamiz (dashboard ichida ham panelni almashtirish mumkin).
       let panel = params.get('panel') === 'affiliate' ? 'affiliate' : (params.get('panel') === 'seller' ? 'seller' : null);
       if (!panel) {
         try { panel = localStorage.getItem('sotibber_panel'); } catch (e) {}
       }
       if (panel !== 'affiliate' && panel !== 'seller') panel = 'seller';
 
-      function paintPanelToggle() {
-        document.querySelectorAll('.panel-opt').forEach((b) => {
-          const on = b.dataset.panel === panel;
-          b.className = `panel-opt rounded-lg py-2 text-sm font-semibold transition ${on ? 'btn-grad text-white' : 'text-slate-400 hover:text-slate-200'}`;
-        });
+      // Ro'yxatdan o'tgandan keyingi rol tanlash ekrani
+      function showRoleView() {
+        hideMsg();
+        $('#authView').classList.add('hidden');
+        $('#roleView').classList.remove('hidden');
       }
-      paintPanelToggle();
-      document.querySelectorAll('.panel-opt').forEach((b) => {
-        b.addEventListener('click', () => { panel = b.dataset.panel; paintPanelToggle(); });
+      document.querySelectorAll('[data-role-choice]').forEach((b) => {
+        b.addEventListener('click', () => {
+          panel = b.dataset.roleChoice === 'affiliate' ? 'affiliate' : 'seller';
+          goToDashboard();
+        });
       });
 
       // Tabs
@@ -231,8 +260,11 @@
         setLoading(e.target, false);
         if (error) return showMsg(window.SotibberAuth.translateError(error), 'error');
         if (data && data.session) {
-          goToDashboard();
+          // Sessiya bor — qayta login so'ramasdan rol tanlashga o'tamiz
+          showRoleView();
         } else {
+          // Supabase'da email tasdiqlash yoqilgan bo'lsa sessiya bo'lmaydi.
+          // Bu holda qayta login talab qilinadi (Supabase talabi).
           showMsg("Ro'yxatdan o'tdingiz! Emailingizga yuborilgan havola orqali hisobingizni tasdiqlang, so'ng tizimga kiring.", 'success');
           activeTab = 'login';
           paintTabs();

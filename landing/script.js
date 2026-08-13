@@ -12,7 +12,7 @@
     // Tanlangan rolni bir necha usulda uzatamiz (turli muhitlarda ishlashi uchun):
     // 1) URL query (?panel=), 2) hash (#role), 3) localStorage.
     try { localStorage.setItem('sotibber_panel', role); } catch (e) {}
-    window.location.href = '../dashboard/index.html?panel=' + encodeURIComponent(role) + '#' + role;
+    window.location.href = '/dashboard/index.html?panel=' + encodeURIComponent(role) + '#' + role;
   }
 
   /* -------------------- Mobile menu toggle -------------------- */
