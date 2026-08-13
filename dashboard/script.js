@@ -55,15 +55,17 @@
        real hisob ochilgach yoki server ulanganda shu yerga
        haqiqiy ma'lumotlar keladi.
     ========================================================= */
-    const merchantProducts = [];
+    // Supabase'dan (dashboard/app-init.js orqali) oldindan yuklab qo'yilgan
+    // ma'lumotlar bo'lsa, o'sha bilan boshlaymiz — bo'lmasa bo'sh massiv.
+    const merchantProducts = Array.isArray(window.__SOTIBBER_PRODUCTS) ? window.__SOTIBBER_PRODUCTS : [];
 
     const merchantOrders = [];
 
     const merchantTx = [];
 
-    // Sotuvchilar qo'shgan mahsulotlardan hosil qilinadi (affiliateViews.market() ichida
-    // har safar qayta hisoblanadi) — shuning uchun let, boshida bo'sh.
-    let marketProducts = [];
+    // Barcha sotuvchilarning sklad mavjud mahsulotlari — app-init.js orqali
+    // Supabase'dan oldindan yuklanadi (dashboard/index.html ochilganda).
+    let marketProducts = Array.isArray(window.__SOTIBBER_MARKET_PRODUCTS) ? window.__SOTIBBER_MARKET_PRODUCTS : [];
 
     const agentLinks = [];
 
@@ -402,19 +404,9 @@
         </div>`,
 
       market: () => {
-        // Sotuvchilar (merchantProducts) qo'shgan, sklad mavjud mahsulotlarni
-        // sotib beruvchilar bozoriga chiqaramiz. Har render'da qayta hisoblanadi,
-        // shunda seller yangi mahsulot qo'shishi bilan shu yerda ham ko'rinadi.
-        marketProducts = merchantProducts
-          .filter((p) => p.stock > 0)
-          .map((p) => ({
-            name: p.name,
-            price: p.price,
-            merchant: 'Sotuvchi',
-            commission: Math.round(p.price * p.commission / 100),
-            color: p.color,
-            image: p.image,
-          }));
+        // marketProducts — barcha sotuvchilarning sklad mavjud mahsulotlari,
+        // dashboard ochilganda app-init.js orqali Supabase'dan oldindan
+        // yuklab qo'yiladi (window.__SOTIBBER_MARKET_PRODUCTS).
         return `
         <div class="view-enter space-y-5">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -797,6 +789,7 @@
       const imageInput = $('#productImageInput');
       const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
       let productImageDataUrl = null;
+      let productImageFile = null;
 
       function showImageError(msg) {
         toast(msg);
@@ -820,6 +813,7 @@
 
       function resetImageDropzone() {
         productImageDataUrl = null;
+        productImageFile = null;
         imageInput.value = '';
         dropContent.innerHTML = `
           <svg class="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/><circle cx="9" cy="10" r="1.5"/></svg>
@@ -836,6 +830,7 @@
         if (file.size > MAX_IMAGE_BYTES) {
           return showImageError("Rasm hajmi 5MB dan oshmasligi kerak");
         }
+        productImageFile = file;
         const reader = new FileReader();
         reader.onload = () => {
           productImageDataUrl = reader.result;
@@ -861,7 +856,7 @@
         if (file) handleImageFile(file);
       });
 
-      $('#productForm').addEventListener('submit', (e) => {
+      $('#productForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = $('#productNameInput').value.trim();
         const priceVal = Number(price.value) || 0;
@@ -871,6 +866,17 @@
           toast("Mahsulot nomi va narxini to'g'ri kiriting");
           return;
         }
+        const user = window.__SOTIBBER_USER;
+        if (!user || !window.sb) {
+          toast('Tizimga kirilmagan. Sahifani yangilab, qayta kiring.');
+          return;
+        }
+
+        const submitBtn = $('#productForm button[type="submit"]');
+        submitBtn.disabled = true;
+        const origBtnText = submitBtn.textContent;
+        submitBtn.textContent = 'Saqlanmoqda...';
+
         const palette = [
           'from-indigo-100 to-indigo-50',
           'from-emerald-100 to-teal-50',
@@ -879,19 +885,57 @@
           'from-purple-100 to-fuchsia-50',
           'from-sky-100 to-cyan-50',
         ];
-        merchantProducts.unshift({
-          name,
-          price: priceVal,
-          stock: stockVal,
-          commission: commissionVal,
-          status: 'Moderatsiyada',
-          color: palette[Math.floor(Math.random() * palette.length)],
-          image: productImageDataUrl,
-        });
-        closeModal();
-        toast('Mahsulot moderatsiyaga yuborildi ✓');
-        // Mahsulotlar sahifasi ochiq bo'lsa, ro'yxatni darhol yangilaymiz
-        if (state.panel === 'seller' && state.view === 'products') renderView();
+        const color = palette[Math.floor(Math.random() * palette.length)];
+
+        try {
+          let imageUrl = null;
+          if (productImageFile) {
+            const ext = (productImageFile.name.split('.').pop() || 'jpg').toLowerCase();
+            const path = `${user.id}/${Date.now()}.${ext}`;
+            const { error: upErr } = await window.sb.storage.from('product-images').upload(path, productImageFile);
+            if (upErr) throw upErr;
+            const { data: pub } = window.sb.storage.from('product-images').getPublicUrl(path);
+            imageUrl = pub && pub.publicUrl ? pub.publicUrl : null;
+          }
+
+          const { data, error } = await window.sb
+            .from('products')
+            .insert({
+              seller_id: user.id,
+              name,
+              description: $('#productDescInput').value.trim(),
+              price: priceVal,
+              stock: stockVal,
+              commission: commissionVal,
+              status: 'Moderatsiyada',
+              image_url: imageUrl,
+              color,
+            })
+            .select()
+            .single();
+          if (error) throw error;
+
+          merchantProducts.unshift({
+            id: data.id,
+            name: data.name,
+            price: Number(data.price),
+            stock: data.stock,
+            commission: Number(data.commission),
+            status: data.status,
+            color: data.color,
+            image: data.image_url,
+          });
+
+          closeModal();
+          toast('Mahsulot moderatsiyaga yuborildi ✓');
+          // Mahsulotlar sahifasi ochiq bo'lsa, ro'yxatni darhol yangilaymiz
+          if (state.panel === 'seller' && state.view === 'products') renderView();
+        } catch (err) {
+          console.error(err);
+          toast("Xatolik: mahsulotni saqlab bo'lmadi. Qayta urinib ko'ring");
+          submitBtn.disabled = false;
+          submitBtn.textContent = origBtnText;
+        }
       });
     }
 
@@ -1343,6 +1387,24 @@
         toast('Havola nusxalandi ✓');
         return;
       }
+    });
+
+    /* =========================================================
+       PROFIL (haqiqiy Supabase foydalanuvchisi)
+    ========================================================= */
+    (function initProfile() {
+      const user = window.__SOTIBBER_USER;
+      const profile = window.__SOTIBBER_PROFILE;
+      const displayName = (profile && profile.full_name) || (user && user.email) || 'Foydalanuvchi';
+      const displayPhone = (profile && profile.phone) || '';
+      $('#profileName').textContent = displayName;
+      $('#profileNameFull').textContent = displayName;
+      $('#profilePhone').textContent = displayPhone || (user ? user.email : "Telefon raqami qo'shilmagan");
+    })();
+
+    $('#logoutBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.SotibberAuth?.signOut();
     });
 
     /* =========================================================
