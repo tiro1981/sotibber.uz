@@ -13,7 +13,7 @@
    boshqa frontend kodiga qo'ymang — u butun bazaga to'liq (RLS'siz)
    kirish huquqini beradi.
 ========================================================= */
-window.SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co'; // <-- shu yerga Project URL
+window.SUPABASE_URL = 'https://fblnctyxbrglclnrixkb.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_mbzdhYUNTLoHltofwOmQVg_1BbAZXWs';
 
 window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
