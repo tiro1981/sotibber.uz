@@ -537,7 +537,14 @@
       btn.disabled = true; btn.textContent = 'Saqlanmoqda...';
       const { error } = await sb.from('site_settings').upsert(rows, { onConflict: 'key' });
       btn.disabled = false; btn.textContent = 'Saqlash';
-      if (error) { console.error(error); toast('Xatolik: ' + (error.message || 'saqlab bo\'lmadi')); return; }
+      if (error) {
+        console.error(error);
+        const missing = error.code === 'PGRST205' || /schema cache|does not exist|find the table/i.test(error.message || '');
+        toast(missing
+          ? "Jadval topilmadi — avval Supabase'da supabase_schema.sql'ni ishga tushiring"
+          : 'Xatolik: ' + (error.message || 'saqlab bo\'lmadi'));
+        return;
+      }
       rows.forEach((r) => { SETTINGS[r.key] = r.value; });
       const ok = $('#settingsSaved');
       ok.classList.remove('hidden');
