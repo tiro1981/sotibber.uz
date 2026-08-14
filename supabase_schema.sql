@@ -286,5 +286,5 @@ create policy "Settings: admin yangilaydi"
 
 -- Boshlang'ich bo'sh qatorlar (ixtiyoriy)
 insert into public.site_settings (key, value) values
-  ('telegram', ''), ('instagram', ''), ('youtube', ''), ('tiktok', '')
+  ('telegram', ''), ('instagram', ''), ('youtube', '')
 on conflict (key) do nothing;
