@@ -1,14 +1,52 @@
-/* ===== sotibber.uz — Dashboard custom styles ===== */
+/* ===== sotibber.uz — Dashboard custom styles (to'q "glass" mavzu) ===== */
 
 html { -webkit-font-smoothing: antialiased; }
 
-/* Silliq scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+/* Sahifa foni — login/qonish sahifasi bilan bir xil to'q binafsha */
+body {
+  background:
+    radial-gradient(760px 460px at 50% -10%, rgba(124,58,237,.26), transparent 60%),
+    radial-gradient(680px 460px at 100% 0%, rgba(99,102,241,.16), transparent 55%),
+    radial-gradient(620px 440px at 0% 100%, rgba(16,185,129,.10), transparent 55%),
+    #07060d;
+  min-height: 100vh;
+}
+
+/* Silliq scrollbar (to'q) */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.22); }
 ::-webkit-scrollbar-track { background: transparent; }
 
+/* "Shisha" (glass) yuzalar — kartalar, panellar, modallar */
+.glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.glass-hover:hover { border-color: rgba(139,92,246,0.35); background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)); }
+
+/* Asosiy gradient tugma */
+.btn-grad {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9 55%, #4f46e5);
+  box-shadow: 0 12px 34px -12px rgba(124,58,237,0.7), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.btn-grad:hover { box-shadow: 0 16px 44px -10px rgba(124,58,237,0.9); }
+
+/* Forma maydonlari */
+.fld {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #f1f0f7;
+}
+.fld::placeholder { color: #6b7280; }
+.fld:focus { border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 3px rgba(124,58,237,0.18); outline: none; }
+
 /* Range slider rangi */
-input[type="range"] { accent-color: #4338CA; }
+input[type="range"] { accent-color: #7c3aed; }
+input[type="radio"], input[type="checkbox"] { accent-color: #7c3aed; }
 
 /* View o'zgarganda animatsiya */
 .view-enter { animation: fadeUp 0.35s ease both; }
+@keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }

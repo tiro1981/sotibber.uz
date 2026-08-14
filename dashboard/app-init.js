@@ -45,16 +45,26 @@
     return Math.round((Number(price) || 0) * (Number(commissionPct) || 0) / 100);
   }
 
+  // Mahsulot rasmlari: yangi `image_urls` massivi bo'lsa o'shani,
+  // bo'lmasa eski bitta `image_url`ni ishlatamiz.
+  function productImages(p) {
+    if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean);
+    return p.image_url ? [p.image_url] : [];
+  }
+
   function mapProductRow(p) {
+    const images = productImages(p);
     return {
       id: p.id,
       name: p.name,
+      description: p.description || '',
       price: Number(p.price),
       stock: p.stock,
       commission: Number(p.commission),
       status: p.status,
-      color: p.color || 'from-indigo-100 to-indigo-50',
-      image: p.image_url,
+      color: p.color || 'from-violet-500/25 to-indigo-500/10',
+      images,
+      image: images[0] || null,
     };
   }
 
@@ -107,14 +117,22 @@
         .gt('stock', 0)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      window.__SOTIBBER_MARKET_PRODUCTS = (marketRows || []).map((p) => ({
-        name: p.name,
-        price: Number(p.price),
-        merchant: 'Sotuvchi',
-        commission: computeCommissionAmount(p.price, p.commission),
-        color: p.color || 'from-indigo-100 to-indigo-50',
-        image: p.image_url,
-      }));
+      window.__SOTIBBER_MARKET_PRODUCTS = (marketRows || []).map((p) => {
+        const images = productImages(p);
+        return {
+          id: p.id,
+          name: p.name,
+          description: p.description || '',
+          price: Number(p.price),
+          stock: p.stock,
+          merchant: 'Sotuvchi',
+          commission: computeCommissionAmount(p.price, p.commission),
+          commissionPct: Number(p.commission),
+          color: p.color || 'from-violet-500/25 to-indigo-500/10',
+          images,
+          image: images[0] || null,
+        };
+      });
     } catch (e) {
       console.error('Bozorni yuklashda xatolik:', e);
       window.__SOTIBBER_MARKET_PRODUCTS = [];

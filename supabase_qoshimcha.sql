@@ -102,3 +102,13 @@ create policy "Settings: admin yangilaydi"
 insert into public.site_settings (key, value) values
   ('telegram', ''), ('instagram', ''), ('youtube', '')
 on conflict (key) do nothing;
+
+-- ---------------------------------------------------------------
+-- 4) MAHSULOT RASMLARI — bittadan 5 tagacha (galereya)
+--
+--   Avval `products.image_url` (bitta rasm) ishlatilardi. Endi
+--   `image_urls` massivi qo'shildi — sotuvchi 5 tagacha rasm yuklaydi.
+--   `image_url` birinchi rasm sifatida saqlanib qoladi (eski kod uchun).
+-- ---------------------------------------------------------------
+alter table public.products
+  add column if not exists image_urls text[] not null default '{}';

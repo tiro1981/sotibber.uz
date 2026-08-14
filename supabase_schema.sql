@@ -72,9 +72,14 @@ create table if not exists public.products (
   commission numeric not null default 0 check (commission >= 0 and commission <= 100),
   status text not null default 'Moderatsiyada',
   image_url text,
+  image_urls text[] not null default '{}',
   color text,
   created_at timestamptz not null default now()
 );
+
+-- Eski loyihalar uchun: `products` allaqachon mavjud bo'lsa, ustunni qo'shamiz
+alter table public.products
+  add column if not exists image_urls text[] not null default '{}';
 
 alter table public.products enable row level security;
 

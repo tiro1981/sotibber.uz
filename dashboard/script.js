@@ -1,6 +1,7 @@
 /* =========================================================
    sotibber.uz — Dashboard logic
    Vanilla JavaScript (HTML + CSS + JS)
+   To'q "glass" mavzu — login/qonish sahifasi bilan bir xil.
    Panel (Sotuvchi / Sotib beruvchi) qo'nish sahifasidan
    ?panel= parametri orqali tanlanadi.
 ========================================================= */
@@ -14,30 +15,34 @@
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
     // Format an integer as UZS with thousands separators
-    const uzs = (n) => n.toLocaleString('ru-RU').replace(/,/g, ' ');
+    const uzs = (n) => (Number(n) || 0).toLocaleString('ru-RU').replace(/,/g, ' ');
 
-    // Status badge — maps Uzbek statuses to consistent colors.
-    // Green = success, Blue = in-progress/transit, Amber = pending, Red = canceled, Gray = neutral.
+    // Xavfsiz HTML — foydalanuvchi kiritgan matnni ekranga chiqarishda
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // Status badge — maps Uzbek statuses to consistent colors (to'q mavzu).
     function badge(status) {
       const map = {
         // success
-        'Yetkazildi': 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-        'Sotuvda': 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-        'Bajarildi': 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-        'Chiqarishga tayyor': 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        'Yetkazildi': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+        'Sotuvda': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+        'Faol': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+        'Bajarildi': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+        'Chiqarishga tayyor': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
         // in-transit / progress
-        "Yo'lda": 'bg-blue-50 text-blue-700 ring-blue-200',
-        'Yuborildi': 'bg-blue-50 text-blue-700 ring-blue-200',
+        "Yo'lda": 'bg-blue-500/15 text-blue-300 ring-blue-500/30',
+        'Yuborildi': 'bg-blue-500/15 text-blue-300 ring-blue-500/30',
         // pending
-        'Yangi': 'bg-amber-50 text-amber-700 ring-amber-200',
-        'Kutilmoqda': 'bg-amber-50 text-amber-700 ring-amber-200',
-        'Moderatsiyada': 'bg-amber-50 text-amber-700 ring-amber-200',
+        'Yangi': 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+        'Kutilmoqda': 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+        'Moderatsiyada': 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
         // danger
-        'Rad etildi': 'bg-rose-50 text-rose-700 ring-rose-200',
-        'Tugagan': 'bg-slate-100 text-slate-500 ring-slate-200',
+        'Rad etildi': 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
+        'Rad etilgan': 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
+        'Tugagan': 'bg-white/10 text-slate-300 ring-white/15',
       };
-      const cls = map[status] || 'bg-slate-100 text-slate-600 ring-slate-200';
-      return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${cls}">${status}</span>`;
+      const cls = map[status] || 'bg-white/10 text-slate-300 ring-white/15';
+      return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${cls}">${esc(status)}</span>`;
     }
 
     function toast(msg) {
@@ -95,6 +100,11 @@
       return `<svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${path}</svg>`;
     }
 
+    // Placeholder rasm (rasm bo'lmaganda) — to'q mavzu uchun
+    function imgPlaceholder(size = 'h-14 w-14') {
+      return `<svg class="${size} text-white/25" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.3">${icon.box}</svg>`;
+    }
+
     /* =========================================================
        NAVIGATION CONFIG (per panel)
     ========================================================= */
@@ -126,24 +136,25 @@
        SHARED UI PARTIALS
     ========================================================= */
     // Summary/stat card
-    function statCard({ label, value, sub, accent = 'indigo', badgeText, trend, icon: ic }) {
+    function statCard({ label, value, sub, accent = 'violet', badgeText, trend, icon: ic }) {
       const accents = {
-        indigo: 'from-indigo-brand to-indigo-deep',
-        emerald: 'from-emerald-brand to-teal-500',
+        violet: 'from-violet-brand to-violet-deep',
+        indigo: 'from-violet-brand to-violet-deep',
+        emerald: 'from-emerald-500 to-teal-500',
         blue: 'from-blue-500 to-indigo-500',
         amber: 'from-amber-500 to-orange-500',
       };
       return `
-      <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:shadow-md">
+      <div class="glass glass-hover rounded-2xl p-5 transition">
         <div class="flex items-start justify-between">
-          <div class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br ${accents[accent]} text-white shadow-lg">
+          <div class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br ${accents[accent] || accents.violet} text-white shadow-lg shadow-violet-500/20">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic}</svg>
           </div>
-          ${badgeText ? badge(badgeText) : (trend ? `<span class="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>${trend}</span>` : '')}
+          ${badgeText ? badge(badgeText) : (trend ? `<span class="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-300"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>${trend}</span>` : '')}
         </div>
-        <p class="mt-4 text-sm font-medium text-slate-500">${label}</p>
-        <p class="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">${value}</p>
-        ${sub ? `<p class="mt-1 text-xs text-slate-400">${sub}</p>` : ''}
+        <p class="mt-4 text-sm font-medium text-slate-400">${label}</p>
+        <p class="font-display mt-1 text-2xl font-bold tracking-tight text-white">${value}</p>
+        ${sub ? `<p class="mt-1 text-xs text-slate-500">${sub}</p>` : ''}
       </div>`;
     }
 
@@ -151,17 +162,34 @@
     function barChart() {
       const bars = chartData.map((c) => `
         <div class="group flex h-full flex-1 flex-col items-center justify-end gap-2">
-          <div class="relative w-full max-w-[38px] rounded-t-lg bg-gradient-to-t from-indigo-brand to-emerald-brand transition-all duration-500 hover:opacity-90" style="height:${c.v}%">
-            <span class="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">${uzs(c.v * 12000)}</span>
+          <div class="relative w-full max-w-[38px] rounded-t-lg bg-gradient-to-t from-violet-brand to-emerald-400 transition-all duration-500 hover:opacity-90" style="height:${c.v}%">
+            <span class="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">${uzs(c.v * 12000)}</span>
           </div>
-          <span class="text-xs font-medium text-slate-400">${c.d}</span>
+          <span class="text-xs font-medium text-slate-500">${c.d}</span>
         </div>`).join('');
       return `<div class="flex h-48 items-end gap-2 sm:gap-4">${bars}</div>`;
     }
 
-    // Page section wrapper
+    // Page section wrapper (glass)
     function card(inner, extra = '') {
-      return `<div class="rounded-2xl border border-slate-100 bg-white shadow-sm ${extra}">${inner}</div>`;
+      return `<div class="glass rounded-2xl ${extra}">${inner}</div>`;
+    }
+
+    // Mahsulot kartasi rasm blogi — bir xil ko'rinishli, chiroyli.
+    // images: massiv (0..5). count-badge bir nechta rasm bo'lsa ko'rsatiladi.
+    function productMedia(images, name, ratio = 'aspect-[4/3]') {
+      const list = Array.isArray(images) ? images.filter(Boolean) : [];
+      const first = list[0];
+      const count = list.length;
+      return `
+        <div class="relative ${ratio} w-full overflow-hidden bg-gradient-to-br from-white/10 to-white/[0.02]">
+          ${first
+            ? `<img src="${esc(first)}" alt="${esc(name)}" loading="lazy" class="h-full w-full object-cover" />`
+            : `<div class="grid h-full w-full place-items-center">${imgPlaceholder('h-16 w-16')}</div>`}
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+          ${count > 1 ? `<span class="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>${count}</span>` : ''}
+        </div>`;
     }
 
     /* =========================================================
@@ -174,7 +202,7 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             ${statCard({ label: 'Umumiy balans', value: uzs(0) + ' so\'m', accent: 'emerald', icon: icon.wallet })}
             ${statCard({ label: 'Muzlatilgan balans (Escrow)', value: uzs(0) + ' so\'m', sub: 'Yetkazilgach ochiladi', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>' })}
-            ${statCard({ label: 'Jami buyurtmalar', value: '0', accent: 'indigo', icon: icon.cart })}
+            ${statCard({ label: 'Jami buyurtmalar', value: '0', accent: 'violet', icon: icon.cart })}
             ${statCard({ label: 'Muvaffaqiyatli sotuvlar', value: '0%', sub: '0 ta yetkazildi', accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
           </div>
 
@@ -184,8 +212,8 @@
               <div class="p-5 sm:p-6">
                 <div class="flex items-center justify-between">
                   <div>
-                    <h3 class="text-base font-bold text-slate-900">Sotuvlar dinamikasi</h3>
-                    <p class="text-sm text-slate-500">So'nggi 7 kun</p>
+                    <h3 class="font-display text-base font-bold text-white">Sotuvlar dinamikasi</h3>
+                    <p class="text-sm text-slate-400">So'nggi 7 kun</p>
                   </div>
                 </div>
                 <div class="mt-6">${barChart()}</div>
@@ -194,13 +222,13 @@
             <!-- Activity feed -->
             ${card(`
               <div class="p-5 sm:p-6">
-                <h3 class="text-base font-bold text-slate-900">So'nggi harakatlar</h3>
+                <h3 class="font-display text-base font-bold text-white">So'nggi harakatlar</h3>
                 <div class="mt-6 flex flex-col items-center justify-center py-6 text-center">
-                  <span class="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-slate-400">
+                  <span class="grid h-11 w-11 place-items-center rounded-full bg-white/5 text-slate-400">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                   </span>
-                  <p class="mt-3 text-sm font-medium text-slate-500">Hali harakatlar yo'q</p>
-                  <p class="mt-1 text-xs text-slate-400">Birinchi buyurtma yoki tranzaksiya shu yerda ko'rinadi</p>
+                  <p class="mt-3 text-sm font-medium text-slate-400">Hali harakatlar yo'q</p>
+                  <p class="mt-1 text-xs text-slate-500">Birinchi buyurtma yoki tranzaksiya shu yerda ko'rinadi</p>
                 </div>
               </div>`)}
           </div>
@@ -210,10 +238,10 @@
         <div class="view-enter space-y-5">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 class="text-lg font-bold text-slate-900">Mahsulotlar (Sklad)</h2>
-              <p class="text-sm text-slate-500">Jami ${merchantProducts.length} ta mahsulot</p>
+              <h2 class="font-display text-lg font-bold text-white">Mahsulotlar (Sklad)</h2>
+              <p class="text-sm text-slate-400">Jami ${merchantProducts.length} ta mahsulot</p>
             </div>
-            <button data-action="add-product" class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-brand px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-deep active:scale-95">
+            <button data-action="add-product" class="btn-grad inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
               Yangi mahsulot qo'shish
             </button>
@@ -221,36 +249,34 @@
 
           <!-- Product cards grid -->
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            ${merchantProducts.map((p) => `
-              <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                <div class="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${p.color}">
-                  ${p.image
-                    ? `<img src="${p.image}" alt="${p.name}" class="h-full w-full object-cover" />`
-                    : `<svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>`}
+            ${merchantProducts.map((p, i) => `
+              <div class="glass glass-hover group overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
+                <button data-product-detail="${i}" class="relative block w-full text-left">
+                  ${productMedia(p.images, p.name)}
                   <div class="absolute right-3 top-3">${badge(p.status)}</div>
-                </div>
+                </button>
                 <div class="p-4">
-                  <h3 class="truncate font-bold text-slate-900">${p.name}</h3>
+                  <button data-product-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
                   <div class="mt-2 flex items-center justify-between">
-                    <span class="text-lg font-extrabold text-slate-900">${uzs(p.price)} <span class="text-xs font-medium text-slate-400">so'm</span></span>
-                    <span class="text-xs font-medium text-slate-500">Sklad: <b class="${p.stock === 0 ? 'text-rose-500' : 'text-slate-700'}">${p.stock}</b></span>
+                    <span class="font-display text-lg font-bold text-white">${uzs(p.price)} <span class="text-xs font-medium text-slate-500">so'm</span></span>
+                    <span class="text-xs font-medium text-slate-400">Sklad: <b class="${p.stock === 0 ? 'text-rose-400' : 'text-slate-200'}">${p.stock}</b></span>
                   </div>
-                  <div class="mt-3 flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2">
-                    <span class="text-xs font-medium text-emerald-700">Komissiya</span>
-                    <span class="text-sm font-bold text-emerald-700">${p.commission}% (${uzs(Math.round(p.price * p.commission / 100))} so'm)</span>
+                  <div class="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 ring-1 ring-emerald-500/20">
+                    <span class="text-xs font-medium text-emerald-300">Komissiya</span>
+                    <span class="text-sm font-bold text-emerald-300">${p.commission}% (${uzs(Math.round(p.price * p.commission / 100))} so'm)</span>
                   </div>
                   <div class="mt-3 flex gap-2">
-                    <button class="flex-1 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">Tahrirlash</button>
-                    <button class="flex-1 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">Statistika</button>
+                    <button data-product-detail="${i}" class="flex-1 rounded-lg border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10">Ko'rish</button>
+                    <button class="flex-1 rounded-lg border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10">Statistika</button>
                   </div>
                 </div>
               </div>`).join('') || `
-              <div class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-14 text-center">
-                <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
+              <div class="glass col-span-full flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
+                <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400">
                   <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.box}</svg>
                 </span>
-                <p class="mt-3 text-sm font-semibold text-slate-600">Hali mahsulot qo'shilmagan</p>
-                <p class="mt-1 max-w-xs text-xs text-slate-400">Birinchi mahsulotingizni qo'shish uchun yuqoridagi tugmani bosing</p>
+                <p class="mt-3 text-sm font-semibold text-slate-300">Hali mahsulot qo'shilmagan</p>
+                <p class="mt-1 max-w-xs text-xs text-slate-500">Birinchi mahsulotingizni qo'shish uchun yuqoridagi tugmani bosing</p>
               </div>`}
           </div>
         </div>`,
@@ -260,20 +286,20 @@
         return `
         <div class="view-enter space-y-5" id="ordersView">
           <div>
-            <h2 class="text-lg font-bold text-slate-900">Buyurtmalar</h2>
-            <p class="text-sm text-slate-500">Barcha buyurtmalarni boshqaring</p>
+            <h2 class="font-display text-lg font-bold text-white">Buyurtmalar</h2>
+            <p class="text-sm text-slate-400">Barcha buyurtmalarni boshqaring</p>
           </div>
 
           <!-- Filter tabs -->
           <div class="flex flex-wrap gap-2 overflow-x-auto">
-            ${tabs.map((t, i) => `<button data-order-tab="${t}" class="order-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${i === 0 ? 'bg-indigo-brand text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}">${t}</button>`).join('')}
+            ${tabs.map((t, i) => `<button data-order-tab="${t}" class="order-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${i === 0 ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${t}</button>`).join('')}
           </div>
 
           <!-- Table -->
           ${card(`
             <div class="overflow-x-auto">
               <table class="w-full min-w-[820px] text-left text-sm">
-                <thead class="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <thead class="border-b border-white/10 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th class="px-4 py-3 font-semibold">Buyurtma ID</th>
                     <th class="px-4 py-3 font-semibold">Mahsulot</th>
@@ -286,7 +312,7 @@
                     <th class="px-4 py-3 text-right font-semibold">Amallar</th>
                   </tr>
                 </thead>
-                <tbody id="ordersBody" class="divide-y divide-slate-50"></tbody>
+                <tbody id="ordersBody" class="divide-y divide-white/5"></tbody>
               </table>
             </div>`)}
         </div>`;
@@ -294,23 +320,23 @@
 
       finance: () => `
         <div class="view-enter space-y-6">
-          <h2 class="text-lg font-bold text-slate-900">Moliya</h2>
+          <h2 class="font-display text-lg font-bold text-white">Moliya</h2>
 
           <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <!-- Balance card -->
-            <div class="rounded-2xl bg-gradient-to-br from-indigo-deep via-indigo-brand to-emerald-brand p-6 text-white shadow-xl lg:col-span-2">
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-deep via-violet-brand to-emerald-500 p-6 text-white shadow-xl shadow-violet-500/20 lg:col-span-2">
               <div class="flex items-start justify-between">
                 <div>
-                  <p class="text-sm text-indigo-100">Umumiy balans</p>
-                  <p class="mt-1 text-3xl font-extrabold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-indigo-200">so'm</span></p>
+                  <p class="text-sm text-violet-100">Umumiy balans</p>
+                  <p class="font-display mt-1 text-3xl font-bold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-violet-200">so'm</span></p>
                 </div>
               </div>
               <div class="mt-6 flex flex-wrap items-center gap-3">
-                <button data-action="withdraw" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-indigo-brand shadow-lg transition hover:bg-slate-50 active:scale-95">
+                <button data-action="withdraw" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-violet-brand shadow-lg transition hover:bg-slate-100 active:scale-95">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6"/></svg>
                   Pul chiqarish
                 </button>
-                <div class="text-sm text-indigo-100">Escrow: <b class="text-white">${uzs(0)} so'm</b></div>
+                <div class="text-sm text-violet-100">Escrow: <b class="text-white">${uzs(0)} so'm</b></div>
               </div>
             </div>
 
@@ -323,12 +349,12 @@
 
           <!-- Transactions -->
           ${card(`
-            <div class="border-b border-slate-100 px-5 py-4">
-              <h3 class="font-bold text-slate-900">Tranzaksiyalar tarixi</h3>
+            <div class="border-b border-white/10 px-5 py-4">
+              <h3 class="font-display font-bold text-white">Tranzaksiyalar tarixi</h3>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full min-w-[640px] text-left text-sm">
-                <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <thead class="text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th class="px-5 py-3 font-semibold">Sana</th>
                     <th class="px-5 py-3 font-semibold">Tranzaksiya ID</th>
@@ -337,22 +363,22 @@
                     <th class="px-5 py-3 font-semibold">Holat</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
+                <tbody class="divide-y divide-white/5">
                   ${merchantTx.map((t) => `
-                    <tr class="transition hover:bg-slate-50">
-                      <td class="px-5 py-3.5 text-slate-500">${t.date}</td>
-                      <td class="px-5 py-3.5 font-mono text-xs text-slate-600">${t.id}</td>
+                    <tr class="transition hover:bg-white/5">
+                      <td class="px-5 py-3.5 text-slate-400">${t.date}</td>
+                      <td class="px-5 py-3.5 font-mono text-xs text-slate-300">${t.id}</td>
                       <td class="px-5 py-3.5">
-                        <span class="inline-flex items-center gap-1.5 font-medium ${t.type === 'in' ? 'text-emerald-600' : 'text-slate-600'}">
-                          <span class="grid h-6 w-6 place-items-center rounded-full ${t.type === 'in' ? 'bg-emerald-50' : 'bg-slate-100'}">
+                        <span class="inline-flex items-center gap-1.5 font-medium ${t.type === 'in' ? 'text-emerald-300' : 'text-slate-300'}">
+                          <span class="grid h-6 w-6 place-items-center rounded-full ${t.type === 'in' ? 'bg-emerald-500/15' : 'bg-white/10'}">
                             <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="${t.type === 'in' ? 'M12 5v14m0 0l-6-6m6 6l6-6' : 'M12 19V5m0 0l-6 6m6-6l6 6'}"/></svg>
                           </span>
                           ${t.type === 'in' ? 'Sotuvdan' : 'Yechish'}
                         </span>
                       </td>
-                      <td class="px-5 py-3.5 font-bold ${t.type === 'in' ? 'text-emerald-600' : 'text-slate-900'}">${t.type === 'in' ? '+' : '−'}${uzs(t.amount)} so'm</td>
+                      <td class="px-5 py-3.5 font-bold ${t.type === 'in' ? 'text-emerald-300' : 'text-white'}">${t.type === 'in' ? '+' : '−'}${uzs(t.amount)} so'm</td>
                       <td class="px-5 py-3.5">${badge(t.status)}</td>
-                    </tr>`).join('') || `<tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">Hali tranzaksiya yo'q</td></tr>`}
+                    </tr>`).join('') || `<tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">Hali tranzaksiya yo'q</td></tr>`}
                 </tbody>
               </table>
             </div>`)}
@@ -367,37 +393,37 @@
         <div class="view-enter space-y-6">
           <!-- Summary cards -->
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div class="rounded-2xl bg-gradient-to-br from-emerald-brand to-teal-500 p-5 text-white shadow-lg">
+            <div class="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 p-5 text-white shadow-lg shadow-emerald-500/20">
               <p class="text-sm text-emerald-50">Mening balansim</p>
-              <p class="mt-1 text-3xl font-extrabold">${uzs(0)} <span class="text-base font-semibold text-emerald-100">so'm</span></p>
+              <p class="font-display mt-1 text-3xl font-bold">${uzs(0)} <span class="text-base font-semibold text-emerald-100">so'm</span></p>
               <button data-action="wallet-withdraw" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold backdrop-blur transition hover:bg-white/25">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3"/></svg>
                 Pul chiqarish
               </button>
             </div>
             ${statCard({ label: 'Kutilayotgan komissiya', value: uzs(0) + ' so\'m', sub: "Yo'ldagi buyurtmalardan", accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
-            ${statCard({ label: 'Jami sotilgan mahsulotlar', value: '0 ta', accent: 'indigo', icon: icon.box })}
+            ${statCard({ label: 'Jami sotilgan mahsulotlar', value: '0 ta', accent: 'violet', icon: icon.box })}
           </div>
 
           <!-- Referral performance -->
           ${card(`
             <div class="p-5 sm:p-6">
               <div class="flex items-center justify-between">
-                <h3 class="text-base font-bold text-slate-900">Referal havolalar samaradorligi</h3>
-                <span class="rounded-lg bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-brand">Bu oy</span>
+                <h3 class="font-display text-base font-bold text-white">Referal havolalar samaradorligi</h3>
+                <span class="rounded-lg bg-violet-500/15 px-3 py-1 text-xs font-bold text-violet-300">Bu oy</span>
               </div>
               <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div class="rounded-xl bg-slate-50 p-4">
-                  <div class="flex items-center gap-2 text-slate-500"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg><span class="text-xs font-medium">Bosishlar (Clicks)</span></div>
-                  <p class="mt-2 text-2xl font-extrabold text-slate-900">0</p>
+                <div class="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
+                  <div class="flex items-center gap-2 text-slate-400"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg><span class="text-xs font-medium">Bosishlar (Clicks)</span></div>
+                  <p class="font-display mt-2 text-2xl font-bold text-white">0</p>
                 </div>
-                <div class="rounded-xl bg-slate-50 p-4">
-                  <div class="flex items-center gap-2 text-slate-500"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-xs font-medium">Konversiyalar</span></div>
-                  <p class="mt-2 text-2xl font-extrabold text-slate-900">0 <span class="text-sm font-semibold text-slate-400">(0%)</span></p>
+                <div class="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
+                  <div class="flex items-center gap-2 text-slate-400"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-xs font-medium">Konversiyalar</span></div>
+                  <p class="font-display mt-2 text-2xl font-bold text-white">0 <span class="text-sm font-semibold text-slate-500">(0%)</span></p>
                 </div>
-                <div class="rounded-xl bg-emerald-50 p-4">
-                  <div class="flex items-center gap-2 text-emerald-600"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg><span class="text-xs font-medium">Ishlangan komissiya</span></div>
-                  <p class="mt-2 text-2xl font-extrabold text-emerald-700">${uzs(0)} so'm</p>
+                <div class="rounded-xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
+                  <div class="flex items-center gap-2 text-emerald-300"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg><span class="text-xs font-medium">Ishlangan komissiya</span></div>
+                  <p class="font-display mt-2 text-2xl font-bold text-emerald-300">${uzs(0)} so'm</p>
                 </div>
               </div>
             </div>`)}
@@ -411,52 +437,20 @@
         <div class="view-enter space-y-5">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 class="text-lg font-bold text-slate-900">Mahsulotlar bozori</h2>
-              <p class="text-sm text-slate-500">Sotish uchun mahsulot tanlang va daromad qiling</p>
+              <h2 class="font-display text-lg font-bold text-white">Mahsulotlar bozori</h2>
+              <p class="text-sm text-slate-400">Sotish uchun mahsulot tanlang va daromad qiling</p>
             </div>
             <div class="relative">
-              <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
-              <input type="text" placeholder="Mahsulot qidirish..." class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100 sm:w-64" />
+              <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+              <input id="marketSearch" type="text" placeholder="Mahsulot qidirish..." class="fld w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none sm:w-64" />
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            ${marketProducts.map((p, i) => `
-              <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                <div class="flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${p.color}">
-                  ${p.image
-                    ? `<img src="${p.image}" alt="${p.name}" class="h-full w-full object-cover" />`
-                    : `<svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>`}
-                </div>
-                <div class="p-4">
-                  <h3 class="truncate font-bold text-slate-900">${p.name}</h3>
-                  <p class="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg>${p.merchant}
-                  </p>
-                  <p class="mt-2 text-lg font-extrabold text-slate-900">${uzs(p.price)} <span class="text-xs font-medium text-slate-400">so'm</span></p>
-                  <div class="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-center">
-                    <span class="text-sm font-medium text-emerald-700">Komissiya: </span>
-                    <span class="text-base font-extrabold text-emerald-700">${uzs(p.commission)} so'm</span>
-                  </div>
-                  <button data-start-selling="${i}" class="mt-3 w-full rounded-xl bg-indigo-brand py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-deep active:scale-95">
-                    Sotishni boshlash
-                  </button>
-                </div>
-              </div>`).join('') || `
-              <div class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-14 text-center">
-                <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
-                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.store}</svg>
-                </span>
-                <p class="mt-3 text-sm font-semibold text-slate-600">Bozorda hali mahsulot yo'q</p>
-                <p class="mt-1 max-w-xs text-xs text-slate-400">Sotuvchilar mahsulot qo'shishi bilan shu yerda paydo bo'ladi</p>
-              </div>`}
-          </div>
+          <div id="marketGrid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
         </div>`;
       },
 
       // "Mening do'konim" — agentning shaxsiy web-ilova do'koni.
-      // Xaridor havola (sotibber.uz/shop/...) orqali kirganda shu do'konni
-      // ko'radi va to'g'ridan-to'g'ri "Sotib olish" orqali buyurtma beradi.
       shop: () => {
         const shopUrl = 'sotibber.uz/shop/mening-dokonim';
         const totalSales = agentLinks.reduce((s, l) => s + l.sales, 0);
@@ -464,20 +458,20 @@
         return `
         <div class="view-enter space-y-6">
           <!-- Do'kon sarlavhasi + havola -->
-          <div class="rounded-2xl bg-gradient-to-br from-indigo-deep via-indigo-brand to-emerald-brand p-6 text-white shadow-xl">
+          <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-deep via-violet-brand to-emerald-500 p-6 text-white shadow-xl shadow-violet-500/20">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-3">
                 <span class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-2xl bg-white/15">
                   <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.shop}</svg>
                 </span>
                 <div>
-                  <h2 class="text-xl font-extrabold">Mening do'konim</h2>
-                  <p class="text-sm text-indigo-100">Shaxsiy web-ilova do'koningiz</p>
+                  <h2 class="font-display text-xl font-bold">Mening do'konim</h2>
+                  <p class="text-sm text-violet-100">Shaxsiy web-ilova do'koningiz</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <div class="flex-1 truncate rounded-xl bg-white/15 px-3.5 py-2.5 font-mono text-sm md:w-56">${shopUrl}</div>
-                <button data-copy="${shopUrl}" class="flex-shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-indigo-brand transition hover:bg-slate-50">Nusxalash</button>
+                <button data-copy="${shopUrl}" class="flex-shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-violet-brand transition hover:bg-slate-100">Nusxalash</button>
                 <a href="${'https://' + shopUrl}" target="_blank" rel="noopener" class="hidden flex-shrink-0 items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/25 sm:inline-flex">
                   Ochish
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -486,52 +480,48 @@
             </div>
             <!-- mini statistika -->
             <div class="mt-5 grid grid-cols-3 gap-3 text-center">
-              <div class="rounded-xl bg-white/10 p-3"><p class="text-lg font-extrabold">${agentLinks.length}</p><p class="text-[11px] text-indigo-100">Mahsulot</p></div>
-              <div class="rounded-xl bg-white/10 p-3"><p class="text-lg font-extrabold">${totalClicks}</p><p class="text-[11px] text-indigo-100">Tashriflar</p></div>
-              <div class="rounded-xl bg-white/10 p-3"><p class="text-lg font-extrabold">${totalSales}</p><p class="text-[11px] text-indigo-100">Sotuvlar</p></div>
+              <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${agentLinks.length}</p><p class="text-[11px] text-violet-100">Mahsulot</p></div>
+              <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${totalClicks}</p><p class="text-[11px] text-violet-100">Tashriflar</p></div>
+              <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${totalSales}</p><p class="text-[11px] text-violet-100">Sotuvlar</p></div>
             </div>
           </div>
 
           <!-- Xaridor nima ko'rishini tushuntiruvchi banner -->
-          <div class="flex items-start gap-2.5 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-700 ring-1 ring-blue-100">
+          <div class="flex items-start gap-2.5 rounded-xl bg-blue-500/10 px-4 py-3 text-sm text-blue-200 ring-1 ring-blue-500/20">
             <svg class="mt-0.5 h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span>Xaridor havola orqali kirganda quyidagi do'koningizni ko'radi va <b>"Sotib olish"</b> tugmasi orqali to'g'ridan-to'g'ri buyurtma beradi. Har bir sotuvdan komissiyangiz hisobingizga tushadi.</span>
           </div>
 
           <!-- Do'kon vitrinasi -->
           <div>
-            <h3 class="mb-3 font-bold text-slate-900">Do'kondagi mahsulotlar</h3>
+            <h3 class="font-display mb-3 font-bold text-white">Do'kondagi mahsulotlar</h3>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               ${agentLinks.map((l, i) => `
-                <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                  <div class="flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-100 to-emerald-50">
-                    ${l.image
-                      ? `<img src="${l.image}" alt="${l.product}" class="h-full w-full object-cover" />`
-                      : `<svg class="h-14 w-14 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">${icon.box}</svg>`}
-                  </div>
+                <div class="glass glass-hover overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
+                  <button data-shop-detail="${i}" class="block w-full text-left">${productMedia(l.images, l.product)}</button>
                   <div class="p-4">
-                    <h4 class="truncate font-bold text-slate-900">${l.product}</h4>
-                    <p class="mt-2 text-lg font-extrabold text-slate-900">${uzs(l.price)} <span class="text-xs font-medium text-slate-400">so'm</span></p>
+                    <button data-shop-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(l.product)}</button>
+                    <p class="font-display mt-2 text-lg font-bold text-white">${uzs(l.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
                     <div class="mt-2 flex items-center justify-between text-xs">
-                      <span class="rounded-full bg-emerald-50 px-2.5 py-1 font-bold text-emerald-700">Ulush: ${uzs(l.commission)} so'm</span>
-                      <span class="text-slate-400">${l.sales} ta sotilgan</span>
+                      <span class="rounded-full bg-emerald-500/15 px-2.5 py-1 font-bold text-emerald-300">Ulush: ${uzs(l.commission)} so'm</span>
+                      <span class="text-slate-500">${l.sales} ta sotilgan</span>
                     </div>
                     <div class="mt-3 flex gap-2">
-                      <button data-buy="${i}" class="flex-1 rounded-xl bg-emerald-brand py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:opacity-90 active:scale-95">
+                      <button data-buy="${i}" class="flex-1 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:opacity-90 active:scale-95">
                         Sotib olish
                       </button>
-                      <button data-copy="${shopUrl}/${l.slug}" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-brand transition hover:bg-indigo-100" title="Mahsulot havolasini nusxalash">
+                      <button data-copy="${shopUrl}/${l.slug}" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-violet-500/15 text-violet-300 transition hover:bg-violet-500/25" title="Mahsulot havolasini nusxalash">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                       </button>
                     </div>
                   </div>
                 </div>`).join('') || `
-              <div class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-14 text-center">
-                <span class="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
+              <div class="glass col-span-full flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
+                <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400">
                   <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.shop}</svg>
                 </span>
-                <p class="mt-3 text-sm font-semibold text-slate-600">Do'koningizda hali mahsulot yo'q</p>
-                <p class="mt-1 max-w-xs text-xs text-slate-400">"Mahsulotlar bozori"dan mahsulot tanlab, "Sotishni boshlash" tugmasini bosing</p>
+                <p class="mt-3 text-sm font-semibold text-slate-300">Do'koningizda hali mahsulot yo'q</p>
+                <p class="mt-1 max-w-xs text-xs text-slate-500">"Mahsulotlar bozori"dan mahsulot tanlab, "Sotishni boshlash" tugmasini bosing</p>
               </div>`}
             </div>
           </div>
@@ -543,16 +533,16 @@
         return `
         <div class="view-enter space-y-5" id="salesView">
           <div>
-            <h2 class="text-lg font-bold text-slate-900">Mening sotuvlarim</h2>
-            <p class="text-sm text-slate-500">Havolalaringiz orqali qilingan buyurtmalar</p>
+            <h2 class="font-display text-lg font-bold text-white">Mening sotuvlarim</h2>
+            <p class="text-sm text-slate-400">Havolalaringiz orqali qilingan buyurtmalar</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            ${tabs.map((t, i) => `<button data-sales-tab="${t}" class="sales-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${i === 0 ? 'bg-emerald-brand text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}">${t}</button>`).join('')}
+            ${tabs.map((t, i) => `<button data-sales-tab="${t}" class="sales-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${i === 0 ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${t}</button>`).join('')}
           </div>
           ${card(`
             <div class="overflow-x-auto">
               <table class="w-full min-w-[680px] text-left text-sm">
-                <thead class="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <thead class="border-b border-white/10 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th class="px-5 py-3 font-semibold">Buyurtma ID</th>
                     <th class="px-5 py-3 font-semibold">Mahsulot</th>
@@ -562,7 +552,7 @@
                     <th class="px-5 py-3 font-semibold">Ishlangan komissiya</th>
                   </tr>
                 </thead>
-                <tbody id="salesBody" class="divide-y divide-slate-50"></tbody>
+                <tbody id="salesBody" class="divide-y divide-white/5"></tbody>
               </table>
             </div>`)}
         </div>`;
@@ -570,14 +560,14 @@
 
       wallet: () => `
         <div class="view-enter space-y-6">
-          <h2 class="text-lg font-bold text-slate-900">Hamyon</h2>
+          <h2 class="font-display text-lg font-bold text-white">Hamyon</h2>
 
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <!-- Balance + payout -->
             <div class="space-y-4 lg:col-span-2">
-              <div class="rounded-2xl bg-gradient-to-br from-emerald-brand to-teal-600 p-6 text-white shadow-xl">
+              <div class="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white shadow-xl shadow-emerald-500/20">
                 <p class="text-sm text-emerald-50">Mavjud balans</p>
-                <p class="mt-1 text-3xl font-extrabold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-emerald-100">so'm</span></p>
+                <p class="font-display mt-1 text-3xl font-bold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-emerald-100">so'm</span></p>
                 <button data-action="wallet-withdraw" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-lg transition hover:bg-emerald-50 active:scale-95">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16"/></svg>
                   Pul chiqarish
@@ -586,13 +576,13 @@
 
               <!-- Withdrawal history -->
               ${card(`
-                <div class="border-b border-slate-100 px-5 py-4">
-                  <h3 class="font-bold text-slate-900">Yechib olishlar tarixi</h3>
-                  <p class="text-xs text-slate-500">Har bir yechishda 1% platforma komissiyasi ushlanadi</p>
+                <div class="border-b border-white/10 px-5 py-4">
+                  <h3 class="font-display font-bold text-white">Yechib olishlar tarixi</h3>
+                  <p class="text-xs text-slate-400">Har bir yechishda 1% platforma komissiyasi ushlanadi</p>
                 </div>
                 <div class="overflow-x-auto">
                   <table class="w-full min-w-[520px] text-left text-sm">
-                    <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <thead class="text-xs uppercase tracking-wide text-slate-500">
                       <tr>
                         <th class="px-5 py-3 font-semibold">Sana</th>
                         <th class="px-5 py-3 font-semibold">Karta</th>
@@ -601,15 +591,15 @@
                         <th class="px-5 py-3 font-semibold">Holat</th>
                       </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-50">
+                    <tbody class="divide-y divide-white/5">
                       ${[].map((w) => `
-                        <tr class="transition hover:bg-slate-50">
-                          <td class="px-5 py-3.5 text-slate-500">${w.date}</td>
-                          <td class="px-5 py-3.5 font-medium text-slate-700">${w.card}</td>
-                          <td class="px-5 py-3.5 font-bold text-slate-900">${uzs(w.amount)} so'm</td>
-                          <td class="px-5 py-3.5 text-rose-500">−${uzs(Math.round(w.amount * 0.01))} so'm</td>
+                        <tr class="transition hover:bg-white/5">
+                          <td class="px-5 py-3.5 text-slate-400">${w.date}</td>
+                          <td class="px-5 py-3.5 font-medium text-slate-200">${w.card}</td>
+                          <td class="px-5 py-3.5 font-bold text-white">${uzs(w.amount)} so'm</td>
+                          <td class="px-5 py-3.5 text-rose-400">−${uzs(Math.round(w.amount * 0.01))} so'm</td>
                           <td class="px-5 py-3.5">${badge(w.status)}</td>
-                        </tr>`).join('') || `<tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">Hali yechib olish tarixi yo'q</td></tr>`}
+                        </tr>`).join('') || `<tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">Hali yechib olish tarixi yo'q</td></tr>`}
                     </tbody>
                   </table>
                 </div>`)}
@@ -617,15 +607,15 @@
 
             <!-- Saved cards -->
             <div class="space-y-4">
-              <h3 class="font-bold text-slate-900">Mening kartalarim</h3>
-              <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center">
-                <span class="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-slate-400">
+              <h3 class="font-display font-bold text-white">Mening kartalarim</h3>
+              <div class="glass flex flex-col items-center justify-center rounded-2xl border-dashed py-10 text-center">
+                <span class="grid h-11 w-11 place-items-center rounded-full bg-white/5 text-slate-400">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">${icon.wallet}</svg>
                 </span>
-                <p class="mt-3 text-sm font-semibold text-slate-600">Hali karta qo'shilmagan</p>
-                <p class="mt-1 max-w-[200px] text-xs text-slate-400">Pul chiqarish uchun karta qo'shing</p>
+                <p class="mt-3 text-sm font-semibold text-slate-300">Hali karta qo'shilmagan</p>
+                <p class="mt-1 max-w-[200px] text-xs text-slate-500">Pul chiqarish uchun karta qo'shing</p>
               </div>
-              <button data-action="add-card" class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 py-4 text-sm font-semibold text-slate-500 transition hover:border-indigo-brand hover:text-indigo-brand">
+              <button data-action="add-card" class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 py-4 text-sm font-semibold text-slate-400 transition hover:border-violet-400/60 hover:text-violet-300">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Yangi karta qo'shish
               </button>
@@ -637,6 +627,50 @@
     const VIEWS = { seller: sellerViews, affiliate: affiliateViews };
 
     /* =========================================================
+       MARKET GRID (filterable — qidiruv bilan)
+    ========================================================= */
+    function marketCard(p, i) {
+      return `
+        <div class="glass glass-hover group overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
+          <button data-market-detail="${i}" class="block w-full text-left">${productMedia(p.images, p.name)}</button>
+          <div class="p-4">
+            <button data-market-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
+            <p class="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg>${esc(p.merchant)}
+            </p>
+            <p class="font-display mt-2 text-lg font-bold text-white">${uzs(p.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
+            <div class="mt-3 rounded-xl bg-emerald-500/10 px-3 py-2 text-center ring-1 ring-emerald-500/20">
+              <span class="text-sm font-medium text-emerald-300">Komissiya: </span>
+              <span class="font-display text-base font-bold text-emerald-300">${uzs(p.commission)} so'm</span>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <button data-market-detail="${i}" class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Batafsil</button>
+              <button data-start-selling="${i}" class="btn-grad flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-95">
+                Sotishni boshlash
+              </button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderMarketGrid(query = '') {
+      const grid = $('#marketGrid');
+      if (!grid) return;
+      const q = query.trim().toLowerCase();
+      const rows = marketProducts
+        .map((p, i) => ({ p, i }))
+        .filter(({ p }) => !q || (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+      grid.innerHTML = rows.map(({ p, i }) => marketCard(p, i)).join('') || `
+        <div class="glass col-span-full flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
+          <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.store}</svg>
+          </span>
+          <p class="mt-3 text-sm font-semibold text-slate-300">${q ? 'Hech narsa topilmadi' : "Bozorda hali mahsulot yo'q"}</p>
+          <p class="mt-1 max-w-xs text-xs text-slate-500">${q ? 'Boshqa kalit so\'z bilan qidirib ko\'ring' : "Sotuvchilar mahsulot qo'shishi bilan shu yerda paydo bo'ladi"}</p>
+        </div>`;
+    }
+
+    /* =========================================================
        ORDER / SALES TABLE RENDERERS (filterable)
     ========================================================= */
     function renderOrdersBody(filter = 'Barchasi') {
@@ -644,22 +678,22 @@
       if (!body) return;
       const rows = merchantOrders.filter((o) => filter === 'Barchasi' || o.status === filter);
       body.innerHTML = rows.map((o) => `
-        <tr class="transition hover:bg-slate-50">
-          <td class="px-4 py-3.5 font-mono text-xs font-semibold text-indigo-brand">${o.id}</td>
-          <td class="px-4 py-3.5 font-medium text-slate-800">${o.product}</td>
-          <td class="px-4 py-3.5 text-slate-500">${o.phone}</td>
-          <td class="px-4 py-3.5 text-slate-600">${o.agent}</td>
-          <td class="px-4 py-3.5 font-semibold text-emerald-600">${uzs(o.commission)}</td>
-          <td class="px-4 py-3.5 font-bold text-slate-900">${uzs(o.total)}</td>
-          <td class="px-4 py-3.5 text-slate-500">${o.date}</td>
+        <tr class="transition hover:bg-white/5">
+          <td class="px-4 py-3.5 font-mono text-xs font-semibold text-violet-300">${o.id}</td>
+          <td class="px-4 py-3.5 font-medium text-slate-100">${esc(o.product)}</td>
+          <td class="px-4 py-3.5 text-slate-400">${esc(o.phone)}</td>
+          <td class="px-4 py-3.5 text-slate-300">${esc(o.agent)}</td>
+          <td class="px-4 py-3.5 font-semibold text-emerald-300">${uzs(o.commission)}</td>
+          <td class="px-4 py-3.5 font-bold text-white">${uzs(o.total)}</td>
+          <td class="px-4 py-3.5 text-slate-400">${o.date}</td>
           <td class="px-4 py-3.5">${badge(o.status)}</td>
           <td class="px-4 py-3.5">
             <div class="flex justify-end gap-1.5">
-              ${o.status === 'Yangi' ? `<button data-mark-shipped="${o.id}" class="rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-600 transition hover:bg-blue-100">Yuborildi</button>` : ''}
-              <button data-order-details="${o.id}" class="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-200">Tafsilotlar</button>
+              ${o.status === 'Yangi' ? `<button data-mark-shipped="${o.id}" class="rounded-lg bg-blue-500/15 px-2.5 py-1.5 text-xs font-semibold text-blue-300 ring-1 ring-blue-500/25 transition hover:bg-blue-500/25">Yuborildi</button>` : ''}
+              <button data-order-details="${o.id}" class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10">Tafsilotlar</button>
             </div>
           </td>
-        </tr>`).join('') || `<tr><td colspan="9" class="px-4 py-10 text-center text-slate-400">Bu holatda buyurtmalar yo'q</td></tr>`;
+        </tr>`).join('') || `<tr><td colspan="9" class="px-4 py-10 text-center text-slate-500">Bu holatda buyurtmalar yo'q</td></tr>`;
     }
 
     function renderSalesBody(filter = 'Barchasi') {
@@ -667,14 +701,14 @@
       if (!body) return;
       const rows = agentSales.filter((s) => filter === 'Barchasi' || s.status === filter);
       body.innerHTML = rows.map((s) => `
-        <tr class="transition hover:bg-slate-50">
-          <td class="px-5 py-3.5 font-mono text-xs font-semibold text-indigo-brand">${s.id}</td>
-          <td class="px-5 py-3.5 font-medium text-slate-800">${s.product}</td>
-          <td class="px-5 py-3.5 text-slate-500">${s.date}</td>
-          <td class="px-5 py-3.5"><span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500" title="Maxfiylik uchun yashirilgan">${s.customer}</span></td>
+        <tr class="transition hover:bg-white/5">
+          <td class="px-5 py-3.5 font-mono text-xs font-semibold text-violet-300">${s.id}</td>
+          <td class="px-5 py-3.5 font-medium text-slate-100">${esc(s.product)}</td>
+          <td class="px-5 py-3.5 text-slate-400">${s.date}</td>
+          <td class="px-5 py-3.5"><span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-300" title="Maxfiylik uchun yashirilgan">${esc(s.customer)}</span></td>
           <td class="px-5 py-3.5">${badge(s.status)}</td>
-          <td class="px-5 py-3.5 font-bold ${s.commission > 0 ? 'text-emerald-600' : 'text-slate-400'}">${s.commission > 0 ? uzs(s.commission) + " so'm" : '—'}</td>
-        </tr>`).join('') || `<tr><td colspan="6" class="px-5 py-10 text-center text-slate-400">Buyurtmalar yo'q</td></tr>`;
+          <td class="px-5 py-3.5 font-bold ${s.commission > 0 ? 'text-emerald-300' : 'text-slate-500'}">${s.commission > 0 ? uzs(s.commission) + " so'm" : '—'}</td>
+        </tr>`).join('') || `<tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">Buyurtmalar yo'q</td></tr>`;
     }
 
     /* =========================================================
@@ -690,9 +724,9 @@
     function openModal(html, { size = 'max-w-md' } = {}) {
       const root = $('#modalRoot');
       root.innerHTML = `
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div data-close class="absolute inset-0 animate-fadeIn bg-slate-900/60 backdrop-blur-sm"></div>
-          <div class="relative w-full ${size} animate-fadeUp rounded-3xl bg-white shadow-2xl">${html}</div>
+        <div class="fixed inset-0 z-[75] flex items-center justify-center p-4">
+          <div data-close class="absolute inset-0 animate-fadeIn bg-black/70 backdrop-blur-sm"></div>
+          <div class="glass relative max-h-[92vh] w-full ${size} animate-fadeUp overflow-y-auto rounded-3xl text-slate-200 shadow-2xl">${html}</div>
         </div>`;
       document.body.style.overflow = 'hidden';
       root.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeModal));
@@ -702,74 +736,196 @@
     function openDrawer(html, { size = 'max-w-md' } = {}) {
       const root = $('#modalRoot');
       root.innerHTML = `
-        <div class="fixed inset-0 z-50">
-          <div data-close class="absolute inset-0 animate-fadeIn bg-slate-900/60 backdrop-blur-sm"></div>
-          <div class="absolute right-0 top-0 h-full w-full ${size} animate-slideIn overflow-y-auto bg-white shadow-2xl">${html}</div>
+        <div class="fixed inset-0 z-[75]">
+          <div data-close class="absolute inset-0 animate-fadeIn bg-black/70 backdrop-blur-sm"></div>
+          <div class="glass absolute right-0 top-0 h-full w-full ${size} animate-slideIn overflow-y-auto text-slate-200 shadow-2xl">${html}</div>
         </div>`;
       document.body.style.overflow = 'hidden';
       root.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', closeModal));
     }
 
-    /* ---- Add Product drawer (merchant) ---- */
+    /* =========================================================
+       PRODUCT DETAIL MODAL (rasm galereyasi + ma'lumot)
+       kind: 'market' | 'seller' | 'shop'
+    ========================================================= */
+    function normalizeProduct(kind, idx) {
+      if (kind === 'market') {
+        const p = marketProducts[idx];
+        if (!p) return null;
+        return {
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          images: p.images || [],
+          badgeLine: `<span class="inline-flex items-center gap-1 text-xs text-slate-400"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg>${esc(p.merchant || 'Sotuvchi')}</span>`,
+          commissionText: `${uzs(p.commission)} so'm`,
+          action: { label: 'Sotishni boshlash', attr: `data-start-selling="${idx}"`, cls: 'btn-grad' },
+        };
+      }
+      if (kind === 'shop') {
+        const l = agentLinks[idx];
+        if (!l) return null;
+        return {
+          name: l.product,
+          description: l.description || '',
+          price: l.price,
+          images: l.images || [],
+          badgeLine: '',
+          commissionText: `${uzs(l.commission)} so'm`,
+          action: { label: 'Sotib olish', attr: `data-buy="${idx}"`, cls: 'bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/25' },
+        };
+      }
+      // seller
+      const p = merchantProducts[idx];
+      if (!p) return null;
+      return {
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        images: p.images || [],
+        badgeLine: `<span class="inline-flex items-center gap-2 text-xs text-slate-400">${badge(p.status)}<span>Sklad: <b class="text-slate-200">${p.stock}</b></span></span>`,
+        commissionText: `${p.commission}% (${uzs(Math.round(p.price * p.commission / 100))} so'm)`,
+        action: null,
+      };
+    }
+
+    function productDetailModal(kind, idx) {
+      const p = normalizeProduct(kind, idx);
+      if (!p) return;
+      const imgs = (p.images || []).filter(Boolean);
+      const hasImgs = imgs.length > 0;
+
+      const mainImg = hasImgs
+        ? `<img id="pdMainImg" src="${esc(imgs[0])}" alt="${esc(p.name)}" class="h-full w-full object-contain" />`
+        : `<div class="grid h-full w-full place-items-center">${imgPlaceholder('h-20 w-20')}</div>`;
+
+      const thumbs = imgs.length > 1
+        ? `<div class="mt-3 flex flex-wrap gap-2">
+            ${imgs.map((src, i) => `
+              <button type="button" data-pd-thumb="${esc(src)}" class="pd-thumb h-14 w-14 overflow-hidden rounded-lg ring-2 transition ${i === 0 ? 'ring-violet-400' : 'ring-white/10 hover:ring-white/30'}">
+                <img src="${esc(src)}" alt="" class="h-full w-full object-cover" />
+              </button>`).join('')}
+          </div>`
+        : '';
+
+      openModal(`
+        <div>
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <h3 class="font-display text-lg font-bold text-white">Mahsulot ma'lumoti</h3>
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="space-y-4 p-6">
+            <!-- Galereya -->
+            <div class="overflow-hidden rounded-2xl bg-black/30 ring-1 ring-white/10">
+              <div class="aspect-square w-full">${mainImg}</div>
+            </div>
+            ${thumbs}
+
+            <!-- Ma'lumot -->
+            <div>
+              <h4 class="font-display text-xl font-bold text-white">${esc(p.name)}</h4>
+              ${p.badgeLine ? `<div class="mt-1.5">${p.badgeLine}</div>` : ''}
+              <p class="font-display mt-3 text-2xl font-bold text-white">${uzs(p.price)} <span class="text-sm font-medium text-slate-500">so'm</span></p>
+            </div>
+
+            <div class="flex items-center justify-between rounded-xl bg-emerald-500/10 px-4 py-3 ring-1 ring-emerald-500/20">
+              <span class="text-sm font-medium text-emerald-300">Komissiya</span>
+              <span class="font-display text-base font-bold text-emerald-300">${p.commissionText}</span>
+            </div>
+
+            <div>
+              <p class="text-sm font-semibold text-slate-300">Tavsifi</p>
+              <p class="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-400">${p.description ? esc(p.description) : "Mahsulot uchun tavsif kiritilmagan."}</p>
+            </div>
+          </div>
+          ${p.action ? `
+          <div class="sticky bottom-0 flex gap-3 border-t border-white/10 bg-ink-900/60 p-6 backdrop-blur">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
+            <button type="button" ${p.action.attr} class="${p.action.cls} flex-1 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">${p.action.label}</button>
+          </div>` : `
+          <div class="border-t border-white/10 p-6">
+            <button type="button" data-close class="w-full rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
+          </div>`}
+        </div>
+      `, { size: 'max-w-lg' });
+
+      // Thumbnail almashtirish
+      const main = $('#pdMainImg');
+      $$('.pd-thumb').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (main) main.src = btn.dataset.pdThumb;
+          $$('.pd-thumb').forEach((b) => {
+            const on = b === btn;
+            b.classList.toggle('ring-violet-400', on);
+            b.classList.toggle('ring-white/10', !on);
+          });
+        });
+      });
+    }
+
+    /* ---- Add Product drawer (merchant) — 5 tagacha rasm ---- */
     function addProductDrawer() {
       openDrawer(`
         <form id="productForm" class="flex min-h-full flex-col">
-          <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-            <h3 class="text-lg font-bold text-slate-900">Yangi mahsulot qo'shish</h3>
-            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <h3 class="font-display text-lg font-bold text-white">Yangi mahsulot qo'shish</h3>
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="flex-1 space-y-5 p-6">
-            <!-- Image upload -->
-            <label id="imageDropZone" for="productImageInput" class="flex cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 py-8 text-center transition hover:border-indigo-brand hover:bg-indigo-50/30">
-              <input type="file" id="productImageInput" accept="image/png,image/jpeg" class="hidden" />
-              <div id="imageDropContent">
-                <svg class="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/><circle cx="9" cy="10" r="1.5"/></svg>
-                <p class="mt-2 text-sm font-medium text-slate-500">Rasm yuklash uchun bosing</p>
-                <p class="text-xs text-slate-400">PNG, JPG (max 5MB)</p>
+            <!-- Ko'p rasm yuklash (5 tagacha) -->
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold text-slate-200">Mahsulot rasmlari</span>
+                <span id="imageCount" class="text-xs font-medium text-slate-500">0 / 5</span>
               </div>
+              <input type="file" id="productImageInput" accept="image/png,image/jpeg,image/webp" multiple class="hidden" />
+              <div id="imageGrid" class="mt-2 grid grid-cols-3 gap-2.5 sm:grid-cols-4"></div>
+              <p class="mt-1.5 text-xs text-slate-500">PNG, JPG yoki WEBP · har biri max 5MB · birinchi rasm asosiy bo'ladi</p>
+            </div>
+
+            <label class="block">
+              <span class="text-sm font-semibold text-slate-200">Mahsulot nomi</span>
+              <input required id="productNameInput" type="text" placeholder="Masalan: AirPods Pro 2" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
             </label>
 
             <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Mahsulot nomi</span>
-              <input required id="productNameInput" type="text" placeholder="Masalan: AirPods Pro 2" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
-            </label>
-
-            <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Tavsifi</span>
-              <textarea id="productDescInput" rows="3" placeholder="Mahsulot haqida qisqacha ma'lumot..." class="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100"></textarea>
+              <span class="text-sm font-semibold text-slate-200">Tavsifi</span>
+              <textarea id="productDescInput" rows="3" placeholder="Mahsulot haqida qisqacha ma'lumot..." class="fld mt-1.5 w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none"></textarea>
             </label>
 
             <div class="grid grid-cols-2 gap-4">
               <label class="block">
-                <span class="text-sm font-semibold text-slate-700">Narxi (so'm)</span>
-                <input required id="priceInput" type="number" value="150000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+                <span class="text-sm font-semibold text-slate-200">Narxi (so'm)</span>
+                <input required id="priceInput" type="number" value="150000" min="0" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
               </label>
               <label class="block">
-                <span class="text-sm font-semibold text-slate-700">Sklad soni</span>
-                <input required id="stockInput" type="number" value="10" min="0" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+                <span class="text-sm font-semibold text-slate-200">Sklad soni</span>
+                <input required id="stockInput" type="number" value="10" min="0" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
               </label>
             </div>
 
             <!-- Commission slider with computed UZS -->
-            <div class="rounded-2xl bg-slate-50 p-4">
+            <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
               <div class="flex items-center justify-between">
-                <span class="text-sm font-semibold text-slate-700">Komissiya ulushi</span>
-                <span class="rounded-lg bg-white px-2.5 py-1 text-sm font-bold text-indigo-brand"><span id="commPct">15</span>%</span>
+                <span class="text-sm font-semibold text-slate-200">Komissiya ulushi</span>
+                <span class="rounded-lg bg-white/10 px-2.5 py-1 text-sm font-bold text-violet-300"><span id="commPct">15</span>%</span>
               </div>
               <input id="commSlider" type="range" min="0" max="50" value="15" class="mt-3 w-full cursor-pointer" />
               <div class="mt-2 flex items-center justify-between text-xs">
-                <span class="text-slate-400">0%</span>
-                <span class="rounded-lg bg-emerald-50 px-3 py-1 font-bold text-emerald-700">Agent oladi: <span id="commUzs">22 500</span> so'm</span>
-                <span class="text-slate-400">50%</span>
+                <span class="text-slate-500">0%</span>
+                <span class="rounded-lg bg-emerald-500/15 px-3 py-1 font-bold text-emerald-300">Agent oladi: <span id="commUzs">22 500</span> so'm</span>
+                <span class="text-slate-500">50%</span>
               </div>
             </div>
           </div>
 
-          <div class="sticky bottom-0 flex gap-3 border-t border-slate-100 bg-white p-6">
-            <button type="button" data-close class="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">Bekor qilish</button>
-            <button type="submit" class="flex-1 rounded-xl bg-indigo-brand py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-deep">Saqlash</button>
+          <div class="sticky bottom-0 flex gap-3 border-t border-white/10 bg-ink-900/60 p-6 backdrop-blur">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Bekor qilish</button>
+            <button type="submit" class="btn-grad flex-1 rounded-xl py-3 text-sm font-bold text-white transition">Saqlash</button>
           </div>
         </form>
       `, { size: 'max-w-lg' });
@@ -783,78 +939,59 @@
       slider.addEventListener('input', recompute);
       price.addEventListener('input', recompute);
 
-      // ---- Rasm yuklash (image upload) ----
-      const dropZone = $('#imageDropZone');
-      const dropContent = $('#imageDropContent');
-      const imageInput = $('#productImageInput');
+      // ---- Ko'p rasm yuklash (up to 5 images) ----
+      const MAX_IMAGES = 5;
       const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
-      let productImageDataUrl = null;
-      let productImageFile = null;
+      const imageInput = $('#productImageInput');
+      const imageGrid = $('#imageGrid');
+      const imageCount = $('#imageCount');
+      // productImages: [{ file, dataUrl }]
+      const productImages = [];
 
-      function showImageError(msg) {
-        toast(msg);
-        imageInput.value = '';
-      }
+      function renderImageGrid() {
+        const tiles = productImages.map((img, i) => `
+          <div class="group relative aspect-square overflow-hidden rounded-xl ring-1 ring-white/10">
+            <img src="${img.dataUrl}" alt="Rasm ${i + 1}" class="h-full w-full object-cover" />
+            ${i === 0 ? '<span class="absolute left-1 top-1 rounded bg-violet-brand px-1.5 py-0.5 text-[9px] font-bold text-white">Asosiy</span>' : ''}
+            <button type="button" data-remove-image="${i}" class="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100" aria-label="O'chirish">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>`).join('');
+        const addTile = productImages.length < MAX_IMAGES
+          ? `<button type="button" id="addImageTile" class="grid aspect-square place-items-center rounded-xl border-2 border-dashed border-white/15 text-slate-500 transition hover:border-violet-400/60 hover:text-violet-300">
+              <span class="flex flex-col items-center gap-1">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span class="text-[10px] font-semibold">Rasm</span>
+              </span>
+            </button>`
+          : '';
+        imageGrid.innerHTML = tiles + addTile;
+        imageCount.textContent = `${productImages.length} / ${MAX_IMAGES}`;
 
-      function renderImagePreview(dataUrl, fileName) {
-        dropContent.innerHTML = `
-          <img src="${dataUrl}" alt="Mahsulot rasmi" class="mx-auto h-28 w-28 rounded-xl border border-slate-200 object-cover shadow-sm" />
-          <p class="mt-2 max-w-[220px] truncate text-xs font-semibold text-slate-600">${fileName}</p>
-          <p class="mt-0.5 text-xs font-semibold text-indigo-brand">Almashtirish uchun bosing</p>
-          <button type="button" id="removeImageBtn" class="mt-1 text-xs font-medium text-rose-500 hover:underline">Olib tashlash</button>
-        `;
-        // "Olib tashlash" tugmasi label'ning fayl tanlash click'ini ishga tushirmasligi kerak
-        $('#removeImageBtn')?.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          resetImageDropzone();
+        $('#addImageTile')?.addEventListener('click', () => imageInput.click());
+        $$('[data-remove-image]', imageGrid).forEach((btn) => {
+          btn.addEventListener('click', () => {
+            productImages.splice(Number(btn.dataset.removeImage), 1);
+            renderImageGrid();
+          });
         });
       }
 
-      function resetImageDropzone() {
-        productImageDataUrl = null;
-        productImageFile = null;
-        imageInput.value = '';
-        dropContent.innerHTML = `
-          <svg class="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.6-4.6a2 2 0 012.8 0L16 16m-2-2l1.6-1.6a2 2 0 012.8 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/><circle cx="9" cy="10" r="1.5"/></svg>
-          <p class="mt-2 text-sm font-medium text-slate-500">Rasm yuklash uchun bosing</p>
-          <p class="text-xs text-slate-400">PNG, JPG (max 5MB)</p>
-        `;
+      function handleFiles(fileList) {
+        const files = Array.from(fileList || []);
+        for (const file of files) {
+          if (productImages.length >= MAX_IMAGES) { toast(`Ko'pi bilan ${MAX_IMAGES} ta rasm yuklash mumkin`); break; }
+          if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) { toast('Faqat PNG, JPG yoki WEBP rasm yuklang'); continue; }
+          if (file.size > MAX_IMAGE_BYTES) { toast(`"${file.name}" — rasm hajmi 5MB dan oshmasligi kerak`); continue; }
+          const reader = new FileReader();
+          reader.onload = () => { productImages.push({ file, dataUrl: reader.result }); renderImageGrid(); };
+          reader.onerror = () => toast("Rasmni o'qib bo'lmadi, qayta urinib ko'ring");
+          reader.readAsDataURL(file);
+        }
       }
 
-      function handleImageFile(file) {
-        if (!file) return;
-        if (!['image/png', 'image/jpeg'].includes(file.type)) {
-          return showImageError("Faqat PNG yoki JPG formatidagi rasm yuklang");
-        }
-        if (file.size > MAX_IMAGE_BYTES) {
-          return showImageError("Rasm hajmi 5MB dan oshmasligi kerak");
-        }
-        productImageFile = file;
-        const reader = new FileReader();
-        reader.onload = () => {
-          productImageDataUrl = reader.result;
-          renderImagePreview(productImageDataUrl, file.name);
-        };
-        reader.onerror = () => showImageError("Rasmni o'qib bo'lmadi, qayta urinib ko'ring");
-        reader.readAsDataURL(file);
-      }
-
-      imageInput.addEventListener('change', () => handleImageFile(imageInput.files && imageInput.files[0]));
-
-      // Drag & drop
-      ['dragover', 'dragenter'].forEach((evt) => dropZone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropZone.classList.add('border-indigo-brand', 'bg-indigo-50/30');
-      }));
-      ['dragleave', 'drop'].forEach((evt) => dropZone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-indigo-brand', 'bg-indigo-50/30');
-      }));
-      dropZone.addEventListener('drop', (e) => {
-        const file = e.dataTransfer?.files && e.dataTransfer.files[0];
-        if (file) handleImageFile(file);
-      });
+      imageInput.addEventListener('change', () => { handleFiles(imageInput.files); imageInput.value = ''; });
+      renderImageGrid();
 
       $('#productForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -878,64 +1015,72 @@
         submitBtn.textContent = 'Saqlanmoqda...';
 
         const palette = [
-          'from-indigo-100 to-indigo-50',
-          'from-emerald-100 to-teal-50',
-          'from-amber-100 to-orange-50',
-          'from-rose-100 to-pink-50',
-          'from-purple-100 to-fuchsia-50',
-          'from-sky-100 to-cyan-50',
+          'from-violet-500/25 to-indigo-500/10',
+          'from-emerald-500/25 to-teal-500/10',
+          'from-amber-500/25 to-orange-500/10',
+          'from-rose-500/25 to-pink-500/10',
+          'from-fuchsia-500/25 to-purple-500/10',
+          'from-sky-500/25 to-cyan-500/10',
         ];
         const color = palette[Math.floor(Math.random() * palette.length)];
 
         try {
-          let imageUrl = null;
-          if (productImageFile) {
+          // Har bir rasmni Supabase storage'ga yuklaymiz
+          const imageUrls = [];
+          for (const img of productImages) {
             try {
-              const ext = (productImageFile.name.split('.').pop() || 'jpg').toLowerCase();
-              const path = `${user.id}/${Date.now()}.${ext}`;
-              const { error: upErr } = await window.sb.storage.from('product-images').upload(path, productImageFile);
+              const ext = (img.file.name.split('.').pop() || 'jpg').toLowerCase();
+              const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+              const { error: upErr } = await window.sb.storage.from('product-images').upload(path, img.file);
               if (upErr) throw upErr;
               const { data: pub } = window.sb.storage.from('product-images').getPublicUrl(path);
-              imageUrl = pub && pub.publicUrl ? pub.publicUrl : null;
+              if (pub && pub.publicUrl) imageUrls.push(pub.publicUrl);
             } catch (imgErr) {
-              // Rasm yuklab bo'lmadi (masalan, "product-images" bucket sozlanmagan) —
-              // mahsulotni rasm-siz baribir saqlaymiz, faqat ogohlantiramiz.
-              console.warn('Rasmni yuklab bo\'lmadi, mahsulot rasm-siz saqlanadi:', imgErr);
-              toast('Rasmni yuklab bo\'lmadi — mahsulot rasm-siz saqlanadi');
+              console.warn('Rasmni yuklab bo\'lmadi:', imgErr);
+              toast('Ba\'zi rasmlarni yuklab bo\'lmadi — mahsulot mavjud rasmlar bilan saqlanadi');
             }
           }
+          const imageUrl = imageUrls[0] || null;
 
-          const { data, error } = await window.sb
+          const basePayload = {
+            seller_id: user.id,
+            name,
+            description: $('#productDescInput').value.trim(),
+            price: priceVal,
+            stock: stockVal,
+            commission: commissionVal,
+            status: 'Moderatsiyada',
+            image_url: imageUrl,
+            color,
+          };
+          let { data, error } = await window.sb
             .from('products')
-            .insert({
-              seller_id: user.id,
-              name,
-              description: $('#productDescInput').value.trim(),
-              price: priceVal,
-              stock: stockVal,
-              commission: commissionVal,
-              status: 'Moderatsiyada',
-              image_url: imageUrl,
-              color,
-            })
+            .insert({ ...basePayload, image_urls: imageUrls })
             .select()
             .single();
+          // `image_urls` ustuni hali qo'shilmagan bo'lsa (migratsiya ishga
+          // tushirilmagan) — bitta rasm bilan (image_url) baribir saqlaymiz.
+          if (error && /image_urls|column .* does not exist|schema cache/i.test(error.message || '')) {
+            console.warn("`image_urls` ustuni topilmadi — supabase_qoshimcha.sql'ni ishga tushiring. Mahsulot bitta rasm bilan saqlanadi.");
+            ({ data, error } = await window.sb.from('products').insert(basePayload).select().single());
+          }
           if (error) throw error;
 
           merchantProducts.unshift({
             id: data.id,
             name: data.name,
+            description: data.description || '',
             price: Number(data.price),
             stock: data.stock,
             commission: Number(data.commission),
             status: data.status,
             color: data.color,
-            image: data.image_url,
+            images: imageUrls,
+            image: imageUrl,
           });
 
           closeModal();
           toast('Mahsulot moderatsiyaga yuborildi ✓');
-          // Mahsulotlar sahifasi ochiq bo'lsa, ro'yxatni darhol yangilaymiz
           if (state.panel === 'seller' && state.view === 'products') renderView();
         } catch (err) {
           console.error('Mahsulotni saqlashda xatolik:', err);
@@ -950,44 +1095,44 @@
     }
 
     /* ---- Withdraw modal (shared, fee = 1%) ---- */
-    function withdrawModal(theme = 'indigo') {
-      const accent = theme === 'emerald' ? 'emerald-brand' : 'indigo-brand';
+    function withdrawModal(theme = 'violet') {
+      const accentBtn = theme === 'emerald' ? 'bg-gradient-to-br from-emerald-500 to-teal-500' : 'btn-grad';
       openModal(`
         <form id="withdrawForm">
-          <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-            <h3 class="text-lg font-bold text-slate-900">Pul chiqarish</h3>
-            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <h3 class="font-display text-lg font-bold text-white">Pul chiqarish</h3>
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="space-y-4 p-6">
             <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Kartani tanlang</span>
-              <select class="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-${accent} focus:ring-2 focus:ring-indigo-100">
-                <option>Uzcard •• 4821</option>
-                <option>Humo •• 9037</option>
-                <option>+ Yangi karta qo'shish</option>
+              <span class="text-sm font-semibold text-slate-200">Kartani tanlang</span>
+              <select class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none">
+                <option class="bg-ink-800">Uzcard •• 4821</option>
+                <option class="bg-ink-800">Humo •• 9037</option>
+                <option class="bg-ink-800">+ Yangi karta qo'shish</option>
               </select>
             </label>
             <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Chiqarish summasi (so'm)</span>
-              <input id="wAmount" type="number" value="1000000" min="10000" step="10000" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-lg font-bold outline-none focus:border-${accent} focus:ring-2 focus:ring-indigo-100" />
+              <span class="text-sm font-semibold text-slate-200">Chiqarish summasi (so'm)</span>
+              <input id="wAmount" type="number" value="1000000" min="10000" step="10000" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-lg font-bold outline-none" />
             </label>
 
             <!-- Fee breakdown -->
-            <div class="space-y-2 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-100">
-              <div class="flex items-center gap-2 text-amber-700">
+            <div class="space-y-2 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-500/20">
+              <div class="flex items-center gap-2 text-amber-300">
                 <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                 <span class="text-xs font-semibold">1% platforma komissiyasi ushlab qolinadi</span>
               </div>
-              <div class="flex justify-between text-sm"><span class="text-slate-500">Summa</span><span id="wGross" class="font-semibold text-slate-700">1 000 000 so'm</span></div>
-              <div class="flex justify-between text-sm"><span class="text-slate-500">Komissiya (1%)</span><span id="wFee" class="font-semibold text-rose-500">−10 000 so'm</span></div>
-              <div class="flex justify-between border-t border-amber-200 pt-2 text-sm"><span class="font-semibold text-slate-700">Qo'lga tegadigan</span><span id="wNet" class="font-extrabold text-emerald-600">990 000 so'm</span></div>
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Summa</span><span id="wGross" class="font-semibold text-slate-200">1 000 000 so'm</span></div>
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Komissiya (1%)</span><span id="wFee" class="font-semibold text-rose-400">−10 000 so'm</span></div>
+              <div class="flex justify-between border-t border-amber-500/20 pt-2 text-sm"><span class="font-semibold text-slate-200">Qo'lga tegadigan</span><span id="wNet" class="font-bold text-emerald-300">990 000 so'm</span></div>
             </div>
           </div>
-          <div class="flex gap-3 border-t border-slate-100 p-6">
-            <button type="button" data-close class="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">Bekor qilish</button>
-            <button type="submit" class="flex-1 rounded-xl bg-${accent} py-3 text-sm font-bold text-white shadow-lg transition hover:opacity-90">Tasdiqlash</button>
+          <div class="flex gap-3 border-t border-white/10 p-6">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Bekor qilish</button>
+            <button type="submit" class="${accentBtn} flex-1 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">Tasdiqlash</button>
           </div>
         </form>
       `);
@@ -1011,37 +1156,37 @@
     function addCardModal() {
       openModal(`
         <form id="cardForm">
-          <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-            <h3 class="text-lg font-bold text-slate-900">Yangi karta qo'shish</h3>
-            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <h3 class="font-display text-lg font-bold text-white">Yangi karta qo'shish</h3>
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="space-y-4 p-6">
             <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Karta raqami</span>
-              <input required inputmode="numeric" placeholder="8600 0000 0000 0000" maxlength="19" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-mono text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+              <span class="text-sm font-semibold text-slate-200">Karta raqami</span>
+              <input required inputmode="numeric" placeholder="8600 0000 0000 0000" maxlength="19" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 font-mono text-sm outline-none" />
             </label>
             <div class="grid grid-cols-2 gap-4">
               <label class="block">
-                <span class="text-sm font-semibold text-slate-700">Amal qilish muddati</span>
-                <input required placeholder="MM/YY" maxlength="5" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+                <span class="text-sm font-semibold text-slate-200">Amal qilish muddati</span>
+                <input required placeholder="MM/YY" maxlength="5" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
               </label>
               <label class="block">
-                <span class="text-sm font-semibold text-slate-700">Karta turi</span>
-                <select class="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100">
-                  <option>Uzcard</option><option>Humo</option>
+                <span class="text-sm font-semibold text-slate-200">Karta turi</span>
+                <select class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none">
+                  <option class="bg-ink-800">Uzcard</option><option class="bg-ink-800">Humo</option>
                 </select>
               </label>
             </div>
-            <p class="flex items-center gap-1.5 text-xs text-slate-400">
+            <p class="flex items-center gap-1.5 text-xs text-slate-500">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               Ma'lumotlaringiz shifrlangan holda saqlanadi
             </p>
           </div>
-          <div class="flex gap-3 border-t border-slate-100 p-6">
-            <button type="button" data-close class="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">Bekor qilish</button>
-            <button type="submit" class="flex-1 rounded-xl bg-indigo-brand py-3 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-deep">Kartani saqlash</button>
+          <div class="flex gap-3 border-t border-white/10 p-6">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Bekor qilish</button>
+            <button type="submit" class="btn-grad flex-1 rounded-xl py-3 text-sm font-bold text-white transition">Kartani saqlash</button>
           </div>
         </form>
       `);
@@ -1054,30 +1199,30 @@
       if (!o) return;
       openModal(`
         <div>
-          <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <div>
-              <h3 class="text-lg font-bold text-slate-900">Buyurtma ${o.id}</h3>
-              <p class="text-xs text-slate-500">${o.date}</p>
+              <h3 class="font-display text-lg font-bold text-white">Buyurtma ${o.id}</h3>
+              <p class="text-xs text-slate-400">${o.date}</p>
             </div>
-            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100">
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="space-y-4 p-6">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-slate-500">Holat</span>${badge(o.status)}
+              <span class="text-sm text-slate-400">Holat</span>${badge(o.status)}
             </div>
-            <div class="space-y-3 rounded-2xl bg-slate-50 p-4 text-sm">
-              <div class="flex justify-between"><span class="text-slate-500">Mahsulot</span><span class="font-semibold text-slate-800">${o.product}</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Mijoz telefoni</span><span class="font-medium text-slate-700">${o.phone}</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Sotib beruvchi (agent)</span><span class="font-medium text-slate-700">${o.agent}</span></div>
-              <div class="flex justify-between border-t border-slate-200 pt-3"><span class="text-slate-500">Umumiy summa</span><span class="font-bold text-slate-900">${uzs(o.total)} so'm</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Agent komissiyasi</span><span class="font-bold text-emerald-600">${uzs(o.commission)} so'm</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Sizning foydangiz</span><span class="font-bold text-indigo-brand">${uzs(o.total - o.commission)} so'm</span></div>
+            <div class="space-y-3 rounded-2xl bg-white/5 p-4 text-sm ring-1 ring-white/10">
+              <div class="flex justify-between"><span class="text-slate-400">Mahsulot</span><span class="font-semibold text-slate-100">${esc(o.product)}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Mijoz telefoni</span><span class="font-medium text-slate-200">${esc(o.phone)}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Sotib beruvchi (agent)</span><span class="font-medium text-slate-200">${esc(o.agent)}</span></div>
+              <div class="flex justify-between border-t border-white/10 pt-3"><span class="text-slate-400">Umumiy summa</span><span class="font-bold text-white">${uzs(o.total)} so'm</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Agent komissiyasi</span><span class="font-bold text-emerald-300">${uzs(o.commission)} so'm</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Sizning foydangiz</span><span class="font-bold text-violet-300">${uzs(o.total - o.commission)} so'm</span></div>
             </div>
           </div>
-          <div class="flex gap-3 border-t border-slate-100 p-6">
-            <button type="button" data-close class="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">Yopish</button>
+          <div class="flex gap-3 border-t border-white/10 p-6">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
             ${o.status === 'Yangi' ? `<button data-mark-shipped="${o.id}" class="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700">Yuborildi deb belgilash</button>` : ''}
           </div>
         </div>
@@ -1087,50 +1232,52 @@
     /* ---- Start selling success modal (affiliate) ---- */
     function startSellingModal(idx) {
       const p = marketProducts[idx];
+      if (!p) return;
       const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 8) + (100 + idx);
       const link = `sotibber.uz/shop/mening-dokonim/${slug}`;
       // Mahsulotni "Mening do'konim"ga qo'shamiz (agar avval qo'shilmagan bo'lsa)
       if (!agentLinks.some((l) => l.product === p.name)) {
         agentLinks.push({
           product: p.name,
+          description: p.description,
           price: p.price,
           commission: p.commission,
           clicks: 0,
           sales: 0,
           slug,
+          images: p.images || [],
           image: p.image,
         });
       }
       openModal(`
         <div>
           <div class="flex flex-col items-center px-6 pt-8 text-center">
-            <span class="grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+            <span class="grid h-16 w-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-300">
               <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
             </span>
-            <h3 class="mt-4 text-xl font-extrabold text-slate-900">Havola tayyor! 🎉</h3>
-            <p class="mt-1 text-sm text-slate-500">"${p.name}" endi sizning shaxsiy do'koningizda. Havolani ijtimoiy tarmoqlarga joylang.</p>
+            <h3 class="font-display mt-4 text-xl font-bold text-white">Havola tayyor! 🎉</h3>
+            <p class="mt-1 text-sm text-slate-400">"${esc(p.name)}" endi sizning shaxsiy do'koningizda. Havolani ijtimoiy tarmoqlarga joylang.</p>
           </div>
           <div class="p-6">
-            <span class="text-sm font-semibold text-slate-700">Shaxsiy do'kon linki</span>
+            <span class="text-sm font-semibold text-slate-200">Shaxsiy do'kon linki</span>
             <div class="mt-1.5 flex items-center gap-2">
-              <div class="flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 font-mono text-sm text-slate-700">${link}</div>
-              <button data-copy="${link}" class="flex-shrink-0 rounded-xl bg-indigo-brand px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-deep">Nusxalash</button>
+              <div class="flex-1 truncate rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 font-mono text-sm text-slate-200">${link}</div>
+              <button data-copy="${link}" class="btn-grad flex-shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold text-white">Nusxalash</button>
             </div>
 
-            <div class="mt-3 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3">
-              <span class="text-sm font-medium text-emerald-700">Har bir sotuvdan olasiz</span>
-              <span class="text-base font-extrabold text-emerald-700">${uzs(p.commission)} so'm</span>
+            <div class="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-4 py-3 ring-1 ring-emerald-500/20">
+              <span class="text-sm font-medium text-emerald-300">Har bir sotuvdan olasiz</span>
+              <span class="font-display text-base font-bold text-emerald-300">${uzs(p.commission)} so'm</span>
             </div>
 
-            <p class="mt-5 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">Tezkor ulashish</p>
+            <p class="mt-5 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Tezkor ulashish</p>
             <div class="mt-3 flex justify-center gap-3">
-              <a href="#" class="grid h-12 w-12 place-items-center rounded-2xl bg-sky-100 text-sky-600 transition hover:scale-105" aria-label="Telegram"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.5 20c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13.6 1.9 12c-1-.3-1-1 .2-1.5l18.2-7c.9-.3 1.6.2 1.6 1.8Z"/></svg></a>
-              <a href="#" class="grid h-12 w-12 place-items-center rounded-2xl bg-pink-100 text-pink-600 transition hover:scale-105" aria-label="Instagram"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
-              <a href="#" class="grid h-12 w-12 place-items-center rounded-2xl bg-slate-200 text-slate-800 transition hover:scale-105" aria-label="TikTok"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3c.3 2.5 1.7 4 4 4.2v2.8c-1.3.1-2.7-.2-4-1v6.2c0 4-2.9 6.3-6.3 5.7-3-.5-4.8-3.5-4-6.5.6-2.4 2.8-4 5.3-3.8v2.9c-.5-.1-1-.1-1.5 0-1.3.4-2 1.7-1.5 3 .5 1.2 1.9 1.7 3.1 1.1.9-.4 1.4-1.3 1.4-2.3V3h3Z"/></svg></a>
+              <a href="#" class="grid h-12 w-12 place-items-center rounded-2xl bg-sky-500/15 text-sky-300 transition hover:scale-105" aria-label="Telegram"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.5 20c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13.6 1.9 12c-1-.3-1-1 .2-1.5l18.2-7c.9-.3 1.6.2 1.6 1.8Z"/></svg></a>
+              <a href="#" class="grid h-12 w-12 place-items-center rounded-2xl bg-pink-500/15 text-pink-300 transition hover:scale-105" aria-label="Instagram"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
             </div>
           </div>
-          <div class="border-t border-slate-100 p-6">
-            <button type="button" data-close class="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition hover:bg-slate-800">Yopish</button>
+          <div class="border-t border-white/10 p-6">
+            <button type="button" data-close class="w-full rounded-xl bg-white/10 py-3 text-sm font-bold text-white transition hover:bg-white/15">Yopish</button>
           </div>
         </div>
       `);
@@ -1139,77 +1286,78 @@
     /* ---- Sotib olish (xaridorning web-ilova do'konidagi buyurtma oynasi) ---- */
     function buyProductModal(idx) {
       const p = agentLinks[idx];
+      if (!p) return;
       openModal(`
         <form id="buyForm">
-          <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <div>
-              <h3 class="text-lg font-bold text-slate-900">Buyurtma berish</h3>
-              <p class="text-xs text-slate-500">Xavfsiz to'lov</p>
+              <h3 class="font-display text-lg font-bold text-white">Buyurtma berish</h3>
+              <p class="text-xs text-slate-400">Xavfsiz to'lov</p>
             </div>
-            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100">
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="space-y-4 p-6">
             <!-- Mahsulot ko'rinishi -->
-            <div class="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
-              <span class="grid h-14 w-14 flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-100 to-emerald-50">
+            <div class="flex items-center gap-3 rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
+              <span class="grid h-14 w-14 flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-white/10">
                 ${p.image
-                  ? `<img src="${p.image}" alt="${p.product}" class="h-full w-full object-cover" />`
-                  : `<svg class="h-7 w-7 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${icon.box}</svg>`}
+                  ? `<img src="${esc(p.image)}" alt="${esc(p.product)}" class="h-full w-full object-cover" />`
+                  : imgPlaceholder('h-7 w-7')}
               </span>
               <div class="min-w-0">
-                <p class="truncate font-bold text-slate-900">${p.product}</p>
-                <p class="text-sm font-extrabold text-slate-900">${uzs(p.price)} <span class="text-xs font-medium text-slate-400">so'm / dona</span></p>
+                <p class="truncate font-bold text-white">${esc(p.product)}</p>
+                <p class="text-sm font-bold text-white">${uzs(p.price)} <span class="text-xs font-medium text-slate-500">so'm / dona</span></p>
               </div>
             </div>
 
             <!-- Miqdor -->
             <div class="flex items-center justify-between">
-              <span class="text-sm font-semibold text-slate-700">Miqdori</span>
+              <span class="text-sm font-semibold text-slate-200">Miqdori</span>
               <div class="flex items-center gap-2">
-                <button type="button" id="qtyMinus" class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-lg font-bold text-slate-600 hover:bg-slate-50">−</button>
-                <input id="qty" type="number" value="1" min="1" max="99" class="w-14 rounded-lg border border-slate-200 py-2 text-center text-sm font-bold outline-none focus:border-emerald-brand focus:ring-2 focus:ring-emerald-100" />
-                <button type="button" id="qtyPlus" class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-lg font-bold text-slate-600 hover:bg-slate-50">+</button>
+                <button type="button" id="qtyMinus" class="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-lg font-bold text-slate-200 hover:bg-white/10">−</button>
+                <input id="qty" type="number" value="1" min="1" max="99" class="fld w-14 rounded-lg py-2 text-center text-sm font-bold outline-none" />
+                <button type="button" id="qtyPlus" class="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-lg font-bold text-slate-200 hover:bg-white/10">+</button>
               </div>
             </div>
 
             <!-- Xaridor ma'lumotlari -->
             <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Ismingiz</span>
-              <input required type="text" placeholder="Ism Familiya" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-brand focus:ring-2 focus:ring-emerald-100" />
+              <span class="text-sm font-semibold text-slate-200">Ismingiz</span>
+              <input required type="text" placeholder="Ism Familiya" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
             </label>
             <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Telefon raqamingiz</span>
-              <input required type="tel" inputmode="tel" placeholder="+998 90 123 45 67" class="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-brand focus:ring-2 focus:ring-emerald-100" />
+              <span class="text-sm font-semibold text-slate-200">Telefon raqamingiz</span>
+              <input required type="tel" inputmode="tel" placeholder="+998 90 123 45 67" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
             </label>
             <label class="block">
-              <span class="text-sm font-semibold text-slate-700">Yetkazib berish manzili</span>
-              <textarea required rows="2" placeholder="Viloyat, tuman, ko'cha, uy..." class="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-brand focus:ring-2 focus:ring-emerald-100"></textarea>
+              <span class="text-sm font-semibold text-slate-200">Yetkazib berish manzili</span>
+              <textarea required rows="2" placeholder="Viloyat, tuman, ko'cha, uy..." class="fld mt-1.5 w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none"></textarea>
             </label>
 
             <!-- To'lov usuli -->
             <div>
-              <span class="text-sm font-semibold text-slate-700">To'lov usuli</span>
+              <span class="text-sm font-semibold text-slate-200">To'lov usuli</span>
               <div class="mt-1.5 grid grid-cols-2 gap-2">
-                <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm has-[:checked]:border-emerald-brand has-[:checked]:bg-emerald-50">
-                  <input type="radio" name="pay" value="cash" checked class="accent-emerald-600" /> Yetkazib berilganda naqd
+                <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-200 has-[:checked]:border-emerald-400/60 has-[:checked]:bg-emerald-500/15">
+                  <input type="radio" name="pay" value="cash" checked /> Yetkazib berilganda naqd
                 </label>
-                <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm has-[:checked]:border-emerald-brand has-[:checked]:bg-emerald-50">
-                  <input type="radio" name="pay" value="card" class="accent-emerald-600" /> Karta orqali
+                <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-200 has-[:checked]:border-emerald-400/60 has-[:checked]:bg-emerald-500/15">
+                  <input type="radio" name="pay" value="card" /> Karta orqali
                 </label>
               </div>
             </div>
 
             <!-- Jami -->
-            <div class="flex items-center justify-between rounded-2xl bg-emerald-50 px-4 py-3">
-              <span class="text-sm font-semibold text-emerald-700">Jami to'lov</span>
-              <span id="buyTotal" class="text-xl font-extrabold text-emerald-700">${uzs(p.price)} so'm</span>
+            <div class="flex items-center justify-between rounded-2xl bg-emerald-500/10 px-4 py-3 ring-1 ring-emerald-500/20">
+              <span class="text-sm font-semibold text-emerald-300">Jami to'lov</span>
+              <span id="buyTotal" class="font-display text-xl font-bold text-emerald-300">${uzs(p.price)} so'm</span>
             </div>
           </div>
-          <div class="flex gap-3 border-t border-slate-100 p-6">
-            <button type="button" data-close class="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">Bekor qilish</button>
-            <button type="submit" class="flex-1 rounded-xl bg-emerald-brand py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:opacity-90">Buyurtmani tasdiqlash</button>
+          <div class="flex gap-3 border-t border-white/10 p-6">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Bekor qilish</button>
+            <button type="submit" class="flex-1 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:opacity-90">Buyurtmani tasdiqlash</button>
           </div>
         </form>
       `, { size: 'max-w-md' });
@@ -1238,18 +1386,18 @@
       const orderId = '#' + (10250 + Math.floor(Math.random() * 90));
       openModal(`
         <div class="p-6 text-center">
-          <span class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+          <span class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-300">
             <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           </span>
-          <h3 class="mt-4 text-xl font-extrabold text-slate-900">Buyurtmangiz qabul qilindi! 🎉</h3>
-          <p class="mt-1 text-sm text-slate-500">Operatorlarimiz tez orada siz bilan bog'lanadi.</p>
-          <div class="mt-5 space-y-2 rounded-2xl bg-slate-50 p-4 text-left text-sm">
-            <div class="flex justify-between"><span class="text-slate-500">Buyurtma raqami</span><span class="font-mono font-bold text-indigo-brand">${orderId}</span></div>
-            <div class="flex justify-between"><span class="text-slate-500">Mahsulot</span><span class="font-semibold text-slate-800">${p.product}</span></div>
-            <div class="flex justify-between"><span class="text-slate-500">Miqdori</span><span class="font-semibold text-slate-800">${n} dona</span></div>
-            <div class="flex justify-between border-t border-slate-200 pt-2"><span class="text-slate-500">Jami</span><span class="font-extrabold text-emerald-600">${uzs(p.price * n)} so'm</span></div>
+          <h3 class="font-display mt-4 text-xl font-bold text-white">Buyurtmangiz qabul qilindi! 🎉</h3>
+          <p class="mt-1 text-sm text-slate-400">Operatorlarimiz tez orada siz bilan bog'lanadi.</p>
+          <div class="mt-5 space-y-2 rounded-2xl bg-white/5 p-4 text-left text-sm ring-1 ring-white/10">
+            <div class="flex justify-between"><span class="text-slate-400">Buyurtma raqami</span><span class="font-mono font-bold text-violet-300">${orderId}</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Mahsulot</span><span class="font-semibold text-slate-100">${esc(p.product)}</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Miqdori</span><span class="font-semibold text-slate-100">${n} dona</span></div>
+            <div class="flex justify-between border-t border-white/10 pt-2"><span class="text-slate-400">Jami</span><span class="font-bold text-emerald-300">${uzs(p.price * n)} so'm</span></div>
           </div>
-          <button type="button" data-close class="mt-6 w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition hover:bg-slate-800">Yopish</button>
+          <button type="button" data-close class="mt-6 w-full rounded-xl bg-white/10 py-3 text-sm font-bold text-white transition hover:bg-white/15">Yopish</button>
         </div>
       `);
     }
@@ -1281,7 +1429,7 @@
       $('#profileRole').textContent = conf.label;
       $('#sidebarNav').innerHTML = conf.items.map((it) => {
         const active = it.id === state.view;
-        return `<button data-view="${it.id}" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${active ? 'bg-white/10 text-white shadow-inner' : 'text-indigo-200 hover:bg-white/5 hover:text-white'}">
+        return `<button data-view="${it.id}" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${active ? 'bg-gradient-to-r from-violet-brand/40 to-violet-deep/25 text-white shadow-inner ring-1 ring-violet-400/30' : 'text-slate-300 hover:bg-white/5 hover:text-white'}">
           ${navIcon(it.icon)}<span>${it.title}</span>
           ${active ? '<span class="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400"></span>' : ''}
         </button>`;
@@ -1294,9 +1442,10 @@
       state.view = item.id;
       $('#viewTitle').textContent = item.title;
       $('#viewRoot').innerHTML = VIEWS[state.panel][state.view]();
-      // Post-render hooks for filterable tables
+      // Post-render hooks for filterable tables / grids
       if (state.panel === 'seller' && state.view === 'orders') renderOrdersBody('Barchasi');
       if (state.panel === 'affiliate' && state.view === 'sales') renderSalesBody('Barchasi');
+      if (state.panel === 'affiliate' && state.view === 'market') renderMarketGrid('');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1343,17 +1492,25 @@
       if (act) {
         const a = act.dataset.action;
         if (a === 'add-product') return addProductDrawer();
-        if (a === 'withdraw') return withdrawModal('indigo');
+        if (a === 'withdraw') return withdrawModal('violet');
         if (a === 'wallet-withdraw') return withdrawModal('emerald');
         if (a === 'add-card') return addCardModal();
       }
+
+      // Product detail modals
+      const pd = t.closest('[data-product-detail]');
+      if (pd) return productDetailModal('seller', Number(pd.dataset.productDetail));
+      const md = t.closest('[data-market-detail]');
+      if (md) return productDetailModal('market', Number(md.dataset.marketDetail));
+      const shd = t.closest('[data-shop-detail]');
+      if (shd) return productDetailModal('shop', Number(shd.dataset.shopDetail));
 
       // Orders: filter tabs
       const ot = t.closest('[data-order-tab]');
       if (ot) {
         $$('.order-tab').forEach((b) => {
           const on = b === ot;
-          b.className = `order-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${on ? 'bg-indigo-brand text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`;
+          b.className = `order-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${on ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}`;
         });
         return renderOrdersBody(ot.dataset.orderTab);
       }
@@ -1363,7 +1520,7 @@
       if (st) {
         $$('.sales-tab').forEach((b) => {
           const on = b === st;
-          b.className = `sales-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${on ? 'bg-emerald-brand text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`;
+          b.className = `sales-tab whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition ${on ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}`;
         });
         return renderSalesBody(st.dataset.salesTab);
       }
@@ -1377,17 +1534,17 @@
         const order = merchantOrders.find((o) => o.id === ms.dataset.markShipped);
         if (order) order.status = "Yo'lda";
         closeModal();
-        renderOrdersBody($('.order-tab.bg-indigo-brand')?.dataset.orderTab || 'Barchasi');
+        renderOrdersBody($('.order-tab.btn-grad')?.dataset.orderTab || 'Barchasi');
         return toast('Buyurtma "Yo\'lda" deb belgilandi ✓');
       }
 
       // Start selling (affiliate marketplace)
       const ss = t.closest('[data-start-selling]');
-      if (ss) return startSellingModal(Number(ss.dataset.startSelling));
+      if (ss) { closeModal(); return startSellingModal(Number(ss.dataset.startSelling)); }
 
       // "Sotib olish" — do'kondagi mahsulotni xarid qilish oynasi
       const buy = t.closest('[data-buy]');
-      if (buy) return buyProductModal(Number(buy.dataset.buy));
+      if (buy) { closeModal(); return buyProductModal(Number(buy.dataset.buy)); }
 
       // Copy link buttons
       const cp = t.closest('[data-copy]');
@@ -1397,6 +1554,12 @@
         toast('Havola nusxalandi ✓');
         return;
       }
+    });
+
+    // Bozor qidiruvi (input)
+    document.addEventListener('input', (e) => {
+      const search = e.target.closest('#marketSearch');
+      if (search) renderMarketGrid(search.value);
     });
 
     /* =========================================================
