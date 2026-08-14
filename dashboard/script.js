@@ -89,6 +89,47 @@
       return { slug, full, display };
     }
 
+    // Ism/matndan do'kon "slug"i (lotin harf + raqam)
+    function slugify(s) {
+      const map = { 'ш': 'sh', 'ч': 'ch', 'ў': 'o', 'ғ': 'g', 'қ': 'q', 'ҳ': 'h', 'я': 'ya', 'ю': 'yu', 'ъ': '', 'ь': '', 'ё': 'yo', 'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'x', 'ц': 'ts', 'э': 'e', "'": '', 'ʻ': '', '`': '' };
+      return String(s || '').toLowerCase().split('').map((c) => (map[c] !== undefined ? map[c] : c)).join('')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24) || 'dokon';
+    }
+
+    // Do'kon havolasini talab bo'yicha yaratamiz (profiles.shop_slug)
+    async function createShopLink(btn) {
+      const user = window.__SOTIBBER_USER;
+      if (!user || !window.sb) { toast('Tizimga qayta kiring'); return; }
+      const profile = window.__SOTIBBER_PROFILE || {};
+      const base = slugify(profile.full_name || (user.email || '').split('@')[0] || 'dokon');
+      const shopName = profile.shop_name || (profile.full_name ? profile.full_name + " do'koni" : "Mening do'konim");
+      if (btn) { btn.disabled = true; btn.textContent = 'Yaratilmoqda...'; }
+      for (let i = 0; i < 4; i++) {
+        const candidate = base + '-' + Math.random().toString(36).slice(2, 6);
+        const { data, error } = await window.sb.from('profiles')
+          .upsert({ id: user.id, shop_slug: candidate, shop_name: shopName }, { onConflict: 'id' })
+          .select().single();
+        if (!error) {
+          window.__SOTIBBER_PROFILE = Object.assign({}, profile, data);
+          toast('Do\'kon havolasi tayyor ✓');
+          renderView();
+          return;
+        }
+        // Ustun yo'q — SQL ishga tushirilmagan
+        if (/shop_slug|column .* does not exist|schema cache/i.test(error.message || '')) {
+          toast("Supabase'da SQL ishga tushiring — profiles jadvalida 'shop_slug' ustuni yo'q");
+          break;
+        }
+        // Band slug — qayta urinamiz
+        if (!/duplicate|unique|23505/i.test(error.message || '')) {
+          console.error('Havola yaratish:', error);
+          toast('Xatolik: ' + (error.message || 'havola yaratilmadi'));
+          break;
+        }
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Havolani yaratish'; }
+    }
+
     // Simple 7-day sales chart data (relative heights in %)
     const chartData = [
       { d: 'Du', v: 0 }, { d: 'Se', v: 0 }, { d: 'Ch', v: 0 }, { d: 'Pa', v: 0 },
@@ -485,12 +526,17 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
+                ${shopLink ? `
                 <div class="flex-1 truncate rounded-xl bg-white/15 px-3.5 py-2.5 font-mono text-sm md:w-56">${esc(shopDisplay)}</div>
-                <button ${shopLink ? `data-copy="${esc(shopLink)}"` : 'disabled'} class="flex-shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-violet-brand transition hover:bg-slate-100 disabled:opacity-60">Nusxalash</button>
-                <a ${shopLink ? `href="${esc(shopLink)}"` : ''} target="_blank" rel="noopener" class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/25">
+                <button data-copy="${esc(shopLink)}" class="flex-shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-violet-brand transition hover:bg-slate-100">Nusxalash</button>
+                <a href="${esc(shopLink)}" target="_blank" rel="noopener" class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/25">
                   Ochish
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                </a>
+                </a>` : `
+                <button data-action="create-shop-link" class="flex-shrink-0 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-violet-brand transition hover:bg-slate-100">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.83 10.17a4 4 0 00-5.66 0l-4 4a4 4 0 105.66 5.66l1.1-1.1m-.76-4.9a4 4 0 005.66 0l4-4a4 4 0 00-5.66-5.66l-1.1 1.1"/></svg>
+                  Havolani yaratish
+                </button>`}
               </div>
             </div>
             <!-- mini statistika -->
@@ -1522,6 +1568,7 @@
       if (act) {
         const a = act.dataset.action;
         if (a === 'add-product') return addProductDrawer();
+        if (a === 'create-shop-link') return createShopLink(act);
         if (a === 'withdraw') return withdrawModal('violet');
         if (a === 'wallet-withdraw') return withdrawModal('emerald');
         if (a === 'add-card') return addCardModal();

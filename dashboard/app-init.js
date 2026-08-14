@@ -67,9 +67,10 @@
     for (let attempt = 0; attempt < 4; attempt++) {
       const candidate = `${base}-${Math.random().toString(36).slice(2, 6)}`;
       try {
+        // upsert — profil qatori yo'q bo'lsa ham yaratadi/yangilaydi
         const { data, error } = await sb.from('profiles')
-          .update({ shop_slug: candidate, shop_name: shopName })
-          .eq('id', user.id).select().single();
+          .upsert({ id: user.id, shop_slug: candidate, shop_name: shopName }, { onConflict: 'id' })
+          .select().single();
         if (!error) return data;
         // Ustun yo'q (migratsiya ishga tushmagan) — jimgina o'tkazamiz
         if (/shop_slug|column .* does not exist|schema cache/i.test(error.message || '')) {
