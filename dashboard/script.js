@@ -79,14 +79,22 @@
     // Sotib beruvchining sotuvlari (orders)
     const agentSales = Array.isArray(window.__SOTIBBER_SALES) ? window.__SOTIBBER_SALES : [];
 
-    // Do'kon havolasi (shop.html?s=<slug>) — profil slug'idan quriladi
+    // Do'kon tartib raqamini 4 xonali qilib formatlaymiz (1 -> 0001)
+    function shopIdStr(no) { return (no == null || no === '') ? '' : String(no).padStart(4, '0'); }
+
+    // Do'kon havolasi. Raqam (shop_no) bo'lsa — shop.html?id=0001 (afzal),
+    // bo'lmasa eski slug bilan (shop.html?s=<slug>).
     function shopUrls() {
       const profile = window.__SOTIBBER_PROFILE || {};
+      const id = shopIdStr(profile.shop_no);
       const slug = profile.shop_slug || '';
-      if (!slug) return { slug: '', full: '', display: '' };
-      const full = new URL('shop.html?s=' + encodeURIComponent(slug), window.location.href).href;
+      let param = '';
+      if (id) param = 'id=' + id;
+      else if (slug) param = 's=' + encodeURIComponent(slug);
+      if (!param) return { slug: '', id: '', full: '', display: '' };
+      const full = new URL('shop.html?' + param, window.location.href).href;
       const display = full.replace(/^https?:\/\//, '');
-      return { slug, full, display };
+      return { slug, id, full, display };
     }
 
     // Ism/matndan do'kon "slug"i (lotin harf + raqam)
@@ -104,6 +112,19 @@
       const base = slugify(profile.full_name || (user.email || '').split('@')[0] || 'dokon');
       const shopName = profile.shop_name || (profile.full_name ? profile.full_name + " do'koni" : "Mening do'konim");
       if (btn) { btn.disabled = true; btn.textContent = 'Yaratilmoqda...'; }
+
+      // 1) Avval do'kon raqamini olishga urinamiz (assign_shop_no RPC)
+      try {
+        const { data, error } = await window.sb.rpc('assign_shop_no');
+        if (!error && data != null) {
+          window.__SOTIBBER_PROFILE = Object.assign({}, profile, { shop_no: data });
+          toast('Do\'kon havolasi tayyor ✓');
+          renderView();
+          return;
+        }
+      } catch (e) { /* funksiya yo'q bo'lishi mumkin — slug bilan davom etamiz */ }
+
+      // 2) Fallback: slug (eski usul)
       for (let i = 0; i < 4; i++) {
         const candidate = base + '-' + Math.random().toString(36).slice(2, 6);
         const { data, error } = await window.sb.from('profiles')
@@ -522,7 +543,7 @@
                 </span>
                 <div>
                   <h2 class="font-display text-xl font-bold">Mening do'konim</h2>
-                  <p class="text-sm text-violet-100">Shaxsiy web-ilova do'koningiz</p>
+                  <p class="text-sm text-violet-100">Shaxsiy web-ilova do'koningiz${su.id ? ` · Do'kon ID: <b class="font-mono text-white">#${su.id}</b>` : ''}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">

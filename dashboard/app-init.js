@@ -84,6 +84,18 @@
     return profile;
   }
 
+  // Do'kon tartib raqamini ta'minlaymiz (0001, 0002 ...). RPC (assign_shop_no)
+  // atomik ravishda keyingi raqamni beradi. Funksiya yo'q bo'lsa — jimgina o'tamiz.
+  async function ensureShopNo(sb, profile) {
+    if (profile && profile.shop_no != null) return profile;
+    try {
+      const { data, error } = await sb.rpc('assign_shop_no');
+      if (!error && data != null) return Object.assign({}, profile || {}, { shop_no: data });
+      if (error) console.warn("assign_shop_no:", error.message || error);
+    } catch (e) { console.warn('assign_shop_no:', e); }
+    return profile;
+  }
+
   function fmtDate(ts) { return ts ? new Date(ts).toLocaleDateString('ru-RU') : ''; }
 
   // orders qatorini sotuvchi "Buyurtmalar" jadvali shakliga o'tkazamiz
@@ -157,6 +169,8 @@
     } catch (e) { /* profil hali yaratilmagan bo'lishi mumkin */ }
     // Do'kon manzili (shop_slug) yo'q bo'lsa — yaratamiz
     profile = await ensureShopSlug(sb, user, profile);
+    // Do'kon tartib raqami (0001, 0002 ...) — yo'q bo'lsa RPC orqali beriladi
+    profile = await ensureShopNo(sb, profile);
     window.__SOTIBBER_PROFILE = profile;
 
     // Sotuvchining o'z mahsulotlari

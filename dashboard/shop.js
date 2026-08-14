@@ -33,6 +33,8 @@
   const params = new URLSearchParams(location.search);
   const slug = (params.get('s') || '').trim();
   const affId = (params.get('a') || '').trim();
+  const shopNoParam = (params.get('id') || '').trim();     // 0001, 0002 ...
+  const shopNo = shopNoParam ? parseInt(shopNoParam, 10) : null;
 
   let shop = null;        // { id, name, phone }
   let settings = {};      // sayt sozlamalari (messenjer havolalari)
@@ -81,13 +83,16 @@
 
   async function loadShop() {
     if (!sb) return renderError('Server ulanmagan.');
-    if (!slug && !affId) return renderNoShop();
+    if (!shopNo && !slug && !affId) return renderNoShop();
+    if (shopNoParam && (shopNo == null || isNaN(shopNo))) return renderNoShop();
 
-    // Do'kon egasini topamiz (slug yoki affiliate_id orqali)
+    // Do'kon egasini topamiz (raqam / slug / affiliate_id orqali)
     let owner = null;
     try {
-      let q = sb.from('profiles').select('id, full_name, phone, shop_name, shop_slug');
-      q = slug ? q.eq('shop_slug', slug) : q.eq('id', affId);
+      let q = sb.from('profiles').select('id, full_name, phone, shop_name, shop_slug, shop_no');
+      if (shopNo != null && !isNaN(shopNo)) q = q.eq('shop_no', shopNo);
+      else if (slug) q = q.eq('shop_slug', slug);
+      else q = q.eq('id', affId);
       const { data } = await q.maybeSingle();
       owner = data;
     } catch (e) { console.error('Do\'kon egasi:', e); }
@@ -111,9 +116,11 @@
         .select('product_id, products(*)')
         .eq('affiliate_id', owner.id);
       if (error) throw error;
+      // Skladda bori ko'rinadi; faqat rad etilgan/tugagan mahsulotlar yashiriladi.
+      const HIDDEN = ['Rad etilgan', 'Rad etildi', 'Tugagan', 'Tugadi'];
       products = (data || [])
         .map(mapProduct)
-        .filter((p) => p.product_id && p.stock > 0 && (p.status === 'Faol' || p.status === 'Sotuvda'));
+        .filter((p) => p.product_id && p.stock > 0 && HIDDEN.indexOf(p.status) === -1);
     } catch (e) {
       console.error('Do\'kon mahsulotlari:', e);
       products = [];

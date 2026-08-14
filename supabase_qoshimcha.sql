@@ -208,3 +208,43 @@ create policy "Orders: sotib beruvchi ko'radi"
 drop policy if exists "Orders: admin ko'radi" on public.orders;
 create policy "Orders: admin ko'radi"
   on public.orders for select to anon using (true);
+
+-- =====================================================================
+-- 6) DO'KON TARTIB RAQAMI — har bir do'kon 0001, 0002, ... oladi
+--
+--   Havolaга shu raqam qo'shiladi (shop.html?id=0001) — do'konlar
+--   chalkashib ketmaydi. Raqam ketma-ket va takrorlanmas.
+-- =====================================================================
+create sequence if not exists public.shop_no_seq start 1;
+
+alter table public.profiles
+  add column if not exists shop_no integer;
+
+create unique index if not exists profiles_shop_no_key
+  on public.profiles (shop_no) where shop_no is not null;
+
+-- Mavjud foydalanuvchilarga raqam beramiz (ro'yxatdan o'tган tartibida)
+do $$
+declare r record;
+begin
+  for r in select id from public.profiles where shop_no is null order by created_at loop
+    update public.profiles set shop_no = nextval('public.shop_no_seq') where id = r.id;
+  end loop;
+end $$;
+
+-- Talab bo'yicha (atomik) raqam beruvchi funksiya — frontend chaqiradi
+create or replace function public.assign_shop_no()
+returns integer
+language plpgsql security definer set search_path = public as $$
+declare n integer;
+begin
+  select shop_no into n from public.profiles where id = auth.uid();
+  if n is not null then return n; end if;
+  n := nextval('public.shop_no_seq');
+  insert into public.profiles (id, shop_no) values (auth.uid(), n)
+    on conflict (id) do update set shop_no = coalesce(public.profiles.shop_no, excluded.shop_no);
+  select shop_no into n from public.profiles where id = auth.uid();
+  return n;
+end; $$;
+
+grant execute on function public.assign_shop_no() to authenticated;
