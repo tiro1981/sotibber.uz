@@ -64,7 +64,8 @@
     // ma'lumotlar bo'lsa, o'sha bilan boshlaymiz — bo'lmasa bo'sh massiv.
     const merchantProducts = Array.isArray(window.__SOTIBBER_PRODUCTS) ? window.__SOTIBBER_PRODUCTS : [];
 
-    const merchantOrders = [];
+    // Sotuvchining buyurtmalari — app-init.js orqali orders jadvalidan yuklanadi
+    const merchantOrders = Array.isArray(window.__SOTIBBER_ORDERS) ? window.__SOTIBBER_ORDERS : [];
 
     const merchantTx = [];
 
@@ -72,9 +73,21 @@
     // Supabase'dan oldindan yuklanadi (dashboard/index.html ochilganda).
     let marketProducts = Array.isArray(window.__SOTIBBER_MARKET_PRODUCTS) ? window.__SOTIBBER_MARKET_PRODUCTS : [];
 
-    const agentLinks = [];
+    // Sotib beruvchining do'konidagi mahsulotlar (affiliate_products)
+    const agentLinks = Array.isArray(window.__SOTIBBER_AGENT_LINKS) ? window.__SOTIBBER_AGENT_LINKS : [];
 
-    const agentSales = [];
+    // Sotib beruvchining sotuvlari (orders)
+    const agentSales = Array.isArray(window.__SOTIBBER_SALES) ? window.__SOTIBBER_SALES : [];
+
+    // Do'kon havolasi (shop.html?s=<slug>) — profil slug'idan quriladi
+    function shopUrls() {
+      const profile = window.__SOTIBBER_PROFILE || {};
+      const slug = profile.shop_slug || '';
+      if (!slug) return { slug: '', full: '', display: '' };
+      const full = new URL('shop.html?s=' + encodeURIComponent(slug), window.location.href).href;
+      const display = full.replace(/^https?:\/\//, '');
+      return { slug, full, display };
+    }
 
     // Simple 7-day sales chart data (relative heights in %)
     const chartData = [
@@ -452,7 +465,9 @@
 
       // "Mening do'konim" — agentning shaxsiy web-ilova do'koni.
       shop: () => {
-        const shopUrl = 'sotibber.uz/shop/mening-dokonim';
+        const su = shopUrls();
+        const shopLink = su.full;
+        const shopDisplay = su.display || "Havola tayyorlanmoqda...";
         const totalSales = agentLinks.reduce((s, l) => s + l.sales, 0);
         const totalClicks = agentLinks.reduce((s, l) => s + l.clicks, 0);
         return `
@@ -470,9 +485,9 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <div class="flex-1 truncate rounded-xl bg-white/15 px-3.5 py-2.5 font-mono text-sm md:w-56">${shopUrl}</div>
-                <button data-copy="${shopUrl}" class="flex-shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-violet-brand transition hover:bg-slate-100">Nusxalash</button>
-                <a href="${'https://' + shopUrl}" target="_blank" rel="noopener" class="hidden flex-shrink-0 items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/25 sm:inline-flex">
+                <div class="flex-1 truncate rounded-xl bg-white/15 px-3.5 py-2.5 font-mono text-sm md:w-56">${esc(shopDisplay)}</div>
+                <button ${shopLink ? `data-copy="${esc(shopLink)}"` : 'disabled'} class="flex-shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-violet-brand transition hover:bg-slate-100 disabled:opacity-60">Nusxalash</button>
+                <a ${shopLink ? `href="${esc(shopLink)}"` : ''} target="_blank" rel="noopener" class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/25">
                   Ochish
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 </a>
@@ -510,7 +525,7 @@
                       <button data-buy="${i}" class="flex-1 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:opacity-90 active:scale-95">
                         Sotib olish
                       </button>
-                      <button data-copy="${shopUrl}/${l.slug}" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-violet-500/15 text-violet-300 transition hover:bg-violet-500/25" title="Mahsulot havolasini nusxalash">
+                      <button data-copy="${esc(shopLink)}" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-violet-500/15 text-violet-300 transition hover:bg-violet-500/25" title="Do'kon havolasini nusxalash">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                       </button>
                     </div>
@@ -1233,21 +1248,36 @@
     function startSellingModal(idx) {
       const p = marketProducts[idx];
       if (!p) return;
-      const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 8) + (100 + idx);
-      const link = `sotibber.uz/shop/mening-dokonim/${slug}`;
+      const su = shopUrls();
+      const link = su.full || "Do'kon havolasi tayyorlanmoqda...";
       // Mahsulotni "Mening do'konim"ga qo'shamiz (agar avval qo'shilmagan bo'lsa)
-      if (!agentLinks.some((l) => l.product === p.name)) {
+      // va Supabase'ga (affiliate_products) yozamiz — do'kon web-ilovasida ko'rinadi.
+      if (!agentLinks.some((l) => l.product_id === p.id)) {
         agentLinks.push({
+          product_id: p.id,
           product: p.name,
           description: p.description,
           price: p.price,
           commission: p.commission,
           clicks: 0,
           sales: 0,
-          slug,
+          slug: '',
           images: p.images || [],
           image: p.image,
         });
+        const user = window.__SOTIBBER_USER;
+        if (user && window.sb && p.id) {
+          window.sb.from('affiliate_products')
+            .insert({ affiliate_id: user.id, product_id: p.id })
+            .then(({ error }) => {
+              if (error && !/duplicate|unique|23505/i.test(error.message || '')) {
+                console.warn('Do\'konga qo\'shishda xatolik:', error);
+                if (/affiliate_products|does not exist|schema cache/i.test(error.message || '')) {
+                  toast("Do'kon jadvali topilmadi — supabase_qoshimcha.sql'ni ishga tushiring");
+                }
+              }
+            });
+        }
       }
       openModal(`
         <div>
@@ -1532,7 +1562,14 @@
       const ms = t.closest('[data-mark-shipped]');
       if (ms) {
         const order = merchantOrders.find((o) => o.id === ms.dataset.markShipped);
-        if (order) order.status = "Yo'lda";
+        if (order) {
+          order.status = "Yo'lda";
+          // Supabase'da holatni yangilaymiz
+          if (order.dbId && window.sb) {
+            window.sb.from('orders').update({ status: "Yo'lda" }).eq('id', order.dbId)
+              .then(({ error }) => { if (error) console.warn('Holatni yangilashda xatolik:', error); });
+          }
+        }
         closeModal();
         renderOrdersBody($('.order-tab.btn-grad')?.dataset.orderTab || 'Barchasi');
         return toast('Buyurtma "Yo\'lda" deb belgilandi ✓');

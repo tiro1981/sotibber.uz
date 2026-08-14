@@ -52,6 +52,67 @@
     return p.image_url ? [p.image_url] : [];
   }
 
+  // Ism/matndan do'kon uchun "slug" yasaymiz (lotin harflari + raqam)
+  function slugify(s) {
+    const map = { 'ш': 'sh', 'ч': 'ch', 'ў': 'o', 'ғ': 'g', 'қ': 'q', 'ҳ': 'h', 'я': 'ya', 'ю': 'yu', 'ъ': '', 'ь': '', 'ё': 'yo', 'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'x', 'ц': 'ts', 'э': 'e', "'": '', 'ʻ': '', '`': '' };
+    return String(s || '').toLowerCase().split('').map((c) => (map[c] !== undefined ? map[c] : c)).join('')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24) || 'dokon';
+  }
+
+  // Foydalanuvchida do'kon manzili (shop_slug) yo'q bo'lsa — yaratamiz
+  async function ensureShopSlug(sb, user, profile) {
+    if (profile && profile.shop_slug) return profile;
+    const base = slugify((profile && profile.full_name) || (user.email || '').split('@')[0] || 'dokon');
+    const shopName = (profile && profile.shop_name) || ((profile && profile.full_name) ? profile.full_name + " do'koni" : "Mening do'konim");
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const candidate = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+      try {
+        const { data, error } = await sb.from('profiles')
+          .update({ shop_slug: candidate, shop_name: shopName })
+          .eq('id', user.id).select().single();
+        if (!error) return data;
+        // Ustun yo'q (migratsiya ishga tushmagan) — jimgina o'tkazamiz
+        if (/shop_slug|column .* does not exist|schema cache/i.test(error.message || '')) {
+          console.warn("`shop_slug` ustuni topilmadi — supabase_qoshimcha.sql'ni ishga tushiring.");
+          return profile;
+        }
+        // Slug band bo'lsa — boshqa suffiks bilan qayta urinamiz
+        if (!/duplicate|unique|23505/i.test(error.message || '')) { console.warn('shop_slug:', error); return profile; }
+      } catch (e) { console.warn('shop_slug:', e); return profile; }
+    }
+    return profile;
+  }
+
+  function fmtDate(ts) { return ts ? new Date(ts).toLocaleDateString('ru-RU') : ''; }
+
+  // orders qatorini sotuvchi "Buyurtmalar" jadvali shakliga o'tkazamiz
+  function mapOrderRow(o) {
+    return {
+      id: '#' + String(o.id).slice(0, 6),
+      dbId: o.id,
+      product: o.product_name || 'Mahsulot',
+      phone: o.customer_phone || '',
+      agent: o.affiliate_name || 'Sotib beruvchi',
+      commission: Number(o.commission) || 0,
+      total: Number(o.total) || 0,
+      date: fmtDate(o.created_at),
+      status: o.status || 'Yangi',
+    };
+  }
+
+  // orders qatorini sotib beruvchi "Mening sotuvlarim" jadvali shakliga o'tkazamiz
+  function mapSaleRow(o) {
+    const nm = (o.customer_name || 'M').trim();
+    return {
+      id: '#' + String(o.id).slice(0, 6),
+      product: o.product_name || 'Mahsulot',
+      date: fmtDate(o.created_at),
+      customer: (nm[0] || 'M').toUpperCase(),
+      status: o.status || 'Yangi',
+      commission: Number(o.commission) || 0,
+    };
+  }
+
   function mapProductRow(p) {
     const images = productImages(p);
     return {
@@ -87,12 +148,14 @@
     const user = session.user;
     window.__SOTIBBER_USER = user;
 
-    // Profil (ism, telefon)
+    // Profil (ism, telefon, do'kon slug)
     let profile = null;
     try {
       const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
       profile = data;
     } catch (e) { /* profil hali yaratilmagan bo'lishi mumkin */ }
+    // Do'kon manzili (shop_slug) yo'q bo'lsa — yaratamiz
+    profile = await ensureShopSlug(sb, user, profile);
     window.__SOTIBBER_PROFILE = profile;
 
     // Sotuvchining o'z mahsulotlari
@@ -136,6 +199,62 @@
     } catch (e) {
       console.error('Bozorni yuklashda xatolik:', e);
       window.__SOTIBBER_MARKET_PRODUCTS = [];
+    }
+
+    // Sotib beruvchining do'koni — qo'shgan mahsulotlari (affiliate_products)
+    try {
+      const { data, error } = await sb
+        .from('affiliate_products')
+        .select('product_id, created_at, products(*)')
+        .eq('affiliate_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      window.__SOTIBBER_AGENT_LINKS = (data || []).filter((r) => r.products).map((r) => {
+        const p = r.products;
+        const images = productImages(p);
+        const commissionPct = Number(p.commission) || 0;
+        return {
+          product_id: p.id,
+          product: p.name,
+          description: p.description || '',
+          price: Number(p.price),
+          commission: computeCommissionAmount(p.price, commissionPct),
+          clicks: 0,
+          sales: 0,
+          slug: '',
+          images,
+          image: images[0] || null,
+        };
+      });
+    } catch (e) {
+      console.error('Do\'kon mahsulotlarini yuklashda xatolik:', e);
+      window.__SOTIBBER_AGENT_LINKS = [];
+    }
+
+    // Sotuvchining buyurtmalari (orders) — seller_id = men
+    try {
+      const { data, error } = await sb.from('orders').select('*').eq('seller_id', user.id).order('created_at', { ascending: false });
+      if (error) throw error;
+      window.__SOTIBBER_ORDERS = (data || []).map(mapOrderRow);
+    } catch (e) {
+      console.error('Buyurtmalarni yuklashda xatolik:', e);
+      window.__SOTIBBER_ORDERS = [];
+    }
+
+    // Sotib beruvchining sotuvlari (orders) — affiliate_id = men
+    try {
+      const { data, error } = await sb.from('orders').select('*').eq('affiliate_id', user.id).order('created_at', { ascending: false });
+      if (error) throw error;
+      window.__SOTIBBER_SALES = (data || []).map(mapSaleRow);
+      // Do'kondagi har bir mahsulot uchun sotuvlar sonini hisoblaymiz
+      const links = window.__SOTIBBER_AGENT_LINKS || [];
+      (data || []).forEach((o) => {
+        const l = links.find((x) => x.product_id === o.product_id);
+        if (l) l.sales += Number(o.quantity) || 1;
+      });
+    } catch (e) {
+      console.error('Sotuvlarni yuklashda xatolik:', e);
+      window.__SOTIBBER_SALES = [];
     }
 
     await loadScript('script.js');

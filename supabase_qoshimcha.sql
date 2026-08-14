@@ -112,3 +112,99 @@ on conflict (key) do nothing;
 -- ---------------------------------------------------------------
 alter table public.products
   add column if not exists image_urls text[] not null default '{}';
+
+-- =====================================================================
+-- 5) SOTIB BERUVCHI DO'KONI (web-ilova) + BUYURTMALAR
+--
+--   Sotib beruvchi (affiliate) o'z do'konini ochadi va havolani ijtimoiy
+--   tarmoqlarga joylaydi. Xaridor havola orqali kiradi
+--   (dashboard/shop.html?s=<shop_slug>), do'kondagi mahsulotlarni ko'radi
+--   va buyurtma beradi. Buyurtma MAHSULOT EGASIGA (sotuvchiga) boradi.
+-- =====================================================================
+
+-- 5.1) profiles — do'kon manzili (slug) va do'kon nomi
+alter table public.profiles
+  add column if not exists shop_slug text,
+  add column if not exists shop_name text;
+
+create unique index if not exists profiles_shop_slug_key
+  on public.profiles (shop_slug) where shop_slug is not null;
+
+-- 5.2) affiliate_products — sotib beruvchi do'koniga qo'shgan mahsulotlar
+create table if not exists public.affiliate_products (
+  affiliate_id uuid not null references auth.users(id) on delete cascade,
+  product_id uuid not null references public.products(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (affiliate_id, product_id)
+);
+alter table public.affiliate_products enable row level security;
+
+-- Sotib beruvchi o'z do'konini boshqaradi
+drop policy if exists "AffProducts: o'zi ko'radi" on public.affiliate_products;
+create policy "AffProducts: o'zi ko'radi"
+  on public.affiliate_products for select to authenticated using (auth.uid() = affiliate_id);
+
+drop policy if exists "AffProducts: o'zi qo'shadi" on public.affiliate_products;
+create policy "AffProducts: o'zi qo'shadi"
+  on public.affiliate_products for insert to authenticated with check (auth.uid() = affiliate_id);
+
+drop policy if exists "AffProducts: o'zi o'chiradi" on public.affiliate_products;
+create policy "AffProducts: o'zi o'chiradi"
+  on public.affiliate_products for delete to authenticated using (auth.uid() = affiliate_id);
+
+-- Xaridor (anon) do'kon mahsulotlarini ko'radi — do'kon ommaviy
+drop policy if exists "AffProducts: ochiq ko'rish" on public.affiliate_products;
+create policy "AffProducts: ochiq ko'rish"
+  on public.affiliate_products for select to anon using (true);
+
+-- 5.3) orders — buyurtmalar (xaridor -> sotuvchi, komissiya -> sotib beruvchi)
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid references public.products(id) on delete set null,
+  seller_id uuid references auth.users(id) on delete set null,
+  affiliate_id uuid references auth.users(id) on delete set null,
+  product_name text,
+  affiliate_name text,
+  customer_name text not null,
+  customer_phone text not null,
+  address text,
+  quantity integer not null default 1,
+  unit_price numeric not null default 0,
+  total numeric not null default 0,
+  commission numeric not null default 0,
+  payment_method text,
+  status text not null default 'Yangi',
+  created_at timestamptz not null default now()
+);
+create index if not exists orders_seller_idx on public.orders (seller_id, created_at desc);
+create index if not exists orders_affiliate_idx on public.orders (affiliate_id, created_at desc);
+alter table public.orders enable row level security;
+
+-- Xaridor (anon) yoki login qilgan foydalanuvchi buyurtma beradi
+drop policy if exists "Orders: xaridor qo'shadi (anon)" on public.orders;
+create policy "Orders: xaridor qo'shadi (anon)"
+  on public.orders for insert to anon with check (true);
+
+drop policy if exists "Orders: xaridor qo'shadi (auth)" on public.orders;
+create policy "Orders: xaridor qo'shadi (auth)"
+  on public.orders for insert to authenticated with check (true);
+
+-- Sotuvchi o'z buyurtmalarini ko'radi va holatini yangilaydi
+drop policy if exists "Orders: sotuvchi ko'radi" on public.orders;
+create policy "Orders: sotuvchi ko'radi"
+  on public.orders for select to authenticated using (auth.uid() = seller_id);
+
+drop policy if exists "Orders: sotuvchi yangilaydi" on public.orders;
+create policy "Orders: sotuvchi yangilaydi"
+  on public.orders for update to authenticated
+  using (auth.uid() = seller_id) with check (auth.uid() = seller_id);
+
+-- Sotib beruvchi o'z sotuvlarini ko'radi
+drop policy if exists "Orders: sotib beruvchi ko'radi" on public.orders;
+create policy "Orders: sotib beruvchi ko'radi"
+  on public.orders for select to authenticated using (auth.uid() = affiliate_id);
+
+-- Admin panel (anon) barcha buyurtmalarni ko'radi
+drop policy if exists "Orders: admin ko'radi" on public.orders;
+create policy "Orders: admin ko'radi"
+  on public.orders for select to anon using (true);
