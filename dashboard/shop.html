@@ -68,10 +68,6 @@
         <h1 id="shopName" class="truncate font-display text-base font-bold text-white">Do'kon</h1>
         <p class="truncate text-[11px] text-slate-400">sotibber.uz do'koni</p>
       </div>
-      <button data-go="cart" class="relative grid h-10 w-10 place-items-center rounded-xl text-slate-200 hover:bg-white/10" aria-label="Savatcha">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 005.6 19H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-        <span id="cartBadge" class="absolute -right-0.5 -top-0.5 hidden min-w-[18px] rounded-full bg-emerald-500 px-1 text-center text-[10px] font-bold leading-[18px] text-white ring-2 ring-ink-900"></span>
-      </button>
     </header>
 
     <!-- ===== MAIN ===== -->
@@ -81,24 +77,32 @@
   </div>
 
   <!-- ===== BOTTOM NAV (app menyu) ===== -->
-  <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-ink-900/85 backdrop-blur-xl">
-    <div class="mx-auto flex max-w-2xl items-stretch justify-around px-2">
-      <button data-go="home" class="nav-tab flex flex-1 flex-col items-center gap-1 py-2.5 text-slate-400">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
-        <span class="text-[11px] font-semibold">Asosiy</span>
+  <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-ink-900/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+    <div class="mx-auto flex max-w-2xl items-stretch justify-around px-2 py-1.5">
+      <button data-go="home" class="nav-tab group flex flex-1 flex-col items-center gap-1 py-1.5">
+        <span class="nav-ico grid h-8 w-14 place-items-center rounded-full transition-all duration-200">
+          <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
+        </span>
+        <span class="nav-lbl text-[11px] font-semibold transition-colors">Asosiy</span>
       </button>
-      <button data-go="cart" class="nav-tab relative flex flex-1 flex-col items-center gap-1 py-2.5 text-slate-400">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 005.6 19H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-        <span class="text-[11px] font-semibold">Savatcha</span>
-        <span id="cartBadge2" class="absolute right-[22%] top-1.5 hidden min-w-[16px] rounded-full bg-emerald-500 px-1 text-center text-[9px] font-bold leading-4 text-white"></span>
+      <button data-go="cart" class="nav-tab group flex flex-1 flex-col items-center gap-1 py-1.5">
+        <span class="nav-ico relative grid h-8 w-14 place-items-center rounded-full transition-all duration-200">
+          <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 4.6A1 1 0 005.6 19H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          <span id="cartBadge2" class="absolute right-2 top-0 hidden min-w-[16px] rounded-full bg-emerald-500 px-1 text-center text-[9px] font-bold leading-4 text-white ring-2 ring-ink-900"></span>
+        </span>
+        <span class="nav-lbl text-[11px] font-semibold transition-colors">Savatcha</span>
       </button>
-      <button data-go="orders" class="nav-tab flex flex-1 flex-col items-center gap-1 py-2.5 text-slate-400">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-        <span class="text-[11px] font-semibold">Buyurtma</span>
+      <button data-go="orders" class="nav-tab group flex flex-1 flex-col items-center gap-1 py-1.5">
+        <span class="nav-ico grid h-8 w-14 place-items-center rounded-full transition-all duration-200">
+          <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        </span>
+        <span class="nav-lbl text-[11px] font-semibold transition-colors">Buyurtma</span>
       </button>
-      <button data-go="profile" class="nav-tab flex flex-1 flex-col items-center gap-1 py-2.5 text-slate-400">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-        <span class="text-[11px] font-semibold">Profil</span>
+      <button data-go="profile" class="nav-tab group flex flex-1 flex-col items-center gap-1 py-1.5">
+        <span class="nav-ico grid h-8 w-14 place-items-center rounded-full transition-all duration-200">
+          <svg class="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </span>
+        <span class="nav-lbl text-[11px] font-semibold transition-colors">Profil</span>
       </button>
     </div>
   </nav>
