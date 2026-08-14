@@ -11,6 +11,14 @@
 (function () {
   'use strict';
 
+  // bfcache guard: brauzer "orqaga/oldinga" bilan sahifani keshdan tiklaganda
+  // skriptlar qayta ishlamaydi — natijada chiqib bo'lingandan keyin ham eski
+  // dashboard ko'rinib qolishi mumkin. Shu holatda sahifani qayta yuklaymiz,
+  // shunda quyidagi boot() sessiyani qaytadan tekshiradi (yo'q bo'lsa loginga).
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) window.location.reload();
+  });
+
   function initialPanel() {
     let p = new URLSearchParams(window.location.search).get('panel');
     if (!p) {

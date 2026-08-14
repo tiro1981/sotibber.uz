@@ -31,8 +31,11 @@
     },
 
     async signOut(redirectTo) {
-      await window.sb.auth.signOut();
-      window.location.href = redirectTo || '../landing/index.html';
+      // Sessiyani lokal tozalaymiz (tarmoq xatosi bo'lsa ham ishlaydi)
+      try { await window.sb.auth.signOut({ scope: 'local' }); } catch (e) { /* baribir davom etamiz */ }
+      // Login sahifasiga o'tamiz va uni tarixdan almashtiramiz — shunda
+      // "orqaga" tugmasi bosilganda ham dashboardga qaytib bo'lmaydi.
+      window.location.replace(redirectTo || 'login.html');
     },
 
     // Uzbekcha xato xabarlari (Supabase inglizcha xabarlarini tarjima qiladi)
