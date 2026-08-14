@@ -153,6 +153,40 @@
     </div>
   </div>
 
+  <!-- ===================== SUPPORT CHAT WIDGET (foydalanuvchi -> admin) ===================== -->
+  <div id="supportChat" class="fixed bottom-5 right-5 z-[70]">
+    <!-- Ochish tugmasi -->
+    <button id="scToggle" class="relative grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-indigo-brand to-indigo-deep text-white shadow-xl shadow-indigo-500/40 transition hover:scale-105 active:scale-95" aria-label="Yordam chat">
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l.8-4.2A7.9 7.9 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      <span id="scUnread" class="absolute -right-0.5 -top-0.5 hidden min-w-[20px] rounded-full bg-rose-500 px-1 text-center text-[11px] font-bold leading-5 text-white ring-2 ring-white"></span>
+    </button>
+
+    <!-- Chat oynasi -->
+    <div id="scPanel" class="absolute bottom-16 right-0 hidden w-[calc(100vw-2.5rem)] max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <div class="flex items-center justify-between bg-gradient-to-r from-indigo-brand to-indigo-deep px-4 py-3 text-white">
+        <div class="flex items-center gap-2">
+          <span class="grid h-8 w-8 place-items-center rounded-full bg-white/20">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0z"/></svg>
+          </span>
+          <div>
+            <p class="text-sm font-bold leading-tight">Qo'llab-quvvatlash</p>
+            <p class="text-[11px] leading-tight text-indigo-100">Savolingizni yozing — javob beramiz</p>
+          </div>
+        </div>
+        <button id="scClose" class="grid h-8 w-8 place-items-center rounded-lg text-white/80 hover:bg-white/15 hover:text-white" aria-label="Yopish">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="scThread" class="h-80 space-y-2.5 overflow-y-auto bg-slate-50 p-4 text-sm"></div>
+      <form id="scForm" class="flex items-center gap-2 border-t border-slate-100 p-3">
+        <input id="scInput" type="text" autocomplete="off" placeholder="Xabar yozing..." class="flex-1 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-brand focus:ring-2 focus:ring-indigo-100" />
+        <button type="submit" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-brand text-white transition hover:bg-indigo-deep active:scale-95">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ===================== SUPABASE + AUTH ===================== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-config.js"></script>
@@ -161,5 +195,98 @@
   <!-- app-init.js foydalanuvchi login qilganini tekshiradi, Supabase'dan
        ma'lumotlarni oldindan yuklaydi, so'ng script.js'ni ishga tushiradi. -->
   <script src="app-init.js"></script>
+
+  <!-- Support chat mantiq -->
+  <script>
+  (function () {
+    'use strict';
+    const $ = (s) => document.querySelector(s);
+    const sb = window.sb;
+    if (!sb) return;
+
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let userId = null;
+    let messages = [];
+    let open = false;
+    let pollTimer = null;
+
+    const panel = $('#scPanel'), thread = $('#scThread'), unreadDot = $('#scUnread');
+
+    function renderThread() {
+      if (!messages.length) {
+        thread.innerHTML = '<p class="mt-6 text-center text-xs text-slate-400">Savolingizni yozing — administrator tez orada javob beradi.</p>';
+        return;
+      }
+      thread.innerHTML = messages.map((m) => {
+        const mine = m.sender === 'user';
+        return `
+          <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
+            <div class="max-w-[80%] rounded-2xl px-3 py-2 ${mine ? 'bg-indigo-brand text-white' : 'bg-white text-slate-800 ring-1 ring-slate-200'}">
+              <p class="whitespace-pre-wrap break-words">${esc(m.body)}</p>
+            </div>
+          </div>`;
+      }).join('');
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function updateUnread() {
+      const n = messages.filter((m) => m.sender === 'admin' && !m.read_by_user).length;
+      if (n > 0 && !open) { unreadDot.textContent = n; unreadDot.classList.remove('hidden'); }
+      else unreadDot.classList.add('hidden');
+    }
+
+    async function load() {
+      if (!userId) return;
+      const { data, error } = await sb.from('support_messages').select('*').eq('user_id', userId).order('created_at', { ascending: true });
+      if (error) { console.error('Chat yuklash:', error); return; }
+      messages = data || [];
+      if (open) renderThread();
+      updateUnread();
+    }
+
+    async function markAdminRead() {
+      const ids = messages.filter((m) => m.sender === 'admin' && !m.read_by_user).map((m) => m.id);
+      if (!ids.length) return;
+      messages.forEach((m) => { if (ids.includes(m.id)) m.read_by_user = true; });
+      updateUnread();
+      try { await sb.from('support_messages').update({ read_by_user: true }).in('id', ids); } catch (e) { console.error(e); }
+    }
+
+    function openPanel() {
+      open = true;
+      panel.classList.remove('hidden');
+      renderThread();
+      markAdminRead();
+    }
+    function closePanel() { open = false; panel.classList.add('hidden'); }
+
+    $('#scToggle').addEventListener('click', () => (open ? closePanel() : openPanel()));
+    $('#scClose').addEventListener('click', closePanel);
+
+    $('#scForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = $('#scInput');
+      const body = input.value.trim();
+      if (!body || !userId) return;
+      input.value = '';
+      const { data, error } = await sb.from('support_messages')
+        .insert({ user_id: userId, sender: 'user', body, read_by_user: true })
+        .select().single();
+      if (error) { console.error(error); input.value = body; return; }
+      messages.push(data);
+      renderThread();
+    });
+
+    // Sessiyani olib, chatni ishga tushiramiz
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { $('#supportChat').classList.add('hidden'); return; }
+      userId = session.user.id;
+      await load();
+      // Har 15 soniyada yangi javoblarni tekshiramiz
+      pollTimer = setInterval(load, 15000);
+    })();
+  })();
+  </script>
 </body>
 </html>

@@ -209,8 +209,8 @@
         });
       });
 
-      // Tabs
-      let activeTab = 'login';
+      // Tabs — landing'dan ?tab=register bilan kelsa, ro'yxatdan o'tish ochiladi
+      let activeTab = params.get('tab') === 'register' ? 'register' : 'login';
       function paintTabs() {
         document.querySelectorAll('.tab-btn').forEach((b) => {
           const on = b.dataset.tab === activeTab;

@@ -179,3 +179,67 @@ create policy "Admin: barcha profillarni ko'rish"
   on public.profiles for select
   to anon
   using (true);
+
+-- ---------------------------------------------------------------
+-- 5) SUPPORT CHAT — foydalanuvchi ↔ admin savol-javob
+--
+--   Foydalanuvchi savol yozadi (sender='user'), admin panel javob
+--   beradi (sender='admin'). Admin anon kalit orqali ishlagani uchun
+--   quyida anon'ga to'liq o'qish/yozish beriladi — yuqoridagi ADMIN
+--   bo'limidagi xavfsizlik ogohlantirishi shu jadvalga ham tegishli.
+-- ---------------------------------------------------------------
+create table if not exists public.support_messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  sender text not null check (sender in ('user', 'admin')),
+  body text not null,
+  read_by_admin boolean not null default false,
+  read_by_user boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists support_messages_user_idx on public.support_messages (user_id, created_at);
+
+alter table public.support_messages enable row level security;
+
+-- Foydalanuvchi o'z xabarlarini ko'radi
+drop policy if exists "Support: o'zini ko'rish" on public.support_messages;
+create policy "Support: o'zini ko'rish"
+  on public.support_messages for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+-- Foydalanuvchi o'z nomidan xabar yozadi
+drop policy if exists "Support: o'zi yozadi" on public.support_messages;
+create policy "Support: o'zi yozadi"
+  on public.support_messages for insert
+  to authenticated
+  with check (auth.uid() = user_id and sender = 'user');
+
+-- Foydalanuvchi o'z xabarlari holatini yangilaydi (o'qildi)
+drop policy if exists "Support: o'zi yangilaydi" on public.support_messages;
+create policy "Support: o'zi yangilaydi"
+  on public.support_messages for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Admin panel (anon) barcha xabarlarni ko'radi, yozadi va yangilaydi
+drop policy if exists "Support: admin ko'radi" on public.support_messages;
+create policy "Support: admin ko'radi"
+  on public.support_messages for select
+  to anon
+  using (true);
+
+drop policy if exists "Support: admin yozadi" on public.support_messages;
+create policy "Support: admin yozadi"
+  on public.support_messages for insert
+  to anon
+  with check (true);
+
+drop policy if exists "Support: admin yangilaydi" on public.support_messages;
+create policy "Support: admin yangilaydi"
+  on public.support_messages for update
+  to anon
+  using (true)
+  with check (true);

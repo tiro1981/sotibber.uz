@@ -5,16 +5,6 @@
 (function () {
   'use strict';
 
-  // Dashboardga o'tish: tanlangan rolga qarab panelni ochadi.
-  // 'seller'  -> Sotuvchi paneli
-  // 'affiliate' -> Sotib beruvchi paneli
-  function goToDashboard(role) {
-    // Tanlangan rolni bir necha usulda uzatamiz (turli muhitlarda ishlashi uchun):
-    // 1) URL query (?panel=), 2) hash (#role), 3) localStorage.
-    try { localStorage.setItem('sotibber_panel', role); } catch (e) {}
-    window.location.href = '/dashboard/index.html?panel=' + encodeURIComponent(role) + '#' + role;
-  }
-
   /* -------------------- Mobile menu toggle -------------------- */
   const menuBtn = document.getElementById('menuBtn');
   const mobileMenu = document.getElementById('mobileMenu');
@@ -24,53 +14,17 @@
     a.addEventListener('click', () => mobileMenu.classList.add('hidden'))
   );
 
-  /* -------------------- Role selection modal -------------------- */
-  const modal = document.getElementById('roleModal');
-  let lastFocused = null;
-
-  function openModal() {
-    lastFocused = document.activeElement;
-    modal.classList.remove('hidden-modal');
-    document.body.style.overflow = 'hidden'; // scrollni bloklash
-  }
-
-  function closeModal() {
-    modal.classList.add('hidden-modal');
-    document.body.style.overflow = '';
-    if (lastFocused) lastFocused.focus();
-  }
-
-  // [data-open-modal] tugmalari:
-  //  - agar data-role bo'lsa (masalan hero tugmalari) -> to'g'ridan-to'g'ri o'sha panelga o'tadi
-  //  - aks holda (Kirish / Ro'yxatdan o'tish) -> rol tanlash oynasini ochadi
-  document.querySelectorAll('[data-open-modal]').forEach((btn) => {
+  /* -------------------- Auth sahifasiga o'tish --------------------
+     Rol (sotuvchi/sotib beruvchi) endi landing'da tanlanmaydi — u
+     ro'yxatdan o'tgandan keyin login sahifasida tanlanadi. Shuning uchun
+     tugmalar to'g'ridan-to'g'ri login/ro'yxatdan o'tish sahifasiga olib boradi. */
+  document.querySelectorAll('[data-goto]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const role = btn.getAttribute('data-role');
-      if (role) {
-        goToDashboard(role);
-      } else {
-        openModal();
-      }
-    });
-  });
-
-  // Yopish (backdrop + yopish tugmasi)
-  document.querySelectorAll('[data-close-modal]').forEach((el) =>
-    el.addEventListener('click', closeModal)
-  );
-
-  // Escape bosilganda yopish
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modal.classList.contains('hidden-modal')) closeModal();
-  });
-
-  // Oyna ichida rol tanlash -> tegishli panelga o'tkazadi
-  document.querySelectorAll('[data-role-choice]').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      const role = el.getAttribute('data-role-choice'); // 'seller' | 'affiliate'
-      goToDashboard(role);
+      const dest = btn.getAttribute('data-goto') === 'register'
+        ? '/dashboard/login.html?tab=register'
+        : '/dashboard/login.html';
+      window.location.href = dest;
     });
   });
 
