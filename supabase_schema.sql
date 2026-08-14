@@ -243,3 +243,48 @@ create policy "Support: admin yangilaydi"
   to anon
   using (true)
   with check (true);
+
+-- ---------------------------------------------------------------
+-- 6) SITE SETTINGS — sayt sozlamalari (messenjer havolalari va h.k.)
+--
+--   Admin panel bu yerga Telegram/Instagram/YouTube/TikTok havolalarini
+--   yozadi; landing (footer) va dashboard shu havolalarni o'qib
+--   tugmalarga qo'yadi.
+--
+--   O'qish hammaga ochiq (havolalar ommaviy). Yozish anon'ga beriladi
+--   (admin panel anon kalit orqali ishlaydi) — yuqoridagi ADMIN
+--   bo'limidagi xavfsizlik ogohlantirishi shu yerga ham tegishli.
+-- ---------------------------------------------------------------
+create table if not exists public.site_settings (
+  key text primary key,
+  value text,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.site_settings enable row level security;
+
+-- Hamma o'qiy oladi (footer havolalari ommaviy)
+drop policy if exists "Settings: ochiq o'qish" on public.site_settings;
+create policy "Settings: ochiq o'qish"
+  on public.site_settings for select
+  to anon, authenticated
+  using (true);
+
+-- Admin panel (anon) yozadi va yangilaydi
+drop policy if exists "Settings: admin yozadi" on public.site_settings;
+create policy "Settings: admin yozadi"
+  on public.site_settings for insert
+  to anon
+  with check (true);
+
+drop policy if exists "Settings: admin yangilaydi" on public.site_settings;
+create policy "Settings: admin yangilaydi"
+  on public.site_settings for update
+  to anon
+  using (true)
+  with check (true);
+
+-- Boshlang'ich bo'sh qatorlar (ixtiyoriy)
+insert into public.site_settings (key, value) values
+  ('telegram', ''), ('instagram', ''), ('youtube', ''), ('tiktok', '')
+on conflict (key) do nothing;
