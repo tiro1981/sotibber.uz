@@ -267,9 +267,9 @@
           <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
           Boshqa manzil kiritish
         </button>
-        <textarea id="coAddrCustom" rows="2" placeholder="Viloyat, tuman, ko'cha, uy..." class="fld mt-1 hidden w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none"></textarea>
+        <div id="coNewAddr" class="hidden pt-1">${addressFormHtml('co')}</div>
       </div>` : `
-      <textarea required id="coAddrCustom" rows="2" placeholder="Viloyat, tuman, ko'cha, uy..." class="fld w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none"></textarea>`;
+      <div>${addressFormHtml('co')}</div>`;
 
     $('#shopRoot').innerHTML = `
       <div class="animate-fadeUp">
@@ -320,17 +320,17 @@
       const picked = $$('[data-pick-addr]').find((el) => el.classList.contains('border-violet-400/60'));
       const val = picked ? picked.dataset.pickAddr : '0';
       if (val === 'new') {
-        address = ($('#coAddrCustom').value || '').trim();
+        address = readAddressForm('co');
         if (address) { addrs.push({ id: Date.now(), text: address }); setAddresses(addrs); }
       } else {
         address = ((addrs[Number(val)] || {}).text) || '';
       }
     } else {
-      address = ($('#coAddrCustom').value || '').trim();
+      address = readAddressForm('co');
       if (address) setAddresses([{ id: Date.now(), text: address }]);
     }
 
-    if (!name || !phone || !address) { toast('Ism, telefon va manzilni to\'ldiring'); return; }
+    if (!name || !phone || !address) { toast('Ism, telefon va to\'liq manzilni (viloyat, tuman, uy) kiriting'); return; }
 
     // Mijoz ma'lumotini keyingi safar uchun saqlaymiz
     writeLS(K.cust, { name, phone });
@@ -478,6 +478,56 @@
   }
 
   /* ---- Profil: manzillar (qo'shish/o'chirish) ---- */
+  /* ---- O'zbekiston hududlari (viloyat -> tuman/shahar) ---- */
+  const REGIONS = {
+    "Toshkent shahri": ["Bektemir", "Chilonzor", "Mirobod", "Mirzo Ulug'bek", "Olmazor", "Sergeli", "Shayxontohur", "Uchtepa", "Yakkasaroy", "Yashnobod", "Yunusobod", "Yangihayot"],
+    "Toshkent viloyati": ["Angren", "Bekobod", "Bo'ka", "Bo'stonliq", "Chinoz", "Chirchiq", "Nurafshon", "Ohangaron", "Olmaliq", "Oqqo'rg'on", "O'rtachirchiq", "Parkent", "Piskent", "Qibray", "Quyichirchiq", "Yangiyo'l", "Yuqorichirchiq", "Zangiota"],
+    "Andijon": ["Andijon shahri", "Xonobod", "Andijon tumani", "Asaka", "Baliqchi", "Buloqboshi", "Bo'z", "Izboskan", "Jalaquduq", "Marhamat", "Oltinko'l", "Paxtaobod", "Qo'rg'ontepa", "Shahrixon", "Ulug'nor", "Xo'jaobod"],
+    "Farg'ona": ["Farg'ona shahri", "Marg'ilon", "Qo'qon", "Quvasoy", "Beshariq", "Bog'dod", "Buvayda", "Dang'ara", "Farg'ona tumani", "Furqat", "Oltiariq", "O'zbekiston", "Qo'shtepa", "Quva", "Rishton", "So'x", "Toshloq", "Uchko'prik", "Yozyovon"],
+    "Namangan": ["Namangan shahri", "Chortoq", "Chust", "Kosonsoy", "Mingbuloq", "Namangan tumani", "Norin", "Pop", "To'raqo'rg'on", "Uchqo'rg'on", "Uychi", "Yangiqo'rg'on", "Davlatobod"],
+    "Samarqand": ["Samarqand shahri", "Kattaqo'rg'on shahri", "Bulung'ur", "Ishtixon", "Jomboy", "Kattaqo'rg'on tumani", "Narpay", "Nurobod", "Oqdaryo", "Pastdarg'om", "Paxtachi", "Payariq", "Qo'shrabot", "Samarqand tumani", "Toyloq", "Urgut"],
+    "Buxoro": ["Buxoro shahri", "Kogon shahri", "Buxoro tumani", "G'ijduvon", "Jondor", "Kogon tumani", "Olot", "Peshku", "Qorako'l", "Qorovulbozor", "Romitan", "Shofirkon", "Vobkent"],
+    "Xorazm": ["Urganch shahri", "Xiva shahri", "Bog'ot", "Gurlan", "Hazorasp", "Xonqa", "Qo'shko'pir", "Shovot", "Urganch tumani", "Xiva tumani", "Yangiariq", "Yangibozor", "Tuproqqal'a"],
+    "Qashqadaryo": ["Qarshi shahri", "Shahrisabz shahri", "Chiroqchi", "Dehqonobod", "G'uzor", "Kasbi", "Kitob", "Koson", "Mirishkor", "Muborak", "Nishon", "Qamashi", "Qarshi tumani", "Shahrisabz tumani", "Yakkabog'", "Ko'kdala"],
+    "Surxondaryo": ["Termiz shahri", "Angor", "Bandixon", "Boysun", "Denov", "Jarqo'rg'on", "Muzrabot", "Oltinsoy", "Qiziriq", "Qumqo'rg'on", "Sariosiyo", "Sherobod", "Sho'rchi", "Termiz tumani", "Uzun"],
+    "Jizzax": ["Jizzax shahri", "Arnasoy", "Baxmal", "Do'stlik", "Forish", "G'allaorol", "Sharof Rashidov", "Mirzacho'l", "Paxtakor", "Yangiobod", "Zafarobod", "Zarbdor", "Zomin"],
+    "Sirdaryo": ["Guliston shahri", "Yangiyer", "Shirin", "Boyovut", "Guliston tumani", "Mirzaobod", "Oqoltin", "Sardoba", "Sayxunobod", "Sirdaryo tumani", "Xovos"],
+    "Navoiy": ["Navoiy shahri", "Zarafshon shahri", "Karmana", "Konimex", "Navbahor", "Nurota", "Qiziltepa", "Tomdi", "Uchquduq", "Xatirchi"],
+    "Qoraqalpog'iston": ["Nukus shahri", "Amudaryo", "Beruniy", "Chimboy", "Ellikqal'a", "Kegeyli", "Mo'ynoq", "Nukus tumani", "Qanliko'l", "Qo'ng'irot", "Qorao'zak", "Shumanay", "Taxtako'pir", "To'rtko'l", "Xo'jayli", "Bo'zatov"],
+  };
+
+  // Tuzilmali manzil forma (viloyat/tuman tanlash + qolganini qo'lda)
+  function addressFormHtml(p) {
+    const regions = Object.keys(REGIONS);
+    return `
+      <div class="addr-form grid grid-cols-1 gap-2.5">
+        <select id="${p}Viloyat" class="addr-viloyat fld w-full rounded-xl px-3.5 py-2.5 text-sm outline-none">
+          <option value="" class="bg-ink-800">Viloyatni tanlang</option>
+          ${regions.map((r) => `<option class="bg-ink-800" value="${esc(r)}">${esc(r)}</option>`).join('')}
+        </select>
+        <select id="${p}Tuman" class="addr-tuman fld w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" disabled>
+          <option value="" class="bg-ink-800">Avval viloyatni tanlang</option>
+        </select>
+        <input id="${p}Mahalla" placeholder="Mahalla / ko'cha nomi" class="fld w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+        <div class="grid grid-cols-3 gap-2">
+          <input id="${p}Uy" inputmode="text" placeholder="Uy №" class="fld rounded-xl px-3 py-2.5 text-sm outline-none" />
+          <input id="${p}Padez" inputmode="numeric" placeholder="Padez" class="fld rounded-xl px-3 py-2.5 text-sm outline-none" />
+          <input id="${p}Kvartira" inputmode="numeric" placeholder="Kvartira" class="fld rounded-xl px-3 py-2.5 text-sm outline-none" />
+        </div>
+      </div>`;
+  }
+
+  // Formani o'qib, bitta manzil satriga aylantiramiz (viloyat/tuman/uy majburiy)
+  function readAddressForm(p) {
+    const g = (id) => { const el = $('#' + p + id); return el ? el.value.trim() : ''; };
+    const v = g('Viloyat'), t = g('Tuman'), m = g('Mahalla'), u = g('Uy'), pd = g('Padez'), k = g('Kvartira');
+    if (!v || !t || !m || !u) return null;
+    let s = v + ', ' + t + ', ' + m + ', ' + u + '-uy';
+    if (pd) s += ', ' + pd + '-padez';
+    if (k) s += ', ' + k + '-kvartira';
+    return s;
+  }
+
   function addressesModal() {
     const addrs = getAddresses();
     const list = addrs.length ? addrs.map((a, i) => `
@@ -494,17 +544,17 @@
         </div>
         <div class="space-y-3 p-5">
           <div id="addrList" class="space-y-2">${list}</div>
-          <form id="addrForm" class="space-y-2 border-t border-white/10 pt-4">
+          <form id="addrForm" class="space-y-2.5 border-t border-white/10 pt-4">
             <span class="text-sm font-semibold text-slate-200">Yangi manzil qo'shish</span>
-            <textarea id="addrText" rows="2" required placeholder="Viloyat, tuman, ko'cha, uy..." class="fld w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none"></textarea>
+            ${addressFormHtml('addr')}
             <button type="submit" class="btn-grad w-full rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-95">＋ Manzil qo'shish</button>
           </form>
         </div>
       </div>`);
     $('#addrForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      const text = $('#addrText').value.trim();
-      if (!text) return;
+      const text = readAddressForm('addr');
+      if (!text) { toast('Viloyat, tuman, mahalla va uy raqamini kiriting'); return; }
       const a = getAddresses(); a.push({ id: Date.now(), text }); setAddresses(a);
       addressesModal(); toast('Manzil qo\'shildi ✓');
     });
@@ -801,14 +851,14 @@
 
     const pick = t.closest('[data-pick-addr]');
     if (pick) {
-      const custom = $('#coAddrCustom');
       $$('[data-pick-addr]').forEach((el) => {
         const on = el === pick;
         el.classList.toggle('border-violet-400/60', on);
         el.classList.toggle('bg-violet-500/10', on);
         el.classList.toggle('border-white/10', !on);
       });
-      if (custom) custom.classList.toggle('hidden', pick.dataset.pickAddr !== 'new');
+      const newBox = $('#coNewAddr');
+      if (newBox) newBox.classList.toggle('hidden', pick.dataset.pickAddr !== 'new');
       return;
     }
 
@@ -841,6 +891,19 @@
       c[i].qty = q.dataset.qty === 'inc' ? Math.min(99, c[i].qty + 1) : Math.max(1, c[i].qty - 1);
       setCart(c); return renderCart();
     }
+  });
+
+  // Viloyat tanlanganda — tumanlar ro'yxatini to'ldiramiz
+  document.addEventListener('change', (e) => {
+    const vs = e.target.closest('.addr-viloyat');
+    if (!vs) return;
+    const form = vs.closest('.addr-form');
+    const ts = form && form.querySelector('.addr-tuman');
+    if (!ts) return;
+    const list = REGIONS[vs.value] || [];
+    ts.innerHTML = '<option value="" class="bg-ink-800">' + (list.length ? 'Tumanni tanlang' : 'Avval viloyatni tanlang') + '</option>'
+      + list.map((d) => `<option class="bg-ink-800" value="${esc(d)}">${esc(d)}</option>`).join('');
+    ts.disabled = !list.length;
   });
 
   // Yozishuv: fayl tanlash va yuborish
