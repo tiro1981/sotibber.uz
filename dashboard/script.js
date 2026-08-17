@@ -169,6 +169,7 @@
       link: '<path stroke-linecap="round" stroke-linejoin="round" d="M13.83 10.17a4 4 0 00-5.66 0l-4 4a4 4 0 105.66 5.66l1.1-1.1m-.76-4.9a4 4 0 005.66 0l4-4a4 4 0 00-5.66-5.66l-1.1 1.1"/>',
       chart: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 15l3-4 3 3 5-7"/>',
       shop: '<path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11a1 1 0 01-1 1H5a1 1 0 01-1-1L5 9z"/>',
+      chat: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l.8-4.2A7.9 7.9 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
     };
 
     function navIcon(path) {
@@ -191,6 +192,7 @@
           { id: 'dashboard', title: 'Bosh sahifa', icon: icon.home },
           { id: 'products', title: 'Mahsulotlar', icon: icon.box },
           { id: 'orders', title: 'Buyurtmalar', icon: icon.cart },
+          { id: 'messages', title: 'Xabarlar', icon: icon.chat },
           { id: 'finance', title: 'Moliya', icon: icon.wallet },
         ],
       },
@@ -201,6 +203,7 @@
           { id: 'dashboard', title: 'Bosh sahifa', icon: icon.home },
           { id: 'market', title: 'Mahsulotlar bozori', icon: icon.store },
           { id: 'shop', title: "Mening do'konim", icon: icon.shop },
+          { id: 'messages', title: 'Xabarlar', icon: icon.chat },
           { id: 'sales', title: 'Mening sotuvlarim', icon: icon.chart },
           { id: 'wallet', title: 'Hamyon', icon: icon.wallet },
         ],
@@ -726,11 +729,14 @@
               <span class="font-display text-base font-bold text-emerald-300">${uzs(p.commission)} so'm</span>
             </div>
             <div class="mt-3 flex gap-2">
-              <button data-market-detail="${i}" class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Batafsil</button>
               <button data-start-selling="${i}" class="btn-grad flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-95">
                 Sotishni boshlash
               </button>
+              <button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg>
+              </button>
             </div>
+            <button data-market-detail="${i}" class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/10">Batafsil ma'lumot</button>
           </div>
         </div>`;
     }
@@ -924,6 +930,7 @@
           </div>
           ${p.action ? `
           <div class="sticky bottom-0 flex gap-3 border-t border-white/10 bg-ink-900/60 p-6 backdrop-blur">
+            ${kind === 'market' && marketProducts[idx] && marketProducts[idx].seller_id ? `<button type="button" data-msg-seller="${idx}" title="Sotuvchi bilan xabarlashish" class="grid w-12 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg></button>` : ''}
             <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
             <button type="button" ${p.action.attr} class="${p.action.cls} flex-1 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">${p.action.label}</button>
           </div>` : `
@@ -1506,6 +1513,261 @@
     }
 
     /* =========================================================
+       XABARLAR (messaging) — sotuvchi ↔ sotib beruvchi
+    ========================================================= */
+    const ME = (window.__SOTIBBER_USER || {}).id || null;
+    let messages = Array.isArray(window.__SOTIBBER_MESSAGES) ? window.__SOTIBBER_MESSAGES : [];
+    let chatSel = null;       // tanlangan suhbat (conversation_id)
+    let chatDraft = null;     // yangi suhbat (hali xabar yo'q): { conversation_id, other, product_id }
+    let chatFile = null;      // biriktiriladigan fayl
+    let chatPoll = null;
+
+    function myName() {
+      const p = window.__SOTIBBER_PROFILE || {}, u = window.__SOTIBBER_USER || {};
+      return p.full_name || u.email || 'Men';
+    }
+    function userConvId(otherId) { return 'u:' + [ME, otherId].sort().join('__'); }
+
+    // Bir xabar bo'yicha "qarshi tomon" (men bo'lmagan ishtirokchi)
+    function otherParty(m) {
+      if (m.sender_id === ME) return { id: m.recipient_id || null, guest: m.recipient_id ? null : (m.guest_id || null), name: m.recipient_name || (m.guest_id ? 'Mehmon' : 'Foydalanuvchi') };
+      return { id: m.sender_id || null, guest: m.sender_id ? null : (m.guest_id || null), name: m.sender_name || (m.guest_id ? 'Mehmon' : 'Foydalanuvchi') };
+    }
+
+    function groupConversations() {
+      const map = {};
+      messages.forEach((m) => {
+        const cid = m.conversation_id;
+        if (!map[cid]) map[cid] = { conversation_id: cid, msgs: [], other: otherParty(m), unread: 0 };
+        map[cid].msgs.push(m);
+        if (m.sender_id !== ME) map[cid].other = otherParty(m); // qarshi tomon ismini aniqroq olamiz
+        if (m.recipient_id === ME && !m.read_by_recipient) map[cid].unread++;
+      });
+      const arr = Object.keys(map).map((k) => { const c = map[k]; c.last = c.msgs[c.msgs.length - 1]; return c; });
+      if (chatDraft && !map[chatDraft.conversation_id]) {
+        arr.push({ conversation_id: chatDraft.conversation_id, msgs: [], other: chatDraft.other, unread: 0, last: null, draft: true });
+      }
+      arr.sort((a, b) => new Date(b.last ? b.last.created_at : 0) - new Date(a.last ? a.last.created_at : 0));
+      return arr;
+    }
+
+    function unreadTotal() { return messages.filter((m) => m.recipient_id === ME && !m.read_by_recipient).length; }
+
+    function timeStr(ts) {
+      if (!ts) return '';
+      const d = new Date(ts);
+      return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Suhbat oynasi (ikkala panel uchun bir xil)
+    function messagesView() {
+      return `
+        <div class="view-enter">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 class="font-display text-lg font-bold text-white">Xabarlar</h2>
+              <p class="text-sm text-slate-400">Sotuvchi va sotib beruvchilar bilan yozishing</p>
+            </div>
+            <button data-msg-refresh class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Yangilash
+            </button>
+          </div>
+          <div class="grid gap-4 lg:grid-cols-[300px_1fr]">
+            <div id="convList" class="glass rounded-2xl p-2 lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto"></div>
+            <div id="chatPanel" class="glass flex min-h-[60vh] flex-col rounded-2xl lg:h-[calc(100vh-13rem)]"></div>
+          </div>
+        </div>`;
+    }
+
+    function renderConvList() {
+      const box = $('#convList');
+      if (!box) return;
+      const convs = groupConversations();
+      box.innerHTML = convs.map((c) => {
+        const active = c.conversation_id === chatSel;
+        const preview = c.last ? ((c.last.sender_id === ME ? 'Siz: ' : '') + (c.last.body || (c.last.attachment_type === 'image' ? '📷 Rasm' : c.last.attachment_type === 'video' ? '🎬 Video' : '📎 Fayl'))) : 'Yangi suhbat';
+        return `
+          <button data-open-conv="${esc(c.conversation_id)}" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${active ? 'bg-violet-500/15 ring-1 ring-violet-400/40' : 'hover:bg-white/5'}">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-sm font-bold text-white">${esc((c.other.name || 'F').slice(0, 1).toUpperCase())}</span>
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center justify-between gap-2">
+                <span class="truncate text-sm font-semibold text-white">${esc(c.other.name || 'Foydalanuvchi')}</span>
+                ${c.unread ? `<span class="shrink-0 rounded-full bg-rose-500/25 px-1.5 text-[10px] font-bold text-rose-200">${c.unread}</span>` : ''}
+              </span>
+              <span class="block truncate text-xs text-slate-400">${esc(preview)}</span>
+            </span>
+          </button>`;
+      }).join('') || '<p class="px-3 py-8 text-center text-sm text-slate-500">Hali suhbatlar yo\'q</p>';
+    }
+
+    function attachHtml(m) {
+      if (!m.attachment_url) return '';
+      const u = esc(m.attachment_url);
+      if (m.attachment_type === 'image') return `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" alt="" class="mt-1.5 max-h-56 rounded-lg" /></a>`;
+      if (m.attachment_type === 'video') return `<video controls src="${u}" class="mt-1.5 max-h-56 w-full rounded-lg"></video>`;
+      return `<a href="${u}" target="_blank" rel="noopener" class="mt-1.5 inline-flex items-center gap-2 rounded-lg bg-black/25 px-3 py-2 text-xs font-medium text-white hover:bg-black/40"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>${esc(m.attachment_name || 'Fayl')}</a>`;
+    }
+
+    function renderThreadPanel() {
+      const panel = $('#chatPanel');
+      if (!panel) return;
+      const conv = groupConversations().find((c) => c.conversation_id === chatSel);
+      if (!chatSel || !conv) {
+        panel.innerHTML = `<div class="flex flex-1 items-center justify-center p-10 text-center text-sm text-slate-500">Chapdan suhbatni tanlang yoki bozordan "Sotuvchi bilan xabarlashish" orqali boshlang.</div>`;
+        return;
+      }
+      const thread = (conv.msgs || []).map((m) => {
+        const mine = m.sender_id === ME;
+        return `
+          <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
+            <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${mine ? 'bg-gradient-to-br from-violet-brand to-violet-deep text-white' : 'bg-white/8 text-slate-100 ring-1 ring-white/10'}">
+              ${m.body ? `<p class="whitespace-pre-wrap break-words">${esc(m.body)}</p>` : ''}
+              ${attachHtml(m)}
+              <p class="mt-1 text-[10px] ${mine ? 'text-white/60' : 'text-slate-400'}">${timeStr(m.created_at)}</p>
+            </div>
+          </div>`;
+      }).join('') || '<p class="py-8 text-center text-sm text-slate-500">Birinchi xabarni yozing</p>';
+
+      panel.innerHTML = `
+        <div class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+          <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc((conv.other.name || 'F').slice(0, 1).toUpperCase())}</span>
+          <div><p class="text-sm font-semibold text-white">${esc(conv.other.name || 'Foydalanuvchi')}</p><p class="text-[11px] text-slate-500">${conv.other.guest ? 'Web-ilova mijozi' : 'Foydalanuvchi'}</p></div>
+        </div>
+        <div id="chatThread" class="flex-1 space-y-2.5 overflow-y-auto p-4">${thread}</div>
+        <form id="msgForm" class="border-t border-white/10 p-3">
+          <div id="msgFilePrev" class="hidden mb-2 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-300 ring-1 ring-white/10"></div>
+          <div class="flex items-center gap-2">
+            <input type="file" id="msgFile" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" />
+            <button type="button" id="msgAttach" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10" title="Rasm / video / fayl">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            </button>
+            <input id="msgInput" type="text" autocomplete="off" placeholder="Xabar yozing..." class="fld flex-1 rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+            <button type="submit" class="btn-grad grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg></button>
+          </div>
+        </form>`;
+
+      const t = $('#chatThread');
+      if (t) t.scrollTop = t.scrollHeight;
+      renderMsgFilePrev();
+      markConversationRead(conv);
+    }
+
+    function renderMsgFilePrev() {
+      const prev = $('#msgFilePrev');
+      if (!prev) return;
+      if (!chatFile) { prev.classList.add('hidden'); prev.innerHTML = ''; return; }
+      prev.classList.remove('hidden');
+      prev.innerHTML = `<svg class="h-4 w-4 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg><span class="min-w-0 flex-1 truncate">${esc(chatFile.name)}</span><button type="button" data-msg-file-remove class="text-rose-400 hover:underline">olib tashlash</button>`;
+    }
+
+    async function markConversationRead(conv) {
+      const ids = (conv.msgs || []).filter((m) => m.recipient_id === ME && !m.read_by_recipient).map((m) => m.id);
+      if (!ids.length) return;
+      messages.forEach((m) => { if (ids.indexOf(m.id) !== -1) m.read_by_recipient = true; });
+      renderConvList(); renderSidebar();
+      try { await window.sb.from('messages').update({ read_by_recipient: true }).in('id', ids); } catch (e) { console.warn(e); }
+    }
+
+    async function uploadMessageFile(file) {
+      const user = window.__SOTIBBER_USER;
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+      const path = `${(user && user.id) || 'guest'}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const { error } = await window.sb.storage.from('message-files').upload(path, file);
+      if (error) throw error;
+      const { data } = window.sb.storage.from('message-files').getPublicUrl(path);
+      const type = file.type.indexOf('image/') === 0 ? 'image' : file.type.indexOf('video/') === 0 ? 'video' : 'file';
+      return { url: data && data.publicUrl, type, name: file.name };
+    }
+
+    async function sendCurrentMessage(form) {
+      const user = window.__SOTIBBER_USER;
+      if (!user || !window.sb) { toast('Tizimga qayta kiring'); return; }
+      const conv = groupConversations().find((c) => c.conversation_id === chatSel);
+      if (!conv) return;
+      const body = $('#msgInput').value.trim();
+      if (!body && !chatFile) return;
+
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+
+      let att = null;
+      if (chatFile) {
+        try { att = await uploadMessageFile(chatFile); }
+        catch (e) {
+          console.error('Fayl yuklash:', e);
+          toast(/bucket|not found|does not exist/i.test(e.message || '') ? "Fayl bucket topilmadi — SQL'ni ishga tushiring" : 'Faylni yuklab bo\'lmadi');
+          btn.disabled = false; return;
+        }
+      }
+
+      const row = {
+        conversation_id: conv.conversation_id,
+        sender_id: user.id,
+        sender_name: myName(),
+        recipient_id: conv.other.id || null,
+        recipient_name: conv.other.name || null,
+        guest_id: conv.other.guest || null,
+        body: body || null,
+        attachment_url: att ? att.url : null,
+        attachment_type: att ? att.type : null,
+        attachment_name: att ? att.name : null,
+        product_id: (chatDraft && chatDraft.conversation_id === conv.conversation_id) ? (chatDraft.product_id || null) : null,
+        read_by_recipient: false,
+      };
+      const { data, error } = await window.sb.from('messages').insert(row).select().single();
+      btn.disabled = false;
+      if (error) {
+        console.error('Xabar yuborish:', error);
+        toast(/messages|does not exist|schema cache|find the table/i.test(error.message || '') ? "Xabarlar jadvali topilmadi — SQL'ni ishga tushiring" : 'Xatolik: ' + (error.message || 'yuborilmadi'));
+        return;
+      }
+      if (!messages.some((x) => x.id === data.id)) messages.push(data);
+      chatDraft = null;
+      chatFile = null;
+      $('#msgInput').value = '';
+      renderConvList(); renderThreadPanel();
+    }
+
+    // Bozordan sotuvchi bilan suhbat boshlash
+    function messageSeller(marketIdx) {
+      const p = marketProducts[marketIdx];
+      if (!p || !p.seller_id) { toast('Sotuvchi topilmadi'); return; }
+      if (p.seller_id === ME) { toast('Bu mahsulot o\'zingizniki'); return; }
+      const cid = userConvId(p.seller_id);
+      chatDraft = { conversation_id: cid, other: { id: p.seller_id, guest: null, name: 'Sotuvchi' }, product_id: p.id };
+      chatSel = cid;
+      closeModal();
+      go('messages');
+    }
+
+    function initMessagesView() {
+      chatFile = null;
+      renderConvList();
+      renderThreadPanel();
+      if (chatPoll) clearInterval(chatPoll);
+      chatPoll = setInterval(reloadMessages, 12000);
+    }
+
+    async function reloadMessages() {
+      const user = window.__SOTIBBER_USER;
+      if (!user || !window.sb) return;
+      try {
+        const { data, error } = await window.sb.from('messages').select('*')
+          .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        messages = data || [];
+      } catch (e) { console.warn('Xabarlarni yangilash:', e); return; }
+      if (state.view === 'messages') { renderConvList(); renderThreadPanel(); }
+      renderSidebar();
+    }
+
+    // "Xabarlar" ko'rinishi ikkala panelda ham mavjud
+    sellerViews.messages = messagesView;
+    affiliateViews.messages = messagesView;
+
+    /* =========================================================
        APP STATE + ROUTER
     ========================================================= */
     // Panel qo'nish sahifasidan (landing) tanlanadi. Uch manbadan o'qiymiz:
@@ -1530,11 +1792,15 @@
       const conf = NAV[state.panel];
       $('#panelLabel').textContent = conf.label;
       $('#profileRole').textContent = conf.label;
+      const unread = unreadTotal();
       $('#sidebarNav').innerHTML = conf.items.map((it) => {
         const active = it.id === state.view;
+        const badge = (it.id === 'messages' && unread > 0)
+          ? `<span class="ml-auto rounded-full bg-rose-500/25 px-2 py-0.5 text-[11px] font-bold text-rose-200">${unread}</span>`
+          : (active ? '<span class="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400"></span>' : '');
         return `<button data-view="${it.id}" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${active ? 'bg-gradient-to-r from-violet-brand/40 to-violet-deep/25 text-white shadow-inner ring-1 ring-violet-400/30' : 'text-slate-300 hover:bg-white/5 hover:text-white'}">
           ${navIcon(it.icon)}<span>${it.title}</span>
-          ${active ? '<span class="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400"></span>' : ''}
+          ${badge}
         </button>`;
       }).join('');
     }
@@ -1543,12 +1809,15 @@
       const conf = NAV[state.panel];
       const item = conf.items.find((i) => i.id === state.view) || conf.items[0];
       state.view = item.id;
+      // Suhbat "poll"ini boshqa ko'rinishga o'tganda to'xtatamiz
+      if (state.view !== 'messages' && chatPoll) { clearInterval(chatPoll); chatPoll = null; }
       $('#viewTitle').textContent = item.title;
       $('#viewRoot').innerHTML = VIEWS[state.panel][state.view]();
       // Post-render hooks for filterable tables / grids
       if (state.panel === 'seller' && state.view === 'orders') renderOrdersBody('Barchasi');
       if (state.panel === 'affiliate' && state.view === 'sales') renderSalesBody('Barchasi');
       if (state.panel === 'affiliate' && state.view === 'market') renderMarketGrid('');
+      if (state.view === 'messages') initMessagesView();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1608,6 +1877,18 @@
       if (md) return productDetailModal('market', Number(md.dataset.marketDetail));
       const shd = t.closest('[data-shop-detail]');
       if (shd) return productDetailModal('shop', Number(shd.dataset.shopDetail));
+
+      // Xabarlar
+      const oc = t.closest('[data-open-conv]');
+      if (oc) { chatSel = oc.dataset.openConv; if (chatDraft && chatDraft.conversation_id !== chatSel) chatDraft = null; renderConvList(); renderThreadPanel(); return; }
+      const mr = t.closest('[data-msg-refresh]');
+      if (mr) { toast('Yangilanmoqda...'); reloadMessages(); return; }
+      const ma = t.closest('#msgAttach');
+      if (ma) { const f = $('#msgFile'); if (f) f.click(); return; }
+      const mfr = t.closest('[data-msg-file-remove]');
+      if (mfr) { chatFile = null; renderMsgFilePrev(); return; }
+      const msell = t.closest('[data-msg-seller]');
+      if (msell) return messageSeller(Number(msell.dataset.msgSeller));
 
       // Orders: filter tabs
       const ot = t.closest('[data-order-tab]');
@@ -1671,6 +1952,25 @@
     document.addEventListener('input', (e) => {
       const search = e.target.closest('#marketSearch');
       if (search) renderMarketGrid(search.value);
+    });
+
+    // Xabar fayli tanlanganda
+    document.addEventListener('change', (e) => {
+      const mf = e.target.closest('#msgFile');
+      if (!mf) return;
+      const f = mf.files && mf.files[0];
+      if (f) {
+        if (f.size > 25 * 1024 * 1024) { toast('Fayl hajmi 25MB dan oshmasligi kerak'); mf.value = ''; return; }
+        chatFile = f;
+        renderMsgFilePrev();
+      }
+      mf.value = '';
+    });
+
+    // Xabar yuborish formasi
+    document.addEventListener('submit', (e) => {
+      const mform = e.target.closest('#msgForm');
+      if (mform) { e.preventDefault(); sendCurrentMessage(mform); }
     });
 
     /* =========================================================

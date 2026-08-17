@@ -203,6 +203,7 @@
           description: p.description || '',
           price: Number(p.price),
           stock: p.stock,
+          seller_id: p.seller_id,
           merchant: 'Sotuvchi',
           commission: computeCommissionAmount(p.price, p.commission),
           commissionPct: Number(p.commission),
@@ -280,6 +281,20 @@
     } catch (e) {
       console.error('Sotuvlarni yuklashda xatolik:', e);
       window.__SOTIBBER_SALES = [];
+    }
+
+    // Xabarlar — foydalanuvchi ishtirok etgan barcha xabarlar (sender yoki recipient)
+    try {
+      const { data, error } = await sb
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      window.__SOTIBBER_MESSAGES = data || [];
+    } catch (e) {
+      console.error('Xabarlarni yuklashda xatolik:', e);
+      window.__SOTIBBER_MESSAGES = [];
     }
 
     await loadScript('script.js');

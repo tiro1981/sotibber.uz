@@ -248,3 +248,63 @@ begin
 end; $$;
 
 grant execute on function public.assign_shop_no() to authenticated;
+
+-- =====================================================================
+-- 7) XABARLAR — sotuvchi ↔ sotib beruvchi (va web-ilova mehmoni)
+--
+--   Foydalanuvchilar o'zaro yozishadi; matndan tashqari rasm/video/fayl
+--   biriktirish mumkin (message-files bucket). Web-ilova mehmoni (anon)
+--   do'kon egasiga xabar yozadi va javobini ko'radi (loyihaning mavjud
+--   ochiq "anon" modeliga mos).
+-- =====================================================================
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id text not null,        -- suhbat kaliti: 'u:<uuid>__<uuid>' yoki 'g:<guest>__<uuid>'
+  sender_id uuid references auth.users(id) on delete set null,   -- null = mehmon
+  sender_name text,
+  recipient_id uuid references auth.users(id) on delete set null,
+  recipient_name text,
+  guest_id text,                        -- web-ilova mehmoni (localStorage) identifikatori
+  body text,
+  attachment_url text,
+  attachment_type text,                 -- 'image' | 'video' | 'file'
+  attachment_name text,
+  product_id uuid references public.products(id) on delete set null,
+  read_by_recipient boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists messages_convo_idx on public.messages (conversation_id, created_at);
+create index if not exists messages_recipient_idx on public.messages (recipient_id, created_at desc);
+create index if not exists messages_sender_idx on public.messages (sender_id, created_at desc);
+alter table public.messages enable row level security;
+
+-- Login qilgan foydalanuvchi o'zi ishtirok etgan suhbatlarni ko'radi
+drop policy if exists "Messages: ishtirokchi ko'radi" on public.messages;
+create policy "Messages: ishtirokchi ko'radi" on public.messages for select to authenticated
+  using (auth.uid() = sender_id or auth.uid() = recipient_id);
+-- Login qilgan foydalanuvchi o'z nomidan yozadi
+drop policy if exists "Messages: foydalanuvchi yozadi" on public.messages;
+create policy "Messages: foydalanuvchi yozadi" on public.messages for insert to authenticated
+  with check (auth.uid() = sender_id);
+-- Qabul qiluvchi "o'qildi" belgisini qo'yadi
+drop policy if exists "Messages: qabul qiluvchi yangilaydi" on public.messages;
+create policy "Messages: qabul qiluvchi yangilaydi" on public.messages for update to authenticated
+  using (auth.uid() = recipient_id) with check (auth.uid() = recipient_id);
+-- Web-ilova mehmoni (anon): yozadi va ko'radi (ochiq model)
+drop policy if exists "Messages: mehmon yozadi" on public.messages;
+create policy "Messages: mehmon yozadi" on public.messages for insert to anon with check (true);
+drop policy if exists "Messages: mehmon ko'radi" on public.messages;
+create policy "Messages: mehmon ko'radi" on public.messages for select to anon using (true);
+drop policy if exists "Messages: mehmon o'qildi" on public.messages;
+create policy "Messages: mehmon o'qildi" on public.messages for update to anon using (true) with check (true);
+
+-- Xabar biriktirmalari uchun storage bucket (rasm/video/fayl)
+insert into storage.buckets (id, name, public)
+values ('message-files', 'message-files', true) on conflict (id) do nothing;
+
+drop policy if exists "Msg files: ochiq o'qish" on storage.objects;
+create policy "Msg files: ochiq o'qish" on storage.objects for select using (bucket_id = 'message-files');
+drop policy if exists "Msg files: yuklash (auth)" on storage.objects;
+create policy "Msg files: yuklash (auth)" on storage.objects for insert to authenticated with check (bucket_id = 'message-files');
+drop policy if exists "Msg files: yuklash (anon)" on storage.objects;
+create policy "Msg files: yuklash (anon)" on storage.objects for insert to anon with check (bucket_id = 'message-files');

@@ -53,6 +53,19 @@
   const getAddresses = () => readLS(K.addr, []);
   const setAddresses = (a) => writeLS(K.addr, a);
 
+  // Mehmon (mijoz) identifikatori — do'kon egasi bilan yozishuv uchun
+  function guestId() {
+    try {
+      let g = localStorage.getItem('sotibber_guest_id');
+      if (!g) { g = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem('sotibber_guest_id', g); }
+      return g;
+    } catch (e) { return 'g-anon'; }
+  }
+  function chatConvId() { return 'g:' + guestId() + '__' + (shop ? shop.id : 'x'); }
+  let chatMsgs = [];
+  let chatPollTimer = null;
+  let chatFile = null;
+
   function cartCount() { return getCart().reduce((s, i) => s + i.qty, 0); }
   function updateCartBadge() {
     const n = cartCount();
@@ -512,15 +525,138 @@
     if (settings.telegram) rows.push(contactLink('Telegram (platforma)', settings.telegram, 'bg-sky-500/15 text-sky-300', '<path d="M21.9 4.3 18.5 20c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13.6 1.9 12c-1-.3-1-1 .2-1.5l18.2-7c.9-.3 1.6.2 1.6 1.8Z"/>', true));
     if (settings.instagram) rows.push(contactLink('Instagram', settings.instagram, 'bg-pink-500/15 text-pink-300', '<rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2"/>', true));
 
-    const body = rows.length ? rows.join('') : `<p class="rounded-xl bg-white/5 px-4 py-6 text-center text-sm text-slate-500 ring-1 ring-white/10">Aloqa ma'lumotlari ko'rsatilmagan. Buyurtma bergach operator siz bilan bog'lanadi.</p>`;
+    const contactRows = rows.length ? rows.join('') : '';
     openModal(`
       <div>
         <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <h3 class="font-display text-lg font-bold text-white">Sotuvchi bilan aloqa</h3>
           <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
         </div>
-        <div class="space-y-2.5 p-5">${body}</div>
+        <div class="space-y-2.5 p-5">
+          <button type="button" data-open-chat class="flex w-full items-center gap-3 rounded-xl bg-gradient-to-br from-violet-brand to-violet-deep px-4 py-3 text-left transition hover:opacity-90">
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-white/20 text-white"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l.8-4.2A7.9 7.9 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></span>
+            <span class="min-w-0"><span class="block text-sm font-bold text-white">Xabar yozish</span><span class="block truncate text-xs text-violet-100">Rasm/video yuborishingiz ham mumkin</span></span>
+          </button>
+          ${contactRows}
+        </div>
       </div>`);
+  }
+
+  /* ---- Do'kon egasi bilan yozishuv (mehmon) ---- */
+  function openChatModal() {
+    openModal(`
+      <div class="flex h-[70vh] max-h-[560px] flex-col">
+        <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div class="flex items-center gap-2.5">
+            <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc((shop.name || 'D').slice(0, 1).toUpperCase())}</span>
+            <div><h3 class="font-display text-base font-bold text-white">${esc(shop.name)}</h3><p class="text-[11px] text-slate-500">Yozishuv</p></div>
+          </div>
+          <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div id="cThread" class="flex-1 space-y-2.5 overflow-y-auto bg-black/20 p-4 text-sm"></div>
+        <form id="cForm" class="border-t border-white/10 p-3">
+          <div id="cFilePrev" class="hidden mb-2 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-300 ring-1 ring-white/10"></div>
+          <div class="flex items-center gap-2">
+            <input type="file" id="cFile" class="hidden" accept="image/*,video/*,.pdf" />
+            <button type="button" id="cAttach" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10" title="Rasm / video / fayl"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button>
+            <input id="cInput" type="text" autocomplete="off" placeholder="Xabar yozing..." class="fld flex-1 rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+            <button type="submit" class="btn-grad grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg></button>
+          </div>
+        </form>
+      </div>`, 'max-w-md');
+    loadChat();
+    chatPollTimer = setInterval(loadChat, 10000);
+  }
+
+  function chatAttachHtml(m) {
+    if (!m.attachment_url) return '';
+    const u = esc(m.attachment_url);
+    if (m.attachment_type === 'image') return `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" class="mt-1.5 max-h-48 rounded-lg" alt="" /></a>`;
+    if (m.attachment_type === 'video') return `<video controls src="${u}" class="mt-1.5 max-h-48 w-full rounded-lg"></video>`;
+    return `<a href="${u}" target="_blank" rel="noopener" class="mt-1.5 inline-block rounded-lg bg-black/25 px-3 py-2 text-xs font-medium text-white">${esc(m.attachment_name || 'Fayl')}</a>`;
+  }
+
+  function renderChatThread() {
+    const box = $('#cThread');
+    if (!box) return;
+    box.innerHTML = chatMsgs.map((m) => {
+      const mine = !m.sender_id; // mehmon xabari
+      return `
+        <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
+          <div class="max-w-[82%] rounded-2xl px-3.5 py-2 ${mine ? 'bg-gradient-to-br from-violet-brand to-violet-deep text-white' : 'bg-white/8 text-slate-100 ring-1 ring-white/10'}">
+            ${m.body ? `<p class="whitespace-pre-wrap break-words">${esc(m.body)}</p>` : ''}
+            ${chatAttachHtml(m)}
+          </div>
+        </div>`;
+    }).join('') || '<p class="mt-6 text-center text-xs text-slate-400">Savolingizni yozing — do\'kon egasi javob beradi.</p>';
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function loadChat() {
+    if (!shop) return;
+    try {
+      const { data, error } = await sb.from('messages').select('*').eq('conversation_id', chatConvId()).order('created_at', { ascending: true });
+      if (error) throw error;
+      chatMsgs = data || [];
+    } catch (e) { console.warn('Yozishuv:', e); return; }
+    renderChatThread();
+  }
+
+  async function uploadChatFile(file) {
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+    const path = `${guestId()}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    const { error } = await sb.storage.from('message-files').upload(path, file);
+    if (error) throw error;
+    const { data } = sb.storage.from('message-files').getPublicUrl(path);
+    const type = file.type.indexOf('image/') === 0 ? 'image' : file.type.indexOf('video/') === 0 ? 'video' : 'file';
+    return { url: data && data.publicUrl, type, name: file.name };
+  }
+
+  function renderCFilePrev() {
+    const prev = $('#cFilePrev');
+    if (!prev) return;
+    if (!chatFile) { prev.classList.add('hidden'); prev.innerHTML = ''; return; }
+    prev.classList.remove('hidden');
+    prev.innerHTML = `<span class="min-w-0 flex-1 truncate">📎 ${esc(chatFile.name)}</span><button type="button" data-cfile-remove class="text-rose-400 hover:underline">olib tashlash</button>`;
+  }
+
+  async function sendChat(form) {
+    if (!shop) return;
+    const body = $('#cInput').value.trim();
+    if (!body && !chatFile) return;
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    let att = null;
+    if (chatFile) {
+      try { att = await uploadChatFile(chatFile); }
+      catch (e) { console.error(e); toast(/bucket|not found/i.test(e.message || '') ? "Fayl bucket topilmadi — SQL'ni ishga tushiring" : 'Faylni yuklab bo\'lmadi'); btn.disabled = false; return; }
+    }
+    const c = getCustomer();
+    const row = {
+      conversation_id: chatConvId(),
+      sender_id: null,
+      sender_name: c.name || 'Mijoz',
+      recipient_id: shop.id,
+      recipient_name: shop.name,
+      guest_id: guestId(),
+      body: body || null,
+      attachment_url: att ? att.url : null,
+      attachment_type: att ? att.type : null,
+      attachment_name: att ? att.name : null,
+      read_by_recipient: false,
+    };
+    const { data, error } = await sb.from('messages').insert(row).select().single();
+    btn.disabled = false;
+    if (error) {
+      console.error('Xabar:', error);
+      toast(/messages|does not exist|schema cache/i.test(error.message || '') ? "Xabarlar jadvali topilmadi — SQL'ni ishga tushiring" : 'Xatolik: yuborilmadi');
+      return;
+    }
+    if (!chatMsgs.some((x) => x.id === data.id)) chatMsgs.push(data);
+    chatFile = null;
+    $('#cInput').value = '';
+    renderCFilePrev();
+    renderChatThread();
   }
   function contactLink(label, href, tint, icon, fill) {
     return `<a href="${esc(href)}" target="_blank" rel="noopener" class="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/10 transition hover:bg-white/10">
@@ -540,7 +676,12 @@
   }
 
   /* ---------------- Modal ---------------- */
-  function closeModal() { $('#modalRoot').innerHTML = ''; document.body.style.overflow = ''; }
+  function closeModal() {
+    if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+    chatFile = null;
+    $('#modalRoot').innerHTML = '';
+    document.body.style.overflow = '';
+  }
   function openModal(html, size = 'max-w-md') {
     $('#modalRoot').innerHTML = `
       <div class="fixed inset-0 z-[75] flex items-end justify-center p-0 sm:items-center sm:p-4">
@@ -678,6 +819,13 @@
     const closeGo = t.closest('[data-close-go]');
     if (closeGo) { closeModal(); return go(closeGo.dataset.closeGo); }
 
+    const oChat = t.closest('[data-open-chat]');
+    if (oChat) return openChatModal();
+    const cAtt = t.closest('#cAttach');
+    if (cAtt) { const cf = $('#cFile'); if (cf) cf.click(); return; }
+    const cfr = t.closest('[data-cfile-remove]');
+    if (cfr) { chatFile = null; renderCFilePrev(); return; }
+
     const rm = t.closest('[data-remove]');
     if (rm) { const c = getCart(); c.splice(Number(rm.dataset.remove), 1); setCart(c); return renderCart(); }
 
@@ -688,6 +836,22 @@
       c[i].qty = q.dataset.qty === 'inc' ? Math.min(99, c[i].qty + 1) : Math.max(1, c[i].qty - 1);
       setCart(c); return renderCart();
     }
+  });
+
+  // Yozishuv: fayl tanlash va yuborish
+  document.addEventListener('change', (e) => {
+    const cf = e.target.closest('#cFile');
+    if (!cf) return;
+    const f = cf.files && cf.files[0];
+    if (f) {
+      if (f.size > 25 * 1024 * 1024) { toast('Fayl 25MB dan oshmasligi kerak'); cf.value = ''; return; }
+      chatFile = f; renderCFilePrev();
+    }
+    cf.value = '';
+  });
+  document.addEventListener('submit', (e) => {
+    const cform = e.target.closest('#cForm');
+    if (cform) { e.preventDefault(); sendChat(cform); }
   });
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
