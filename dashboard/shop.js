@@ -109,18 +109,25 @@
       (data || []).forEach((r) => { settings[r.key] = r.value || ''; });
     } catch (e) { settings = {}; }
 
-    // Do'kondagi mahsulotlar
+    // Do'kondagi mahsulotlar — embed o'rniga ikki bosqichli so'rov (ishonchliroq)
     try {
-      const { data, error } = await sb
+      const { data: apRows, error: apErr } = await sb
         .from('affiliate_products')
-        .select('product_id, products(*)')
+        .select('product_id')
         .eq('affiliate_id', owner.id);
-      if (error) throw error;
-      // Skladda bori ko'rinadi; faqat rad etilgan/tugagan mahsulotlar yashiriladi.
-      const HIDDEN = ['Rad etilgan', 'Rad etildi', 'Tugagan', 'Tugadi'];
-      products = (data || [])
-        .map(mapProduct)
-        .filter((p) => p.product_id && p.stock > 0 && HIDDEN.indexOf(p.status) === -1);
+      if (apErr) throw apErr;
+      const ids = (apRows || []).map((r) => r.product_id).filter(Boolean);
+      if (!ids.length) {
+        products = [];
+      } else {
+        const { data: prods, error: pErr } = await sb.from('products').select('*').in('id', ids);
+        if (pErr) throw pErr;
+        // Skladda bori ko'rinadi; faqat rad etilgan/tugagan yashiriladi.
+        const HIDDEN = ['Rad etilgan', 'Rad etildi', 'Tugagan', 'Tugadi'];
+        products = (prods || [])
+          .map(mapProduct)
+          .filter((p) => p.product_id && p.stock > 0 && HIDDEN.indexOf(p.status) === -1);
+      }
     } catch (e) {
       console.error('Do\'kon mahsulotlari:', e);
       products = [];

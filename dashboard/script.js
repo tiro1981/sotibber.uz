@@ -1312,14 +1312,31 @@
     }
 
     /* ---- Start selling success modal (affiliate) ---- */
-    function startSellingModal(idx) {
+    async function startSellingModal(idx) {
       const p = marketProducts[idx];
       if (!p) return;
       const su = shopUrls();
       const link = su.full || "Do'kon havolasi tayyorlanmoqda...";
-      // Mahsulotni "Mening do'konim"ga qo'shamiz (agar avval qo'shilmagan bo'lsa)
-      // va Supabase'ga (affiliate_products) yozamiz — do'kon web-ilovasida ko'rinadi.
-      if (!agentLinks.some((l) => l.product_id === p.id)) {
+      const user = window.__SOTIBBER_USER;
+      const already = agentLinks.some((l) => l.product_id === p.id);
+
+      // Supabase'ga (affiliate_products) yozamiz — do'kon web-ilovasida shu orqali
+      // ko'rinadi. Yozuvni KUTAMIZ; muvaffaqiyatsiz bo'lsa — aniq xato beramiz.
+      if (!already && user && window.sb && p.id) {
+        const { error } = await window.sb.from('affiliate_products')
+          .insert({ affiliate_id: user.id, product_id: p.id });
+        if (error && !/duplicate|unique|23505/i.test(error.message || '')) {
+          console.error('Do\'konga qo\'shishda xatolik:', error);
+          if (/affiliate_products|does not exist|schema cache|find the table/i.test(error.message || '')) {
+            toast("Do'kon jadvali topilmadi — Supabase'da supabase_qoshimcha.sql'ni ishga tushiring");
+          } else {
+            toast('Xatolik: ' + (error.message || 'do\'konga qo\'shib bo\'lmadi'));
+          }
+          return; // muvaffaqiyatsiz — do'konга qo'shilmadi, modalni ko'rsatmaymiz
+        }
+      }
+
+      if (!already) {
         agentLinks.push({
           product_id: p.id,
           product: p.name,
@@ -1332,19 +1349,8 @@
           images: p.images || [],
           image: p.image,
         });
-        const user = window.__SOTIBBER_USER;
-        if (user && window.sb && p.id) {
-          window.sb.from('affiliate_products')
-            .insert({ affiliate_id: user.id, product_id: p.id })
-            .then(({ error }) => {
-              if (error && !/duplicate|unique|23505/i.test(error.message || '')) {
-                console.warn('Do\'konga qo\'shishda xatolik:', error);
-                if (/affiliate_products|does not exist|schema cache/i.test(error.message || '')) {
-                  toast("Do'kon jadvali topilmadi — supabase_qoshimcha.sql'ni ishga tushiring");
-                }
-              }
-            });
-        }
+        // Do'kon sahifasi ochiq bo'lsa — ro'yxatni darhol yangilaymiz
+        if (state.panel === 'affiliate' && state.view === 'shop') renderView();
       }
       openModal(`
         <div>

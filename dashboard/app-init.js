@@ -216,31 +216,41 @@
       window.__SOTIBBER_MARKET_PRODUCTS = [];
     }
 
-    // Sotib beruvchining do'koni — qo'shgan mahsulotlari (affiliate_products)
+    // Sotib beruvchining do'koni — qo'shgan mahsulotlari (affiliate_products).
+    // Embed (bog'lam) o'rniga ikki bosqichli so'rov — ishonchliroq.
     try {
-      const { data, error } = await sb
+      const { data: apRows, error: apErr } = await sb
         .from('affiliate_products')
-        .select('product_id, created_at, products(*)')
+        .select('product_id, created_at')
         .eq('affiliate_id', user.id)
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      window.__SOTIBBER_AGENT_LINKS = (data || []).filter((r) => r.products).map((r) => {
-        const p = r.products;
-        const images = productImages(p);
-        const commissionPct = Number(p.commission) || 0;
-        return {
-          product_id: p.id,
-          product: p.name,
-          description: p.description || '',
-          price: Number(p.price),
-          commission: computeCommissionAmount(p.price, commissionPct),
-          clicks: 0,
-          sales: 0,
-          slug: '',
-          images,
-          image: images[0] || null,
-        };
-      });
+      if (apErr) throw apErr;
+      const ids = (apRows || []).map((r) => r.product_id).filter(Boolean);
+      const prodById = {};
+      if (ids.length) {
+        const { data: prods, error: pErr } = await sb.from('products').select('*').in('id', ids);
+        if (pErr) throw pErr;
+        (prods || []).forEach((p) => { prodById[p.id] = p; });
+      }
+      window.__SOTIBBER_AGENT_LINKS = (apRows || [])
+        .map((r) => prodById[r.product_id])
+        .filter(Boolean)
+        .map((p) => {
+          const images = productImages(p);
+          const commissionPct = Number(p.commission) || 0;
+          return {
+            product_id: p.id,
+            product: p.name,
+            description: p.description || '',
+            price: Number(p.price),
+            commission: computeCommissionAmount(p.price, commissionPct),
+            clicks: 0,
+            sales: 0,
+            slug: '',
+            images,
+            image: images[0] || null,
+          };
+        });
     } catch (e) {
       console.error('Do\'kon mahsulotlarini yuklashda xatolik:', e);
       window.__SOTIBBER_AGENT_LINKS = [];
