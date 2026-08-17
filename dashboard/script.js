@@ -46,13 +46,44 @@
     }
 
     function toast(msg) {
-      const t = $('#toast');
+      const el = $('#toast');
       $('#toastMsg').textContent = msg;
-      t.classList.remove('hidden');
-      t.firstElementChild.classList.add('animate-fadeUp');
+      el.classList.remove('hidden');
+      el.firstElementChild.classList.add('animate-fadeUp');
       clearTimeout(toast._t);
-      toast._t = setTimeout(() => t.classList.add('hidden'), 2600);
+      toast._t = setTimeout(() => el.classList.add('hidden'), 2600);
     }
+
+    /* =========================================================
+       TIL (i18n) — uz / ru / en. Faqat shu lug'atdagi satrlar
+       tarjima qilinadi; qolganlari o'zbekcha qoladi.
+    ========================================================= */
+    let LANG = 'uz';
+    try { LANG = localStorage.getItem('sotibber_lang') || 'uz'; } catch (e) {}
+    const DICT = {
+      ru: {
+        'Bosh sahifa': 'Главная', 'Mahsulotlar': 'Товары', 'Buyurtmalar': 'Заказы', 'Sotib beruvchilar': 'Продавцы',
+        'Xabarlar': 'Сообщения', 'Moliya': 'Финансы', 'Mahsulotlar bozori': 'Рынок товаров', "Mening do'konim": 'Мой магазин',
+        'Messenjer': 'Мессенджер', 'Mening sotuvlarim': 'Мои продажи', 'Hamyon': 'Кошелёк',
+        'Profilim': 'Мой профиль', 'Sozlamalar': 'Настройки', 'Chiqish': 'Выход', 'Bildirishnomalar': 'Уведомления',
+        "Bildirishnoma yo'q": 'Нет уведомлений', 'Til': 'Язык', "Do'kon ID": 'ID магазина', 'Ism familiya': 'Имя и фамилия',
+        'Telefon': 'Телефон', 'Email': 'Email', 'Saqlash': 'Сохранить', 'Bekor qilish': 'Отмена', 'Yopish': 'Закрыть',
+        "Parolni o'zgartirish": 'Смена пароля', 'Yangi parol': 'Новый пароль', 'Parolni tasdiqlang': 'Подтвердите пароль',
+        'Yangilash': 'Обновить', "O'zbekcha": 'Узбекский', 'Ruscha': 'Русский', 'Inglizcha': 'Английский',
+      },
+      en: {
+        'Bosh sahifa': 'Home', 'Mahsulotlar': 'Products', 'Buyurtmalar': 'Orders', 'Sotib beruvchilar': 'Resellers',
+        'Xabarlar': 'Messages', 'Moliya': 'Finance', 'Mahsulotlar bozori': 'Marketplace', "Mening do'konim": 'My shop',
+        'Messenjer': 'Messenger', 'Mening sotuvlarim': 'My sales', 'Hamyon': 'Wallet',
+        'Profilim': 'My profile', 'Sozlamalar': 'Settings', 'Chiqish': 'Log out', 'Bildirishnomalar': 'Notifications',
+        "Bildirishnoma yo'q": 'No notifications', 'Til': 'Language', "Do'kon ID": 'Shop ID', 'Ism familiya': 'Full name',
+        'Telefon': 'Phone', 'Email': 'Email', 'Saqlash': 'Save', 'Bekor qilish': 'Cancel', 'Yopish': 'Close',
+        "Parolni o'zgartirish": 'Change password', 'Yangi parol': 'New password', 'Parolni tasdiqlang': 'Confirm password',
+        'Yangilash': 'Update', "O'zbekcha": 'Uzbek', 'Ruscha': 'Russian', 'Inglizcha': 'English',
+      },
+    };
+    function t(s) { return (LANG !== 'uz' && DICT[LANG] && DICT[LANG][s]) || s; }
+    function applyI18n() { $$('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); }); }
 
     /* =========================================================
        DATA
@@ -2018,7 +2049,7 @@
           ? `<span class="ml-auto rounded-full bg-rose-500/25 px-2 py-0.5 text-[11px] font-bold text-rose-200">${unread}</span>`
           : (active ? '<span class="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400"></span>' : '');
         return `<button data-view="${it.id}" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${active ? 'bg-gradient-to-r from-violet-brand/40 to-violet-deep/25 text-white shadow-inner ring-1 ring-violet-400/30' : 'text-slate-300 hover:bg-white/5 hover:text-white'}">
-          ${navIcon(it.icon)}<span>${it.title}</span>
+          ${navIcon(it.icon)}<span>${t(it.title)}</span>
           ${badge}
         </button>`;
       }).join('');
@@ -2030,7 +2061,7 @@
       state.view = item.id;
       // Suhbat "poll"ini boshqa ko'rinishga o'tganda to'xtatamiz
       if (state.view !== 'messages' && chatPoll) { clearInterval(chatPoll); chatPoll = null; }
-      $('#viewTitle').textContent = item.title;
+      $('#viewTitle').textContent = t(item.title);
       $('#viewRoot').innerHTML = VIEWS[state.panel][state.view]();
       // Post-render hooks for filterable tables / grids
       if (state.panel === 'seller' && state.view === 'orders') renderOrdersBody('Barchasi');
@@ -2066,7 +2097,159 @@
         $('#profileMenu').classList.add('hidden');
       }
     });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); $('#profileMenu').classList.add('hidden'); } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); $('#profileMenu').classList.add('hidden'); $('#notifMenu')?.classList.add('hidden'); } });
+
+    /* =========================================================
+       BILDIRISHNOMALAR (bell)
+    ========================================================= */
+    let notifications = Array.isArray(window.__SOTIBBER_NOTIFICATIONS) ? window.__SOTIBBER_NOTIFICATIONS : [];
+    function relevantNotifs() { return notifications.filter((n) => n.audience === 'all' || n.audience === state.panel); }
+    function notifSeen() { try { return localStorage.getItem('sotibber_notif_seen') || ''; } catch (e) { return ''; } }
+    function updateNotifDot() {
+      const last = notifSeen();
+      const has = relevantNotifs().some((n) => !last || new Date(n.created_at) > new Date(last));
+      const dot = $('#notifDot'); if (dot) dot.classList.toggle('hidden', !has);
+    }
+    function renderNotifList() {
+      const box = $('#notifList'); if (!box) return;
+      box.innerHTML = relevantNotifs().map((n) => `
+        <div class="rounded-xl px-3 py-2.5 transition hover:bg-white/5">
+          ${n.title ? `<p class="text-sm font-semibold text-white">${esc(n.title)}</p>` : ''}
+          <p class="whitespace-pre-wrap break-words text-sm text-slate-300">${esc(n.body)}</p>
+          <p class="mt-1 text-[11px] text-slate-500">${new Date(n.created_at).toLocaleString('ru-RU')}</p>
+        </div>`).join('') || `<p class="px-3 py-8 text-center text-sm text-slate-500">${t("Bildirishnoma yo'q")}</p>`;
+    }
+    $('#notifBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menu = $('#notifMenu');
+      const willOpen = menu.classList.contains('hidden');
+      $('#profileMenu').classList.add('hidden');
+      menu.classList.toggle('hidden');
+      if (willOpen) {
+        renderNotifList();
+        try { localStorage.setItem('sotibber_notif_seen', new Date().toISOString()); } catch (e2) {}
+        updateNotifDot();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#notifBtn') && !e.target.closest('#notifMenu')) $('#notifMenu')?.classList.add('hidden');
+    });
+
+    /* =========================================================
+       PROFIL oynasi (Profilim)
+    ========================================================= */
+    function profileModal() {
+      $('#profileMenu').classList.add('hidden');
+      const profile = window.__SOTIBBER_PROFILE || {};
+      const user = window.__SOTIBBER_USER || {};
+      const id = (profile.shop_no != null) ? String(profile.shop_no).padStart(4, '0') : '—';
+      openModal(`
+        <form id="profileForm">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <h3 class="font-display text-lg font-bold text-white">${t('Profilim')}</h3>
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div class="space-y-4 p-6">
+            <div class="flex items-center gap-4">
+              <span class="grid h-16 w-16 flex-shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-white"><svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></span>
+              <div>
+                <p class="text-xs text-slate-400">${t("Do'kon ID")}</p>
+                <p class="font-display text-2xl font-bold text-white">#${id}</p>
+                <p class="text-[11px] text-slate-500">O'zgarmas raqam</p>
+              </div>
+            </div>
+            <label class="block"><span class="text-sm font-semibold text-slate-200">${t('Ism familiya')}</span>
+              <input id="pfFullName" value="${esc(profile.full_name || '')}" placeholder="Ism Familiya" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" /></label>
+            <label class="block"><span class="text-sm font-semibold text-slate-200">${t('Telefon')}</span>
+              <input id="pfPhoneInp" type="tel" value="${esc(profile.phone || '')}" placeholder="+998 90 123 45 67" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" /></label>
+            <label class="block"><span class="text-sm font-semibold text-slate-200">${t('Email')}</span>
+              <input value="${esc(user.email || '')}" disabled class="fld mt-1.5 w-full cursor-not-allowed rounded-xl px-3.5 py-2.5 text-sm text-slate-400 opacity-70 outline-none" /></label>
+          </div>
+          <div class="flex gap-3 border-t border-white/10 p-6">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">${t('Bekor qilish')}</button>
+            <button type="submit" class="btn-grad flex-1 rounded-xl py-3 text-sm font-bold text-white transition">${t('Saqlash')}</button>
+          </div>
+        </form>
+      `);
+      $('#profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const user2 = window.__SOTIBBER_USER;
+        if (!user2 || !window.sb) { toast('Tizimga qayta kiring'); return; }
+        const full_name = $('#pfFullName').value.trim();
+        const phone = $('#pfPhoneInp').value.trim();
+        const btn = $('#profileForm button[type="submit"]'); btn.disabled = true;
+        const { error } = await window.sb.from('profiles').upsert({ id: user2.id, full_name, phone }, { onConflict: 'id' });
+        btn.disabled = false;
+        if (error) { console.error('Profil:', error); toast('Xatolik: ' + (error.message || 'saqlanmadi')); return; }
+        window.__SOTIBBER_PROFILE = Object.assign({}, window.__SOTIBBER_PROFILE || {}, { full_name, phone });
+        $('#profileName').textContent = full_name || (user2.email || 'Foydalanuvchi');
+        $('#profileNameFull').textContent = full_name || (user2.email || 'Foydalanuvchi');
+        $('#profilePhone').textContent = phone || user2.email || '';
+        closeModal();
+        toast('Profil saqlandi ✓');
+      });
+    }
+
+    /* =========================================================
+       SOZLAMALAR (parol + til)
+    ========================================================= */
+    function setLang(lang) {
+      LANG = lang;
+      try { localStorage.setItem('sotibber_lang', lang); } catch (e) {}
+      applyI18n();
+      renderSidebar();
+      const conf = NAV[state.panel];
+      const item = conf.items.find((i) => i.id === state.view) || conf.items[0];
+      if ($('#viewTitle')) $('#viewTitle').textContent = t(item.title);
+      if ($('#notifTitle')) $('#notifTitle').textContent = t('Bildirishnomalar');
+      settingsModal();
+    }
+    function settingsModal() {
+      $('#profileMenu').classList.add('hidden');
+      const langs = [['uz', "O'zbekcha", '🇺🇿'], ['ru', 'Ruscha', '🇷🇺'], ['en', 'Inglizcha', '🇬🇧']];
+      openModal(`
+        <div>
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <h3 class="font-display text-lg font-bold text-white">${t('Sozlamalar')}</h3>
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div class="space-y-5 p-6">
+            <div>
+              <p class="text-sm font-semibold text-slate-200">${t('Til')}</p>
+              <div class="mt-2 grid grid-cols-3 gap-2">
+                ${langs.map(([code, label, flag]) => `<button type="button" data-lang="${code}" class="rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${LANG === code ? 'border-violet-400/60 bg-violet-500/15 text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}">${flag} ${t(label)}</button>`).join('')}
+              </div>
+            </div>
+            <form id="pwForm" class="space-y-3 border-t border-white/10 pt-5">
+              <p class="text-sm font-semibold text-slate-200">${t("Parolni o'zgartirish")}</p>
+              <input id="pw1" type="password" required minlength="6" placeholder="${t('Yangi parol')}" class="fld w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+              <input id="pw2" type="password" required minlength="6" placeholder="${t('Parolni tasdiqlang')}" class="fld w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+              <button type="submit" class="btn-grad w-full rounded-xl py-2.5 text-sm font-bold text-white transition">${t('Yangilash')}</button>
+            </form>
+          </div>
+          <div class="border-t border-white/10 p-6">
+            <button type="button" data-close class="w-full rounded-xl bg-white/10 py-3 text-sm font-bold text-white transition hover:bg-white/15">${t('Yopish')}</button>
+          </div>
+        </div>
+      `);
+      $$('[data-lang]', $('#modalRoot')).forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang)));
+      $('#pwForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!window.sb) { toast('Tizimga qayta kiring'); return; }
+        const p1 = $('#pw1').value, p2 = $('#pw2').value;
+        if (p1.length < 6) { toast('Parol kamida 6 belgi bo\'lishi kerak'); return; }
+        if (p1 !== p2) { toast('Parollar mos emas'); return; }
+        const btn = $('#pwForm button[type="submit"]'); btn.disabled = true;
+        const { error } = await window.sb.auth.updateUser({ password: p1 });
+        btn.disabled = false;
+        if (error) { console.error('Parol:', error); toast('Xatolik: ' + (error.message || 'yangilanmadi')); return; }
+        $('#pwForm').reset();
+        toast('Parol yangilandi ✓');
+      });
+    }
+
+    $('#profileLink')?.addEventListener('click', (e) => { e.preventDefault(); profileModal(); });
+    $('#settingsLink')?.addEventListener('click', (e) => { e.preventDefault(); settingsModal(); });
 
     /* =========================================================
        GLOBAL EVENT DELEGATION
@@ -2234,6 +2417,9 @@
     /* =========================================================
        INIT
     ========================================================= */
+    applyI18n();
+    if ($('#notifTitle')) $('#notifTitle').textContent = t('Bildirishnomalar');
+    updateNotifDot();
     renderSidebar();
     renderView();
   })();

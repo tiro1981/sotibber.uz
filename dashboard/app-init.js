@@ -342,6 +342,16 @@
       window.__SOTIBBER_MESSAGES = [];
     }
 
+    // Bildirishnomalar (admin -> foydalanuvchilar)
+    try {
+      const { data, error } = await sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
+      if (error) throw error;
+      window.__SOTIBBER_NOTIFICATIONS = data || [];
+    } catch (e) {
+      console.error('Bildirishnomalarni yuklashda xatolik:', e);
+      window.__SOTIBBER_NOTIFICATIONS = [];
+    }
+
     await loadScript('script.js');
   })();
 })();

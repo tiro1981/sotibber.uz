@@ -342,3 +342,34 @@ alter table public.profiles
 drop policy if exists "Profiles: login ko'radi" on public.profiles;
 create policy "Profiles: login ko'radi"
   on public.profiles for select to authenticated using (true);
+
+-- =====================================================================
+-- 9) BILDIRISHNOMALAR — admin -> foydalanuvchilarga xabar
+--
+--   Admin panel bildirishnoma yuboradi: barchaga, faqat sotuvchilarga
+--   yoki faqat sotib beruvchilarga. Foydalanuvchi qo'ng'iroq (bell)
+--   belgisida ko'radi.
+-- =====================================================================
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  audience text not null default 'all' check (audience in ('all', 'seller', 'affiliate')),
+  title text,
+  body text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists notifications_created_idx on public.notifications (created_at desc);
+alter table public.notifications enable row level security;
+
+-- Hamma o'qiy oladi (bildirishnomalar ommaviy)
+drop policy if exists "Notif: ochiq o'qish" on public.notifications;
+create policy "Notif: ochiq o'qish"
+  on public.notifications for select to anon, authenticated using (true);
+
+-- Admin panel (anon) yuboradi va o'chiradi
+drop policy if exists "Notif: admin yozadi" on public.notifications;
+create policy "Notif: admin yozadi"
+  on public.notifications for insert to anon with check (true);
+
+drop policy if exists "Notif: admin o'chiradi" on public.notifications;
+create policy "Notif: admin o'chiradi"
+  on public.notifications for delete to anon using (true);

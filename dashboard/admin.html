@@ -82,6 +82,10 @@
           Savol-javob chat
           <span id="chatBadge" class="ml-auto hidden rounded-full bg-rose-500/25 px-2 py-0.5 text-[11px] font-bold text-rose-200"></span>
         </button>
+        <button data-view="notifications" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          Bildirishnoma
+        </button>
         <button data-view="settings" class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
           Messenjer
@@ -145,6 +149,7 @@
     let PROFILES = [];
     let CHAT = [];
     let SETTINGS = {};
+    let NOTIFS = [];
     let chatSelectedUser = null;
     let currentView = 'stats';
 
@@ -210,6 +215,12 @@
         SETTINGS = {};
         (data || []).forEach((r) => { SETTINGS[r.key] = r.value || ''; });
       } catch (e) { console.error('Sozlamalar:', e); SETTINGS = {}; }
+
+      try {
+        const { data, error } = await sb.from('notifications').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        NOTIFS = data || [];
+      } catch (e) { console.error('Bildirishnomalar:', e); NOTIFS = []; }
 
       const pending = PRODUCTS.filter((p) => p.status === 'Moderatsiyada').length;
       const badgeEl = $('#pendingBadge');
@@ -552,13 +563,92 @@
       toast('Sozlamalar saqlandi ✓');
     }
 
+    /* ---------------- Bildirishnomalar ---------------- */
+    const AUDIENCE = { all: 'Barchaga', seller: 'Sotuvchilarga', affiliate: 'Sotib beruvchilarga' };
+    function renderNotifications() {
+      const sent = NOTIFS.map((n) => `
+        <div class="glass flex items-start justify-between gap-3 rounded-xl p-4">
+          <div class="min-w-0">
+            <div class="mb-1 flex items-center gap-2">
+              <span class="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[11px] font-bold text-violet-300">${esc(AUDIENCE[n.audience] || n.audience)}</span>
+              <span class="text-[11px] text-slate-500">${n.created_at ? new Date(n.created_at).toLocaleString('ru-RU') : ''}</span>
+            </div>
+            ${n.title ? `<p class="text-sm font-semibold text-white">${esc(n.title)}</p>` : ''}
+            <p class="whitespace-pre-wrap break-words text-sm text-slate-300">${esc(n.body)}</p>
+          </div>
+          <button data-del-notif="${n.id}" class="flex-shrink-0 rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/30 hover:bg-rose-500/25">O'chirish</button>
+        </div>`).join('') || '<p class="text-sm text-slate-500">Hozircha bildirishnoma yuborilmagan.</p>';
+
+      $('#viewRoot').innerHTML = `
+        <div class="mx-auto max-w-2xl space-y-5">
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-display text-lg font-bold text-white">Yangi bildirishnoma</h3>
+            <p class="mt-1 text-sm text-slate-400">Foydalanuvchilarga xabar yuboring — ular qo'ng'iroq belgisida ko'radi.</p>
+            <form id="notifForm" class="mt-5 space-y-4">
+              <label class="block">
+                <span class="mb-1.5 block text-sm font-semibold text-slate-200">Kimga</span>
+                <select id="notifAudience" class="w-full rounded-xl bg-white/5 px-3.5 py-2.5 text-sm text-slate-100 outline-none ring-1 ring-white/10 focus:ring-violet-400/50">
+                  <option value="all" class="bg-ink-800">Barchaga</option>
+                  <option value="seller" class="bg-ink-800">Faqat sotuvchilarga</option>
+                  <option value="affiliate" class="bg-ink-800">Faqat sotib beruvchilarga</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-1.5 block text-sm font-semibold text-slate-200">Sarlavha <span class="font-normal text-slate-500">(ixtiyoriy)</span></span>
+                <input id="notifTitle" type="text" placeholder="Masalan: Yangilik" class="w-full rounded-xl bg-white/5 px-3.5 py-2.5 text-sm text-slate-100 outline-none ring-1 ring-white/10 placeholder:text-slate-500 focus:ring-violet-400/50" />
+              </label>
+              <label class="block">
+                <span class="mb-1.5 block text-sm font-semibold text-slate-200">Matn</span>
+                <textarea id="notifBody" rows="3" required placeholder="Bildirishnoma matni..." class="w-full resize-none rounded-xl bg-white/5 px-3.5 py-2.5 text-sm text-slate-100 outline-none ring-1 ring-white/10 placeholder:text-slate-500 focus:ring-violet-400/50"></textarea>
+              </label>
+              <button type="submit" class="btn-grad rounded-xl px-6 py-2.5 text-sm font-bold text-white">Yuborish</button>
+            </form>
+          </div>
+          <div>
+            <h3 class="font-display mb-3 text-base font-bold text-white">Yuborilgan bildirishnomalar</h3>
+            <div class="space-y-2">${sent}</div>
+          </div>
+        </div>
+        ${(NOTIFS.length === 0 && window.__ADMIN_LOAD_ERROR) ? policyHint() : ''}`;
+    }
+
+    async function sendNotification(form) {
+      const audience = form.querySelector('#notifAudience').value;
+      const title = form.querySelector('#notifTitle').value.trim();
+      const body = form.querySelector('#notifBody').value.trim();
+      if (!body) { toast('Matn kiriting'); return; }
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true; btn.textContent = 'Yuborilmoqda...';
+      const { data, error } = await sb.from('notifications').insert({ audience, title: title || null, body }).select().single();
+      btn.disabled = false; btn.textContent = 'Yuborish';
+      if (error) {
+        console.error(error);
+        const missing = /notifications|does not exist|schema cache|find the table/i.test(error.message || '');
+        toast(missing ? "Jadval topilmadi — supabase_qoshimcha.sql'ni ishga tushiring" : 'Xatolik: ' + (error.message || 'yuborilmadi'));
+        return;
+      }
+      NOTIFS.unshift(data);
+      renderNotifications();
+      toast('Bildirishnoma yuborildi ✓');
+    }
+
+    async function deleteNotification(id) {
+      if (!confirm('Bildirishnomani o\'chirasizmi?')) return;
+      const { error } = await sb.from('notifications').delete().eq('id', id);
+      if (error) { console.error(error); toast('Xatolik: o\'chirib bo\'lmadi'); return; }
+      NOTIFS = NOTIFS.filter((n) => n.id !== id);
+      renderNotifications();
+      toast('O\'chirildi');
+    }
+
     function render() {
-      const titles = { stats: 'Statistika', products: 'Mahsulotlar', users: 'Foydalanuvchilar', chat: 'Savol-javob chat', settings: 'Messenjer' };
+      const titles = { stats: 'Statistika', products: 'Mahsulotlar', users: 'Foydalanuvchilar', chat: 'Savol-javob chat', notifications: 'Bildirishnomalar', settings: 'Messenjer' };
       $('#viewTitle').textContent = titles[currentView] || 'Admin';
       if (currentView === 'stats') renderStats();
       else if (currentView === 'products') renderProducts();
       else if (currentView === 'users') renderUsers();
       else if (currentView === 'chat') renderChat();
+      else if (currentView === 'notifications') renderNotifications();
       else if (currentView === 'settings') renderSettings();
     }
 
@@ -586,16 +676,19 @@
       const rj = e.target.closest('[data-reject]');
       const dl = e.target.closest('[data-delete]');
       const cv = e.target.closest('[data-open-convo]');
+      const dn = e.target.closest('[data-del-notif]');
       if (ap) setStatus(ap.dataset.approve, 'Faol');
       else if (rj) setStatus(rj.dataset.reject, 'Rad etilgan');
       else if (dl) removeProduct(dl.dataset.delete);
       else if (cv) { chatSelectedUser = cv.dataset.openConvo; renderChat(); }
+      else if (dn) deleteNotification(dn.dataset.delNotif);
     });
 
     // Formalar (delegatsiya orqali): chat javobi va sozlamalar
     $('#viewRoot').addEventListener('submit', (e) => {
       const chatForm = e.target.closest('#chatReplyForm');
       const settingsForm = e.target.closest('#settingsForm');
+      const notifForm = e.target.closest('#notifForm');
       if (chatForm) {
         e.preventDefault();
         const input = chatForm.querySelector('#chatReplyInput');
@@ -605,6 +698,9 @@
       } else if (settingsForm) {
         e.preventDefault();
         saveSettings(settingsForm);
+      } else if (notifForm) {
+        e.preventDefault();
+        sendNotification(notifForm);
       }
     });
 
