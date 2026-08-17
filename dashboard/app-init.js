@@ -224,7 +224,7 @@
     try {
       const { data: apRows, error: apErr } = await sb
         .from('affiliate_products')
-        .select('product_id, created_at')
+        .select('product_id, created_at, archived')
         .eq('affiliate_id', user.id)
         .order('created_at', { ascending: false });
       if (apErr) throw apErr;
@@ -236,9 +236,9 @@
         (prods || []).forEach((p) => { prodById[p.id] = p; });
       }
       window.__SOTIBBER_AGENT_LINKS = (apRows || [])
-        .map((r) => prodById[r.product_id])
-        .filter(Boolean)
-        .map((p) => {
+        .map((r) => {
+          const p = prodById[r.product_id];
+          if (!p) return null;
           const images = productImages(p);
           const commissionPct = Number(p.commission) || 0;
           return {
@@ -251,10 +251,12 @@
             clicks: 0,
             sales: 0,
             slug: '',
+            archived: !!r.archived,
             images,
             image: images[0] || null,
           };
-        });
+        })
+        .filter(Boolean);
     } catch (e) {
       console.error('Do\'kon mahsulotlarini yuklashda xatolik:', e);
       window.__SOTIBBER_AGENT_LINKS = [];
@@ -284,6 +286,46 @@
     } catch (e) {
       console.error('Sotuvlarni yuklashda xatolik:', e);
       window.__SOTIBBER_SALES = [];
+    }
+
+    // Sotuvchi: mahsulotlarimni KIM do'koniga qo'shgan (sotib beruvchilar) + sotilgani
+    try {
+      const myIds = (window.__SOTIBBER_PRODUCTS || []).map((p) => p.id);
+      if (myIds.length) {
+        const { data: aps } = await sb.from('affiliate_products').select('affiliate_id, product_id, archived, created_at').in('product_id', myIds);
+        const affIds = Array.from(new Set((aps || []).map((a) => a.affiliate_id).filter(Boolean)));
+        const profById = {};
+        if (affIds.length) {
+          const { data: profs } = await sb.from('profiles').select('id, full_name, shop_name, shop_no, instagram').in('id', affIds);
+          (profs || []).forEach((p) => { profById[p.id] = p; });
+        }
+        // Sotilgan soni: orders (seller_id = men) bo'yicha affiliate+product kesimida
+        const soldMap = {};
+        try {
+          const { data: ord } = await sb.from('orders').select('affiliate_id, product_id, quantity').eq('seller_id', user.id);
+          (ord || []).forEach((o) => { const k = o.affiliate_id + '|' + o.product_id; soldMap[k] = (soldMap[k] || 0) + (Number(o.quantity) || 1); });
+        } catch (e) { /* orders yo'q bo'lishi mumkin */ }
+        const prodNameById = {};
+        (window.__SOTIBBER_PRODUCTS || []).forEach((p) => { prodNameById[p.id] = p.name; });
+        window.__SOTIBBER_MY_RESELLERS = (aps || []).map((a) => {
+          const pr = profById[a.affiliate_id] || {};
+          return {
+            affiliate_id: a.affiliate_id,
+            product_id: a.product_id,
+            product_name: prodNameById[a.product_id] || 'Mahsulot',
+            name: pr.shop_name || pr.full_name || 'Sotib beruvchi',
+            instagram: pr.instagram || '',
+            shop_no: pr.shop_no || null,
+            archived: !!a.archived,
+            sold: soldMap[a.affiliate_id + '|' + a.product_id] || 0,
+          };
+        });
+      } else {
+        window.__SOTIBBER_MY_RESELLERS = [];
+      }
+    } catch (e) {
+      console.error('Sotib beruvchilarni yuklashda xatolik:', e);
+      window.__SOTIBBER_MY_RESELLERS = [];
     }
 
     // Xabarlar — foydalanuvchi ishtirok etgan barcha xabarlar (sender yoki recipient)

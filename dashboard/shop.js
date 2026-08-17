@@ -127,10 +127,11 @@
     try {
       const { data: apRows, error: apErr } = await sb
         .from('affiliate_products')
-        .select('product_id')
+        .select('product_id, archived')
         .eq('affiliate_id', owner.id);
       if (apErr) throw apErr;
-      const ids = (apRows || []).map((r) => r.product_id).filter(Boolean);
+      // Arxivlangan mahsulotlar do'konda ko'rinmaydi
+      const ids = (apRows || []).filter((r) => !r.archived).map((r) => r.product_id).filter(Boolean);
       if (!ids.length) {
         products = [];
       } else {

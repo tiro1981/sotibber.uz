@@ -79,6 +79,9 @@
     // Sotib beruvchining sotuvlari (orders)
     const agentSales = Array.isArray(window.__SOTIBBER_SALES) ? window.__SOTIBBER_SALES : [];
 
+    // Sotuvchi: mahsulotlarimni kim do'koniga qo'shgan (sotib beruvchilar)
+    const myResellers = Array.isArray(window.__SOTIBBER_MY_RESELLERS) ? window.__SOTIBBER_MY_RESELLERS : [];
+
     // Mahsulot kategoriyalari
     const CATEGORIES = ['Elektronika', 'Kiyim-kechak', 'Poyabzal', "Go'zallik", "Uy-ro'zg'or", 'Oziq-ovqat', 'Bolalar', 'Sport', 'Aksessuar', 'Boshqa'];
     let marketQuery = '';
@@ -175,6 +178,8 @@
       chart: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 15l3-4 3 3 5-7"/>',
       shop: '<path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11a1 1 0 01-1 1H5a1 1 0 01-1-1L5 9z"/>',
       chat: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l.8-4.2A7.9 7.9 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
+      insta: '<rect x="3" y="3" width="18" height="18" rx="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/>',
+      users: '<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/>',
     };
 
     function navIcon(path) {
@@ -197,6 +202,7 @@
           { id: 'dashboard', title: 'Bosh sahifa', icon: icon.home },
           { id: 'products', title: 'Mahsulotlar', icon: icon.box },
           { id: 'orders', title: 'Buyurtmalar', icon: icon.cart },
+          { id: 'resellers', title: 'Sotib beruvchilar', icon: icon.users },
           { id: 'messages', title: 'Xabarlar', icon: icon.chat },
           { id: 'finance', title: 'Moliya', icon: icon.wallet },
         ],
@@ -208,6 +214,7 @@
           { id: 'dashboard', title: 'Bosh sahifa', icon: icon.home },
           { id: 'market', title: 'Mahsulotlar bozori', icon: icon.store },
           { id: 'shop', title: "Mening do'konim", icon: icon.shop },
+          { id: 'messenger', title: 'Messenjer', icon: icon.insta },
           { id: 'messages', title: 'Xabarlar', icon: icon.chat },
           { id: 'sales', title: 'Mening sotuvlarim', icon: icon.chart },
           { id: 'wallet', title: 'Hamyon', icon: icon.wallet },
@@ -549,8 +556,36 @@
         const su = shopUrls();
         const shopLink = su.full;
         const shopDisplay = su.display || "Havola tayyorlanmoqda...";
+        const activeLinks = agentLinks.filter((l) => !l.archived);
+        const archivedLinks = agentLinks.filter((l) => l.archived);
         const totalSales = agentLinks.reduce((s, l) => s + l.sales, 0);
-        const totalClicks = agentLinks.reduce((s, l) => s + l.clicks, 0);
+        // Do'kondagi mahsulot kartasi (boshqaruv: arxivlash / olib tashlash)
+        const shopCard = (l, archived) => `
+          <div class="glass overflow-hidden rounded-2xl ${archived ? 'opacity-70' : 'glass-hover transition hover:-translate-y-0.5'}">
+            ${productMedia(l.images, l.product)}
+            <div class="p-4">
+              <button data-shop-detail="${agentLinks.indexOf(l)}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(l.product)}</button>
+              <p class="font-display mt-2 text-lg font-bold text-white">${uzs(l.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
+              <div class="mt-2 flex items-center justify-between text-xs">
+                <span class="rounded-full bg-emerald-500/15 px-2.5 py-1 font-bold text-emerald-300">Ulush: ${uzs(l.commission)} so'm</span>
+                <span class="rounded-full bg-white/10 px-2.5 py-1 font-semibold text-slate-200">${l.sales} ta sotilgan</span>
+              </div>
+              <div class="mt-3 flex gap-2">
+                ${archived ? `
+                  <button data-shop-unarchive="${l.product_id}" class="flex-1 rounded-xl bg-white/10 py-2.5 text-sm font-bold text-white transition hover:bg-white/15">Qaytarish</button>
+                  <button data-shop-remove="${l.product_id}" class="rounded-xl bg-rose-500/15 px-3 text-sm font-semibold text-rose-300 ring-1 ring-rose-500/25 transition hover:bg-rose-500/25">O'chirish</button>
+                ` : `
+                  <button data-shop-archive="${l.product_id}" class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Arxivlash</button>
+                  <button data-copy="${esc(shopLink)}" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-violet-500/15 text-violet-300 transition hover:bg-violet-500/25" title="Do'kon havolasini nusxalash">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </button>
+                  <button data-shop-remove="${l.product_id}" title="Do'kondan olib tashlash" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/20 transition hover:bg-rose-500/20">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>`;
         return `
         <div class="view-enter space-y-6">
           <!-- Do'kon sarlavhasi + havola -->
@@ -581,42 +616,23 @@
             </div>
             <!-- mini statistika -->
             <div class="mt-5 grid grid-cols-3 gap-3 text-center">
-              <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${agentLinks.length}</p><p class="text-[11px] text-violet-100">Mahsulot</p></div>
-              <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${totalClicks}</p><p class="text-[11px] text-violet-100">Tashriflar</p></div>
+              <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${activeLinks.length}</p><p class="text-[11px] text-violet-100">Faol mahsulot</p></div>
               <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${totalSales}</p><p class="text-[11px] text-violet-100">Sotuvlar</p></div>
+              <div class="rounded-xl bg-white/10 p-3"><p class="font-display text-lg font-bold">${archivedLinks.length}</p><p class="text-[11px] text-violet-100">Arxivda</p></div>
             </div>
           </div>
 
           <!-- Xaridor nima ko'rishini tushuntiruvchi banner -->
           <div class="flex items-start gap-2.5 rounded-xl bg-blue-500/10 px-4 py-3 text-sm text-blue-200 ring-1 ring-blue-500/20">
             <svg class="mt-0.5 h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span>Xaridor havola orqali kirganda quyidagi do'koningizni ko'radi va <b>"Sotib olish"</b> tugmasi orqali to'g'ridan-to'g'ri buyurtma beradi. Har bir sotuvdan komissiyangiz hisobingizga tushadi.</span>
+            <span>Bu yerda do'koningizga qo'shgan mahsulotlarni boshqarasiz: har birining nechta sotilganini ko'rasiz, kerakmasini <b>arxivlaysiz</b> yoki <b>do'kondan olib tashlaysiz</b>. Faol mahsulotlar web-ilova do'koningizda ko'rinadi.</span>
           </div>
 
-          <!-- Do'kon vitrinasi -->
+          <!-- Faol mahsulotlar -->
           <div>
             <h3 class="font-display mb-3 font-bold text-white">Do'kondagi mahsulotlar</h3>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              ${agentLinks.map((l, i) => `
-                <div class="glass glass-hover overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
-                  ${productMedia(l.images, l.product)}
-                  <div class="p-4">
-                    <button data-shop-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(l.product)}</button>
-                    <p class="font-display mt-2 text-lg font-bold text-white">${uzs(l.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
-                    <div class="mt-2 flex items-center justify-between text-xs">
-                      <span class="rounded-full bg-emerald-500/15 px-2.5 py-1 font-bold text-emerald-300">Ulush: ${uzs(l.commission)} so'm</span>
-                      <span class="text-slate-500">${l.sales} ta sotilgan</span>
-                    </div>
-                    <div class="mt-3 flex gap-2">
-                      <button data-buy="${i}" class="flex-1 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:opacity-90 active:scale-95">
-                        Sotib olish
-                      </button>
-                      <button data-copy="${esc(shopLink)}" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-violet-500/15 text-violet-300 transition hover:bg-violet-500/25" title="Do'kon havolasini nusxalash">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>`).join('') || `
+              ${activeLinks.map((l) => shopCard(l, false)).join('') || `
               <div class="glass col-span-full flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
                 <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400">
                   <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.shop}</svg>
@@ -626,6 +642,15 @@
               </div>`}
             </div>
           </div>
+
+          <!-- Arxivlangan mahsulotlar -->
+          ${archivedLinks.length ? `
+          <div>
+            <h3 class="font-display mb-3 flex items-center gap-2 font-bold text-white">Arxivlangan <span class="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-slate-300">${archivedLinks.length}</span></h3>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              ${archivedLinks.map((l) => shopCard(l, true)).join('')}
+            </div>
+          </div>` : ''}
         </div>`;
       },
 
@@ -731,7 +756,6 @@
        MARKET GRID (filterable — qidiruv bilan)
     ========================================================= */
     function marketCard(p, i) {
-      const own = p.seller_id && p.seller_id === ME;
       return `
         <div class="glass glass-hover group overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
           ${productMedia(p.images, p.name)}
@@ -750,9 +774,9 @@
               <button data-start-selling="${i}" class="btn-grad flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-95">
                 Sotishni boshlash
               </button>
-              ${own ? '' : `<button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
+              <button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg>
-              </button>`}
+              </button>
             </div>
             <button data-market-detail="${i}" class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/10">Batafsil ma'lumot</button>
           </div>
@@ -883,7 +907,7 @@
           images: l.images || [],
           badgeLine: '',
           commissionText: `${uzs(l.commission)} so'm`,
-          action: { label: 'Sotib olish', attr: `data-buy="${idx}"`, cls: 'bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/25' },
+          action: null,
         };
       }
       // seller
@@ -957,7 +981,7 @@
           </div>
           ${p.action ? `
           <div class="sticky bottom-0 flex gap-3 border-t border-white/10 bg-ink-900/60 p-6 backdrop-blur">
-            ${kind === 'market' && marketProducts[idx] && marketProducts[idx].seller_id && marketProducts[idx].seller_id !== ME ? `<button type="button" data-msg-seller="${idx}" title="Sotuvchi bilan xabarlashish" class="grid w-12 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg></button>` : ''}
+            ${kind === 'market' && marketProducts[idx] && marketProducts[idx].seller_id ? `<button type="button" data-msg-seller="${idx}" title="Sotuvchi bilan xabarlashish" class="grid w-12 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg></button>` : ''}
             <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
             <button type="button" ${p.action.attr} class="${p.action.cls} flex-1 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">${p.action.label}</button>
           </div>` : `
@@ -1802,9 +1826,165 @@
       renderSidebar();
     }
 
-    // "Xabarlar" ko'rinishi ikkala panelda ham mavjud
+    /* =========================================================
+       MESSENJER (sotib beruvchi) — Instagram ulash + statistika
+    ========================================================= */
+    function messengerView() {
+      const profile = window.__SOTIBBER_PROFILE || {};
+      const ig = profile.instagram || '';
+      const activeCount = agentLinks.filter((l) => !l.archived).length;
+      const totalSold = agentLinks.reduce((s, l) => s + l.sales, 0);
+      const totalCommission = agentSales.reduce((s, o) => s + (Number(o.commission) || 0), 0);
+      const ordersCount = agentSales.length;
+      const igStat = (label, value, ic, tint) => `
+        <div class="glass rounded-2xl p-5">
+          <span class="grid h-10 w-10 place-items-center rounded-xl ${tint}"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic}</svg></span>
+          <p class="font-display mt-3 text-2xl font-bold text-white">${value}</p>
+          <p class="mt-0.5 text-xs text-slate-400">${label}</p>
+        </div>`;
+      return `
+        <div class="view-enter space-y-6">
+          <div>
+            <h2 class="font-display text-lg font-bold text-white">Messenjer</h2>
+            <p class="text-sm text-slate-400">Instagram akkauntingizni ulang va statistikani kuzating</p>
+          </div>
+
+          <!-- Instagram ulash -->
+          <div class="glass rounded-2xl p-6">
+            <div class="flex items-center gap-3">
+              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-pink-500 to-fuchsia-500 text-white"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.insta}</svg></span>
+              <div>
+                <h3 class="font-display font-bold text-white">Instagram</h3>
+                <p class="text-xs text-slate-400">Do'koningizni Instagram orqali targ'ib qiling</p>
+              </div>
+              ${ig ? '<span class="ml-auto rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-300">Ulangan</span>' : ''}
+            </div>
+            <form id="igForm" class="mt-4 flex flex-col gap-2 sm:flex-row">
+              <div class="relative flex-1">
+                <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">@</span>
+                <input id="igInput" type="text" value="${esc(ig.replace(/^@/, ''))}" placeholder="username yoki havola" class="fld w-full rounded-xl py-2.5 pl-7 pr-3 text-sm outline-none" />
+              </div>
+              <button type="submit" class="btn-grad rounded-xl px-5 py-2.5 text-sm font-bold text-white transition active:scale-95">Saqlash</button>
+              ${ig ? `<a href="${esc(/^https?:/.test(ig) ? ig : 'https://instagram.com/' + ig.replace(/^@/, ''))}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/10">Ochish</a>` : ''}
+            </form>
+          </div>
+
+          <!-- Statistika -->
+          <div>
+            <h3 class="font-display mb-3 font-bold text-white">Statistika</h3>
+            <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              ${igStat('Faol mahsulot', activeCount, icon.box, 'bg-violet-500/15 text-violet-300')}
+              ${igStat('Buyurtmalar', ordersCount, icon.cart, 'bg-blue-500/15 text-blue-300')}
+              ${igStat('Sotilgan', totalSold + ' ta', '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>', 'bg-emerald-500/15 text-emerald-300')}
+              ${igStat('Ishlangan komissiya', uzs(totalCommission) + " so'm", icon.wallet, 'bg-amber-500/15 text-amber-300')}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    /* =========================================================
+       SOTIB BERUVCHILAR (sotuvchi) — mahsulotimni kim do'koniga qo'shgan
+    ========================================================= */
+    function resellersView() {
+      const byAff = {};
+      myResellers.forEach((r) => {
+        if (!byAff[r.affiliate_id]) byAff[r.affiliate_id] = { name: r.name, instagram: r.instagram, shop_no: r.shop_no, items: [] };
+        byAff[r.affiliate_id].items.push(r);
+      });
+      const groups = Object.keys(byAff).map((k) => byAff[k]);
+      const totalSold = myResellers.reduce((s, r) => s + r.sold, 0);
+
+      const igHref = (ig) => /^https?:/.test(ig) ? ig : 'https://instagram.com/' + ig.replace(/^@/, '');
+      const shopHref = (no) => no != null ? new URL('shop.html?id=' + String(no).padStart(4, '0'), window.location.href).href : '';
+
+      const cards = groups.map((g) => `
+        <div class="glass rounded-2xl p-5">
+          <div class="flex items-center gap-3">
+            <span class="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-sm font-bold text-white">${esc((g.name || 'S').slice(0, 1).toUpperCase())}</span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-bold text-white">${esc(g.name)}</p>
+              <p class="text-xs text-slate-400">${g.items.length} ta mahsulot · ${g.items.reduce((s, r) => s + r.sold, 0)} ta sotgan</p>
+            </div>
+            <div class="flex flex-shrink-0 gap-1.5">
+              ${g.instagram ? `<a href="${esc(igHref(g.instagram))}" target="_blank" rel="noopener" title="Instagram" class="grid h-9 w-9 place-items-center rounded-lg bg-pink-500/15 text-pink-300 hover:bg-pink-500/25"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.insta}</svg></a>` : ''}
+              ${g.shop_no != null ? `<a href="${esc(shopHref(g.shop_no))}" target="_blank" rel="noopener" title="Do'konni ochish" class="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-slate-200 ring-1 ring-white/10 hover:bg-white/10"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.shop}</svg></a>` : ''}
+            </div>
+          </div>
+          <div class="mt-3 space-y-1.5">
+            ${g.items.map((r) => `<div class="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm ring-1 ring-white/10">
+              <span class="min-w-0 flex-1 truncate text-slate-200">${esc(r.product_name)}${r.archived ? ' <span class="text-xs text-slate-500">(arxiv)</span>' : ''}</span>
+              <span class="flex-shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">${r.sold} ta sotilgan</span>
+            </div>`).join('')}
+          </div>
+        </div>`).join('');
+
+      return `
+        <div class="view-enter space-y-5">
+          <div>
+            <h2 class="font-display text-lg font-bold text-white">Sotib beruvchilar</h2>
+            <p class="text-sm text-slate-400">Mahsulotlaringizni do'koniga qo'shgan sotib beruvchilar</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            ${[['Sotib beruvchilar', groups.length], ['Jami qo\'shilgan', myResellers.length + ' ta'], ['Ular sotgan', totalSold + ' ta']].map(([l, v]) => `
+              <div class="glass rounded-2xl p-4 text-center"><p class="font-display text-2xl font-bold text-white">${v}</p><p class="mt-0.5 text-xs text-slate-400">${l}</p></div>`).join('')}
+          </div>
+          ${groups.length ? `<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">${cards}</div>` : `
+            <div class="glass flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
+              <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.users}</svg></span>
+              <p class="mt-3 text-sm font-semibold text-slate-300">Hali hech kim mahsulotingizni qo'shmagan</p>
+              <p class="mt-1 max-w-xs text-xs text-slate-500">Sotib beruvchilar bozordan mahsulotingizni "Sotishni boshlash" bilan do'koniga qo'shsa, shu yerda ko'rinadi</p>
+            </div>`}
+        </div>`;
+    }
+
+    async function saveInstagram(form) {
+      const user = window.__SOTIBBER_USER;
+      if (!user || !window.sb) { toast('Tizimga qayta kiring'); return; }
+      const val = form.querySelector('#igInput').value.trim();
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      const { error } = await window.sb.from('profiles').upsert({ id: user.id, instagram: val }, { onConflict: 'id' });
+      btn.disabled = false;
+      if (error) {
+        console.error('Instagram:', error);
+        toast(/instagram|column .* does not exist|schema cache/i.test(error.message || '') ? "'instagram' ustuni yo'q — supabase_qoshimcha.sql'ni ishga tushiring" : 'Xatolik: ' + (error.message || ''));
+        return;
+      }
+      window.__SOTIBBER_PROFILE = Object.assign({}, window.__SOTIBBER_PROFILE || {}, { instagram: val });
+      toast('Instagram saqlandi ✓');
+      renderView();
+    }
+
+    async function archiveShopProduct(productId, archived) {
+      const user = window.__SOTIBBER_USER;
+      if (!user || !window.sb) return;
+      const link = agentLinks.find((l) => l.product_id === productId);
+      if (link) link.archived = archived;
+      if (state.view === 'shop') renderView();
+      const { error } = await window.sb.from('affiliate_products').update({ archived }).eq('affiliate_id', user.id).eq('product_id', productId);
+      if (error) {
+        console.error('Arxivlash:', error);
+        toast(/archived|column .* does not exist|schema cache/i.test(error.message || '') ? "'archived' ustuni yo'q — supabase_qoshimcha.sql'ni ishga tushiring" : 'Xatolik yuz berdi');
+      } else toast(archived ? 'Arxivlandi ✓' : 'Qaytarildi ✓');
+    }
+
+    async function removeShopProduct(productId) {
+      const user = window.__SOTIBBER_USER;
+      if (!user || !window.sb) return;
+      if (!confirm("Mahsulotni do'kondan olib tashlaysizmi?")) return;
+      const idx = agentLinks.findIndex((l) => l.product_id === productId);
+      if (idx >= 0) agentLinks.splice(idx, 1);
+      if (state.view === 'shop') renderView();
+      const { error } = await window.sb.from('affiliate_products').delete().eq('affiliate_id', user.id).eq('product_id', productId);
+      if (error) { console.error('Olib tashlash:', error); toast('Xatolik: olib tashlab bo\'lmadi'); }
+      else toast("Do'kondan olib tashlandi ✓");
+    }
+
+    // Ko'rinishlarni ikkala panelga bog'laymiz
     sellerViews.messages = messagesView;
     affiliateViews.messages = messagesView;
+    sellerViews.resellers = resellersView;
+    affiliateViews.messenger = messengerView;
 
     /* =========================================================
        APP STATE + ROUTER
@@ -1929,6 +2109,14 @@
       const msell = t.closest('[data-msg-seller]');
       if (msell) return messageSeller(Number(msell.dataset.msgSeller));
 
+      // Do'kon boshqaruvi (arxivlash / qaytarish / olib tashlash)
+      const sArch = t.closest('[data-shop-archive]');
+      if (sArch) return archiveShopProduct(sArch.dataset.shopArchive, true);
+      const sUnarch = t.closest('[data-shop-unarchive]');
+      if (sUnarch) return archiveShopProduct(sUnarch.dataset.shopUnarchive, false);
+      const sRem = t.closest('[data-shop-remove]');
+      if (sRem) return removeShopProduct(sRem.dataset.shopRemove);
+
       // Bozor kategoriya filtri
       const mcat = t.closest('[data-market-cat]');
       if (mcat) {
@@ -2017,10 +2205,12 @@
       mf.value = '';
     });
 
-    // Xabar yuborish formasi
+    // Xabar yuborish + Instagram saqlash formalari
     document.addEventListener('submit', (e) => {
       const mform = e.target.closest('#msgForm');
-      if (mform) { e.preventDefault(); sendCurrentMessage(mform); }
+      if (mform) { e.preventDefault(); sendCurrentMessage(mform); return; }
+      const igf = e.target.closest('#igForm');
+      if (igf) { e.preventDefault(); saveInstagram(igf); }
     });
 
     /* =========================================================

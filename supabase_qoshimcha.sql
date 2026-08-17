@@ -312,3 +312,33 @@ drop policy if exists "Msg files: yuklash (auth)" on storage.objects;
 create policy "Msg files: yuklash (auth)" on storage.objects for insert to authenticated with check (bucket_id = 'message-files');
 drop policy if exists "Msg files: yuklash (anon)" on storage.objects;
 create policy "Msg files: yuklash (anon)" on storage.objects for insert to anon with check (bucket_id = 'message-files');
+
+-- =====================================================================
+-- 8) DO'KON BOSHQARUVI + MESSENJER (Instagram) + STATISTIKA
+-- =====================================================================
+
+-- 8.1) Do'kondagi mahsulotni arxivlash
+alter table public.affiliate_products
+  add column if not exists archived boolean not null default false;
+
+-- Sotib beruvchi o'z do'kon yozuvini yangilaydi (arxivlash/qaytarish)
+drop policy if exists "AffProducts: o'zi yangilaydi" on public.affiliate_products;
+create policy "AffProducts: o'zi yangilaydi"
+  on public.affiliate_products for update to authenticated
+  using (auth.uid() = affiliate_id) with check (auth.uid() = affiliate_id);
+
+-- Sotuvchi o'z mahsulotini KIM do'koniga qo'shganini ko'radi
+drop policy if exists "AffProducts: sotuvchi ko'radi" on public.affiliate_products;
+create policy "AffProducts: sotuvchi ko'radi"
+  on public.affiliate_products for select to authenticated
+  using (product_id in (select id from public.products where seller_id = auth.uid()));
+
+-- 8.2) Sotib beruvchining Instagram havolasi (profilda)
+alter table public.profiles
+  add column if not exists instagram text;
+
+-- Login qilgan foydalanuvchi profillarni ko'radi (ism/do'kon/instagram).
+-- Loyihaning mavjud ochiq modeliga mos (anon allaqachon ko'radi).
+drop policy if exists "Profiles: login ko'radi" on public.profiles;
+create policy "Profiles: login ko'radi"
+  on public.profiles for select to authenticated using (true);
