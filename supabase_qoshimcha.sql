@@ -113,6 +113,10 @@ on conflict (key) do nothing;
 alter table public.products
   add column if not exists image_urls text[] not null default '{}';
 
+-- Mahsulot kategoriyasi (bozorda filtrlash uchun)
+alter table public.products
+  add column if not exists category text;
+
 -- =====================================================================
 -- 5) SOTIB BERUVCHI DO'KONI (web-ilova) + BUYURTMALAR
 --

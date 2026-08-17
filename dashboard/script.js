@@ -79,6 +79,11 @@
     // Sotib beruvchining sotuvlari (orders)
     const agentSales = Array.isArray(window.__SOTIBBER_SALES) ? window.__SOTIBBER_SALES : [];
 
+    // Mahsulot kategoriyalari
+    const CATEGORIES = ['Elektronika', 'Kiyim-kechak', 'Poyabzal', "Go'zallik", "Uy-ro'zg'or", 'Oziq-ovqat', 'Bolalar', 'Sport', 'Aksessuar', 'Boshqa'];
+    let marketQuery = '';
+    let marketCategory = 'Barchasi';
+
     // Do'kon tartib raqamini 4 xonali qilib formatlaymiz (1 -> 0001)
     function shopIdStr(no) { return (no == null || no === '') ? '' : String(no).padStart(4, '0'); }
 
@@ -255,18 +260,24 @@
 
     // Mahsulot kartasi rasm blogi — bir xil ko'rinishli, chiroyli.
     // images: massiv (0..5). count-badge bir nechta rasm bo'lsa ko'rsatiladi.
+    // Kartadagi rasm(lar). Bir nechta bo'lsa — suriladigan (swipe) lenta:
+    // barcha rasmlar chapga-o'ngga surib ko'riladi.
     function productMedia(images, name, ratio = 'aspect-[4/3]') {
       const list = Array.isArray(images) ? images.filter(Boolean) : [];
-      const first = list[0];
-      const count = list.length;
+      if (!list.length) {
+        return `<div class="relative ${ratio} w-full overflow-hidden bg-gradient-to-br from-white/10 to-white/[0.02]"><div class="grid h-full w-full place-items-center">${imgPlaceholder('h-16 w-16')}</div></div>`;
+      }
+      if (list.length === 1) {
+        return `<div class="relative ${ratio} w-full overflow-hidden bg-gradient-to-br from-white/10 to-white/[0.02]"><img src="${esc(list[0])}" alt="${esc(name)}" loading="lazy" class="h-full w-full object-cover" /></div>`;
+      }
       return `
-        <div class="relative ${ratio} w-full overflow-hidden bg-gradient-to-br from-white/10 to-white/[0.02]">
-          ${first
-            ? `<img src="${esc(first)}" alt="${esc(name)}" loading="lazy" class="h-full w-full object-cover" />`
-            : `<div class="grid h-full w-full place-items-center">${imgPlaceholder('h-16 w-16')}</div>`}
-          <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-          ${count > 1 ? `<span class="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>${count}</span>` : ''}
+        <div class="relative ${ratio} w-full overflow-hidden bg-black/20">
+          <div class="no-scrollbar flex h-full w-full snap-x snap-mandatory overflow-x-auto">
+            ${list.map((src) => `<img src="${esc(src)}" alt="${esc(name)}" loading="lazy" class="h-full w-full flex-shrink-0 snap-center object-cover" />`).join('')}
+          </div>
+          <span class="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>${list.length}
+          </span>
         </div>`;
     }
 
@@ -329,10 +340,10 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             ${merchantProducts.map((p, i) => `
               <div class="glass glass-hover group overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
-                <button data-product-detail="${i}" class="relative block w-full text-left">
+                <div class="relative">
                   ${productMedia(p.images, p.name)}
-                  <div class="absolute right-3 top-3">${badge(p.status)}</div>
-                </button>
+                  <div class="absolute right-3 top-3 z-10">${badge(p.status)}</div>
+                </div>
                 <div class="p-4">
                   <button data-product-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
                   <div class="mt-2 flex items-center justify-between">
@@ -524,6 +535,11 @@
             </div>
           </div>
 
+          <!-- Kategoriya filtri -->
+          <div id="marketCats" class="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            ${['Barchasi'].concat(CATEGORIES).map((c) => `<button data-market-cat="${esc(c)}" class="market-cat whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition ${c === marketCategory ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${esc(c)}</button>`).join('')}
+          </div>
+
           <div id="marketGrid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
         </div>`;
       },
@@ -583,7 +599,7 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               ${agentLinks.map((l, i) => `
                 <div class="glass glass-hover overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
-                  <button data-shop-detail="${i}" class="block w-full text-left">${productMedia(l.images, l.product)}</button>
+                  ${productMedia(l.images, l.product)}
                   <div class="p-4">
                     <button data-shop-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(l.product)}</button>
                     <p class="font-display mt-2 text-lg font-bold text-white">${uzs(l.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
@@ -715,14 +731,16 @@
        MARKET GRID (filterable — qidiruv bilan)
     ========================================================= */
     function marketCard(p, i) {
+      const own = p.seller_id && p.seller_id === ME;
       return `
         <div class="glass glass-hover group overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
-          <button data-market-detail="${i}" class="block w-full text-left">${productMedia(p.images, p.name)}</button>
+          ${productMedia(p.images, p.name)}
           <div class="p-4">
             <button data-market-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
-            <p class="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
-              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg>${esc(p.merchant)}
-            </p>
+            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span class="flex items-center gap-1"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg>${esc(p.merchant)}</span>
+              ${p.category ? `<span class="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-slate-300">${esc(p.category)}</span>` : ''}
+            </div>
             <p class="font-display mt-2 text-lg font-bold text-white">${uzs(p.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
             <div class="mt-3 rounded-xl bg-emerald-500/10 px-3 py-2 text-center ring-1 ring-emerald-500/20">
               <span class="text-sm font-medium text-emerald-300">Komissiya: </span>
@@ -732,29 +750,32 @@
               <button data-start-selling="${i}" class="btn-grad flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-95">
                 Sotishni boshlash
               </button>
-              <button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
+              ${own ? '' : `<button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg>
-              </button>
+              </button>`}
             </div>
             <button data-market-detail="${i}" class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/10">Batafsil ma'lumot</button>
           </div>
         </div>`;
     }
 
-    function renderMarketGrid(query = '') {
+    function renderMarketGrid() {
       const grid = $('#marketGrid');
       if (!grid) return;
-      const q = query.trim().toLowerCase();
+      const q = marketQuery.trim().toLowerCase();
+      const cat = marketCategory;
       const rows = marketProducts
         .map((p, i) => ({ p, i }))
-        .filter(({ p }) => !q || (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+        .filter(({ p }) => (!q || (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
+          && (cat === 'Barchasi' || (p.category || '') === cat));
+      const filtering = q || cat !== 'Barchasi';
       grid.innerHTML = rows.map(({ p, i }) => marketCard(p, i)).join('') || `
         <div class="glass col-span-full flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
           <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.store}</svg>
           </span>
-          <p class="mt-3 text-sm font-semibold text-slate-300">${q ? 'Hech narsa topilmadi' : "Bozorda hali mahsulot yo'q"}</p>
-          <p class="mt-1 max-w-xs text-xs text-slate-500">${q ? 'Boshqa kalit so\'z bilan qidirib ko\'ring' : "Sotuvchilar mahsulot qo'shishi bilan shu yerda paydo bo'ladi"}</p>
+          <p class="mt-3 text-sm font-semibold text-slate-300">${filtering ? 'Hech narsa topilmadi' : "Bozorda hali mahsulot yo'q"}</p>
+          <p class="mt-1 max-w-xs text-xs text-slate-500">${filtering ? 'Boshqa kategoriya yoki kalit so\'z bilan qidirib ko\'ring' : "Sotuvchilar mahsulot qo'shishi bilan shu yerda paydo bo'ladi"}</p>
         </div>`;
     }
 
@@ -843,6 +864,7 @@
         return {
           name: p.name,
           description: p.description,
+          category: p.category || '',
           price: p.price,
           images: p.images || [],
           badgeLine: `<span class="inline-flex items-center gap-1 text-xs text-slate-400"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg>${esc(p.merchant || 'Sotuvchi')}</span>`,
@@ -856,6 +878,7 @@
         return {
           name: l.product,
           description: l.description || '',
+          category: l.category || '',
           price: l.price,
           images: l.images || [],
           badgeLine: '',
@@ -869,6 +892,7 @@
       return {
         name: p.name,
         description: p.description,
+        category: p.category || '',
         price: p.price,
         images: p.images || [],
         badgeLine: `<span class="inline-flex items-center gap-2 text-xs text-slate-400">${badge(p.status)}<span>Sklad: <b class="text-slate-200">${p.stock}</b></span></span>`,
@@ -914,7 +938,10 @@
             <!-- Ma'lumot -->
             <div>
               <h4 class="font-display text-xl font-bold text-white">${esc(p.name)}</h4>
-              ${p.badgeLine ? `<div class="mt-1.5">${p.badgeLine}</div>` : ''}
+              <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                ${p.badgeLine || ''}
+                ${p.category ? `<span class="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-slate-300">${esc(p.category)}</span>` : ''}
+              </div>
               <p class="font-display mt-3 text-2xl font-bold text-white">${uzs(p.price)} <span class="text-sm font-medium text-slate-500">so'm</span></p>
             </div>
 
@@ -930,7 +957,7 @@
           </div>
           ${p.action ? `
           <div class="sticky bottom-0 flex gap-3 border-t border-white/10 bg-ink-900/60 p-6 backdrop-blur">
-            ${kind === 'market' && marketProducts[idx] && marketProducts[idx].seller_id ? `<button type="button" data-msg-seller="${idx}" title="Sotuvchi bilan xabarlashish" class="grid w-12 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg></button>` : ''}
+            ${kind === 'market' && marketProducts[idx] && marketProducts[idx].seller_id && marketProducts[idx].seller_id !== ME ? `<button type="button" data-msg-seller="${idx}" title="Sotuvchi bilan xabarlashish" class="grid w-12 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg></button>` : ''}
             <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
             <button type="button" ${p.action.attr} class="${p.action.cls} flex-1 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">${p.action.label}</button>
           </div>` : `
@@ -984,6 +1011,13 @@
             <label class="block">
               <span class="text-sm font-semibold text-slate-200">Tavsifi</span>
               <textarea id="productDescInput" rows="3" placeholder="Mahsulot haqida qisqacha ma'lumot..." class="fld mt-1.5 w-full resize-none rounded-xl px-3.5 py-2.5 text-sm outline-none"></textarea>
+            </label>
+
+            <label class="block">
+              <span class="text-sm font-semibold text-slate-200">Kategoriya</span>
+              <select id="productCatInput" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none">
+                ${CATEGORIES.map((c) => `<option class="bg-ink-800" value="${esc(c)}">${esc(c)}</option>`).join('')}
+              </select>
             </label>
 
             <div class="grid grid-cols-2 gap-4">
@@ -1131,10 +1165,12 @@
           }
           const imageUrl = imageUrls[0] || null;
 
+          const catVal = ($('#productCatInput') && $('#productCatInput').value) || 'Boshqa';
           const basePayload = {
             seller_id: user.id,
             name,
             description: $('#productDescInput').value.trim(),
+            category: catVal,
             price: priceVal,
             stock: stockVal,
             commission: commissionVal,
@@ -1147,11 +1183,12 @@
             .insert({ ...basePayload, image_urls: imageUrls })
             .select()
             .single();
-          // `image_urls` ustuni hali qo'shilmagan bo'lsa (migratsiya ishga
-          // tushirilmagan) — bitta rasm bilan (image_url) baribir saqlaymiz.
-          if (error && /image_urls|column .* does not exist|schema cache/i.test(error.message || '')) {
-            console.warn("`image_urls` ustuni topilmadi — supabase_qoshimcha.sql'ni ishga tushiring. Mahsulot bitta rasm bilan saqlanadi.");
-            ({ data, error } = await window.sb.from('products').insert(basePayload).select().single());
+          // `image_urls` yoki `category` ustuni hali qo'shilmagan bo'lsa
+          // (migratsiya ishga tushirilmagan) — ularsiz baribir saqlaymiz.
+          if (error && /image_urls|category|column .* does not exist|schema cache/i.test(error.message || '')) {
+            console.warn("Yangi ustun topilmadi — supabase_qoshimcha.sql'ni ishga tushiring. Mahsulot soddalashtirilgan holda saqlanadi.");
+            const noExtra = { seller_id: user.id, name, description: basePayload.description, price: priceVal, stock: stockVal, commission: commissionVal, status: 'Moderatsiyada', image_url: imageUrl, color };
+            ({ data, error } = await window.sb.from('products').insert(noExtra).select().single());
           }
           if (error) throw error;
 
@@ -1159,6 +1196,7 @@
             id: data.id,
             name: data.name,
             description: data.description || '',
+            category: data.category || catVal,
             price: Number(data.price),
             stock: data.stock,
             commission: Number(data.commission),
@@ -1348,6 +1386,7 @@
           product_id: p.id,
           product: p.name,
           description: p.description,
+          category: p.category || '',
           price: p.price,
           commission: p.commission,
           clicks: 0,
@@ -1816,7 +1855,7 @@
       // Post-render hooks for filterable tables / grids
       if (state.panel === 'seller' && state.view === 'orders') renderOrdersBody('Barchasi');
       if (state.panel === 'affiliate' && state.view === 'sales') renderSalesBody('Barchasi');
-      if (state.panel === 'affiliate' && state.view === 'market') renderMarketGrid('');
+      if (state.panel === 'affiliate' && state.view === 'market') { marketQuery = ''; renderMarketGrid(); }
       if (state.view === 'messages') initMessagesView();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1890,6 +1929,17 @@
       const msell = t.closest('[data-msg-seller]');
       if (msell) return messageSeller(Number(msell.dataset.msgSeller));
 
+      // Bozor kategoriya filtri
+      const mcat = t.closest('[data-market-cat]');
+      if (mcat) {
+        marketCategory = mcat.dataset.marketCat;
+        $$('.market-cat').forEach((b) => {
+          const on = b.dataset.marketCat === marketCategory;
+          b.className = `market-cat whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition ${on ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}`;
+        });
+        return renderMarketGrid();
+      }
+
       // Orders: filter tabs
       const ot = t.closest('[data-order-tab]');
       if (ot) {
@@ -1951,7 +2001,7 @@
     // Bozor qidiruvi (input)
     document.addEventListener('input', (e) => {
       const search = e.target.closest('#marketSearch');
-      if (search) renderMarketGrid(search.value);
+      if (search) { marketQuery = search.value; renderMarketGrid(); }
     });
 
     // Xabar fayli tanlanganda

@@ -61,7 +61,8 @@
       return g;
     } catch (e) { return 'g-anon'; }
   }
-  function chatConvId() { return 'g:' + guestId() + '__' + (shop ? shop.id : 'x'); }
+  function chatTarget() { return shop ? (shop.sellerId || shop.id) : 'x'; }
+  function chatConvId() { return 'g:' + guestId() + '__' + chatTarget(); }
   let chatMsgs = [];
   let chatPollTimer = null;
   let chatFile = null;
@@ -145,6 +146,10 @@
       console.error('Do\'kon mahsulotlari:', e);
       products = [];
     }
+
+    // Xabar KIMGA boradi: mahsulot egasi (sotuvchi). Do'kondagi mahsulotlar
+    // sotuvchisi. Bo'lmasa — do'kon egasiga (zaxira variant).
+    shop.sellerId = (products.find((p) => p.seller_id) || {}).seller_id || shop.id;
 
     updateCartBadge();
     go('home');
@@ -636,7 +641,7 @@
       conversation_id: chatConvId(),
       sender_id: null,
       sender_name: c.name || 'Mijoz',
-      recipient_id: shop.id,
+      recipient_id: chatTarget(),
       recipient_name: shop.name,
       guest_id: guestId(),
       body: body || null,

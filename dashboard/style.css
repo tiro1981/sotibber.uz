@@ -47,6 +47,10 @@ body {
 input[type="range"] { accent-color: #7c3aed; }
 input[type="radio"], input[type="checkbox"] { accent-color: #7c3aed; }
 
+/* Scrollbarni yashirish (rasm lentasi, kategoriya chiplari) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* View o'zgarganda animatsiya */
 .view-enter { animation: fadeUp 0.35s ease both; }
 @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
