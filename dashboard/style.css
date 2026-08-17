@@ -54,3 +54,99 @@ input[type="radio"], input[type="checkbox"] { accent-color: #7c3aed; }
 /* View o'zgarganda animatsiya */
 .view-enter { animation: fadeUp 0.35s ease both; }
 @keyframes fadeUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* =====================================================================
+   YORUG' (LIGHT) MAVZU — html[data-theme="light"]
+   Butun panel to'q qurilgan; bu yerda kalit klasslarni yorug'ga aylantiramiz.
+===================================================================== */
+html[data-theme="light"] body {
+  background:
+    radial-gradient(760px 460px at 50% -10%, rgba(124,58,237,.10), transparent 60%),
+    radial-gradient(680px 460px at 100% 0%, rgba(99,102,241,.08), transparent 55%),
+    radial-gradient(620px 440px at 0% 100%, rgba(16,185,129,.06), transparent 55%),
+    #eef0f6;
+  color: #0f172a;
+}
+html[data-theme="light"] .glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.78));
+  border: 1px solid rgba(15,23,42,0.08);
+}
+html[data-theme="light"] .glass-hover:hover { border-color: rgba(124,58,237,0.30); background: #fff; }
+html[data-theme="light"] .fld { background: #fff; border: 1px solid rgba(15,23,42,0.14); color: #0f172a; }
+html[data-theme="light"] .fld::placeholder { color: #94a3b8; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(15,23,42,.18); }
+
+/* Sidebar / header / ink yuzalar */
+html[data-theme="light"] .bg-ink-900\/80,
+html[data-theme="light"] .bg-ink-900\/70,
+html[data-theme="light"] .bg-ink-900\/60 { background-color: rgba(255,255,255,0.85) !important; }
+html[data-theme="light"] .border-white\/5 { border-color: rgba(15,23,42,0.07) !important; }
+html[data-theme="light"] .border-white\/10 { border-color: rgba(15,23,42,0.10) !important; }
+html[data-theme="light"] .border-white\/15 { border-color: rgba(15,23,42,0.14) !important; }
+html[data-theme="light"] .ring-white\/10 { --tw-ring-color: rgba(15,23,42,0.10) !important; }
+html[data-theme="light"] .ring-white\/15 { --tw-ring-color: rgba(15,23,42,0.14) !important; }
+html[data-theme="light"] .ring-white\/30 { --tw-ring-color: rgba(15,23,42,0.20) !important; }
+html[data-theme="light"] .ring-ink-900 { --tw-ring-color: #fff !important; }
+html[data-theme="light"] .divide-white\/5 > * + * { border-color: rgba(15,23,42,0.07) !important; }
+
+/* Neytral matn */
+html[data-theme="light"] .text-white { color: #0f172a !important; }
+html[data-theme="light"] .text-slate-100 { color: #1e293b !important; }
+html[data-theme="light"] .text-slate-200 { color: #334155 !important; }
+html[data-theme="light"] .text-slate-300 { color: #475569 !important; }
+html[data-theme="light"] .text-slate-400 { color: #64748b !important; }
+html[data-theme="light"] .text-slate-500 { color: #94a3b8 !important; }
+
+/* Aksent matn (yorug' fonda o'qilishi uchun quyuqroq) */
+html[data-theme="light"] .text-violet-300 { color: #6d28d9 !important; }
+html[data-theme="light"] .text-violet-400 { color: #7c3aed !important; }
+html[data-theme="light"] .text-emerald-300 { color: #047857 !important; }
+html[data-theme="light"] .text-emerald-400 { color: #059669 !important; }
+html[data-theme="light"] .text-blue-300 { color: #1d4ed8 !important; }
+html[data-theme="light"] .text-blue-200 { color: #1e40af !important; }
+html[data-theme="light"] .text-rose-300 { color: #be123c !important; }
+html[data-theme="light"] .text-rose-400 { color: #e11d48 !important; }
+html[data-theme="light"] .text-amber-300 { color: #b45309 !important; }
+html[data-theme="light"] .text-sky-300 { color: #0369a1 !important; }
+html[data-theme="light"] .text-pink-300 { color: #be185d !important; }
+
+/* Oq shaffof yuzalar -> quyuq nozik fon */
+html[data-theme="light"] .bg-white\/5 { background-color: rgba(15,23,42,0.04) !important; }
+html[data-theme="light"] .bg-white\/8 { background-color: rgba(15,23,42,0.05) !important; }
+html[data-theme="light"] .bg-white\/10 { background-color: rgba(15,23,42,0.06) !important; }
+html[data-theme="light"] .bg-white\/15 { background-color: rgba(15,23,42,0.08) !important; }
+html[data-theme="light"] .bg-white\/20 { background-color: rgba(15,23,42,0.10) !important; }
+html[data-theme="light"] .bg-white\/25 { background-color: rgba(15,23,42,0.12) !important; }
+html[data-theme="light"] .bg-black\/20 { background-color: rgba(15,23,42,0.04) !important; }
+html[data-theme="light"] .bg-black\/25 { background-color: rgba(15,23,42,0.05) !important; }
+html[data-theme="light"] .bg-black\/30 { background-color: rgba(15,23,42,0.06) !important; }
+html[data-theme="light"] .bg-ink-800 { background-color: #fff !important; color: #0f172a; }
+
+/* Rangli gradient yuzalar (hero kartalar, tugmalar) — matn OQ qoladi */
+html[data-theme="light"] .btn-grad,
+html[data-theme="light"] .btn-grad *,
+html[data-theme="light"] [class*="from-violet-deep"],
+html[data-theme="light"] [class*="from-violet-deep"] *,
+html[data-theme="light"] [class*="from-violet-brand"],
+html[data-theme="light"] [class*="from-violet-brand"] *,
+html[data-theme="light"] [class*="from-emerald-500"],
+html[data-theme="light"] [class*="from-emerald-500"] *,
+html[data-theme="light"] [class*="from-emerald-brand"],
+html[data-theme="light"] [class*="from-emerald-brand"] *,
+html[data-theme="light"] [class*="from-teal-500"],
+html[data-theme="light"] [class*="from-teal-600"],
+html[data-theme="light"] [class*="from-blue-500"] *,
+html[data-theme="light"] [class*="from-amber-500"] *,
+html[data-theme="light"] [class*="from-indigo-500"] *,
+html[data-theme="light"] [class*="from-pink-500"] *,
+html[data-theme="light"] [class*="from-fuchsia-500"] * { color: #fff !important; }
+/* gradient ichidagi oq chiplar oq qoladi */
+html[data-theme="light"] [class*="from-violet-deep"] .bg-white\/10,
+html[data-theme="light"] [class*="from-violet-deep"] .bg-white\/15,
+html[data-theme="light"] [class*="from-emerald-500"] .bg-white\/10,
+html[data-theme="light"] [class*="from-emerald-500"] .bg-white\/15,
+html[data-theme="light"] [class*="from-emerald-brand"] .bg-white\/15 { background-color: rgba(255,255,255,0.18) !important; }
+/* Gradient ustidagi OQ tugmalar (Nusxalash, Pul chiqarish) — matni aksent rangda qoladi */
+html[data-theme="light"] .text-violet-brand { color: #6d28d9 !important; }
+html[data-theme="light"] .text-emerald-700 { color: #047857 !important; }
+html[data-theme="light"] .text-emerald-brand { color: #059669 !important; }

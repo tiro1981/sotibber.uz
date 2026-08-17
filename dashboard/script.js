@@ -2136,6 +2136,26 @@
     });
 
     /* =========================================================
+       MAVZU (dark / light)
+    ========================================================= */
+    const SUN_ICON = '<circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"/>';
+    const MOON_ICON = '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+    function isLightTheme() { return document.documentElement.getAttribute('data-theme') === 'light'; }
+    function setThemeIcon() {
+      const ic = $('#themeIcon');
+      if (ic) ic.innerHTML = isLightTheme() ? MOON_ICON : SUN_ICON; // yorug'da -> oyni ko'rsatamiz (bosilsa to'q)
+    }
+    function toggleTheme() {
+      const goLight = !isLightTheme();
+      if (goLight) document.documentElement.setAttribute('data-theme', 'light');
+      else document.documentElement.removeAttribute('data-theme');
+      try { localStorage.setItem('sotibber_theme', goLight ? 'light' : 'dark'); } catch (e) {}
+      setThemeIcon();
+    }
+    $('#themeToggle')?.addEventListener('click', toggleTheme);
+    setThemeIcon();
+
+    /* =========================================================
        PROFIL oynasi (Profilim)
     ========================================================= */
     function profileModal() {
