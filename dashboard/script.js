@@ -1742,6 +1742,21 @@
     let chatDraft = null;     // yangi suhbat (hali xabar yo'q): { conversation_id, other, product_id }
     let chatFile = null;      // biriktiriladigan fayl
     let chatPoll = null;
+    // Filter / arxiv / yulduzcha holati (localStorage'da saqlanadi — foydalanuvchi bo'yicha)
+    let chatFilter = 'all';       // all | day | week | month
+    let chatShowArchived = false; // arxivlangan suhbatlarni ko'rsatish
+    let chatStarredOnly = false;  // faqat yulduzchali (muhim) suhbatlar
+    let chatArchived = new Set(); // arxivlangan conversation_id'lar
+    let chatStarred = new Set();  // yulduzchali conversation_id'lar
+
+    function chatLSKey(kind) { return 'sotibber_chat_' + kind + '_' + (ME || 'x'); }
+    function loadChatFlags() {
+      try { chatArchived = new Set(JSON.parse(localStorage.getItem(chatLSKey('archived')) || '[]')); } catch (e) { chatArchived = new Set(); }
+      try { chatStarred = new Set(JSON.parse(localStorage.getItem(chatLSKey('starred')) || '[]')); } catch (e) { chatStarred = new Set(); }
+    }
+    function saveChatFlags(kind) {
+      try { localStorage.setItem(chatLSKey(kind), JSON.stringify([...(kind === 'archived' ? chatArchived : chatStarred)])); } catch (e) {}
+    }
 
     function myName() {
       const p = window.__SOTIBBER_PROFILE || {}, u = window.__SOTIBBER_USER || {};
@@ -1795,8 +1810,37 @@
             </button>
           </div>
           <div class="grid gap-4 lg:grid-cols-[300px_1fr]">
-            <div id="convList" class="glass rounded-2xl p-2 lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto"></div>
+            <div class="flex flex-col gap-2 lg:max-h-[calc(100vh-13rem)]">
+              <div id="convFilter"></div>
+              <div id="convList" class="glass min-h-0 flex-1 rounded-2xl p-2 lg:overflow-y-auto"></div>
+            </div>
             <div id="chatPanel" class="glass flex min-h-[60vh] flex-col rounded-2xl lg:h-[calc(100vh-13rem)]"></div>
+          </div>
+        </div>`;
+    }
+
+    // Suhbatga davr filtri qo'llaymi? (oxirgi xabar sanasi bo'yicha)
+    function convInPeriod(c) {
+      if (chatFilter === 'all') return true;
+      if (!c.last) return true; // yangi/draft suhbatni yashirmaymiz
+      const span = chatFilter === 'day' ? 864e5 : chatFilter === 'week' ? 7 * 864e5 : 30 * 864e5;
+      return (Date.now() - new Date(c.last.created_at).getTime()) <= span;
+    }
+
+    // Chap ustundagi filter paneli (davr + muhim + arxiv)
+    function renderConvFilter() {
+      const box = $('#convFilter');
+      if (!box) return;
+      const periods = [['all', 'Barchasi'], ['day', 'Kunlik'], ['week', 'Haftalik'], ['month', 'Oylik']];
+      const pill = (v, l) => `<button data-chat-filter="${v}" class="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${chatFilter === v ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${l}</button>`;
+      const starIco = '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01z"/></svg>';
+      const arcIco = '<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18v4H3zM5 8v11a1 1 0 001 1h12a1 1 0 001-1V8M9.5 12h5"/></svg>';
+      box.innerHTML = `
+        <div class="glass rounded-2xl p-2">
+          <div class="no-scrollbar flex gap-1.5 overflow-x-auto">${periods.map(([v, l]) => pill(v, l)).join('')}</div>
+          <div class="mt-1.5 flex gap-1.5">
+            <button data-chat-starred-toggle class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${chatStarredOnly ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${starIco} Muhim</button>
+            <button data-chat-archived-toggle class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${chatShowArchived ? 'bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${arcIco} Arxiv</button>
           </div>
         </div>`;
     }
@@ -1804,22 +1848,38 @@
     function renderConvList() {
       const box = $('#convList');
       if (!box) return;
-      const convs = groupConversations();
+      let convs = groupConversations();
+      // Arxiv ko'rinishi: arxivlanganlar yoki faollar
+      convs = convs.filter((c) => c.draft || (chatShowArchived ? chatArchived.has(c.conversation_id) : !chatArchived.has(c.conversation_id)));
+      if (chatStarredOnly) convs = convs.filter((c) => c.draft || chatStarred.has(c.conversation_id));
+      convs = convs.filter((c) => c.draft || convInPeriod(c));
+
+      const star = '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="{fill}" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01z"/></svg>';
+      const restoreIco = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15l-4-4 4-4M5 11h9a5 5 0 010 10h-3"/></svg>';
+      const archiveIco = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18v4H3zM5 8v11a1 1 0 001 1h12a1 1 0 001-1V8M9.5 12h5"/></svg>';
+
       box.innerHTML = convs.map((c) => {
         const active = c.conversation_id === chatSel;
+        const starred = chatStarred.has(c.conversation_id);
         const preview = c.last ? ((c.last.sender_id === ME ? 'Siz: ' : '') + (c.last.body || (c.last.attachment_type === 'image' ? '📷 Rasm' : c.last.attachment_type === 'video' ? '🎬 Video' : '📎 Fayl'))) : 'Yangi suhbat';
         return `
-          <button data-open-conv="${esc(c.conversation_id)}" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${active ? 'bg-violet-500/15 ring-1 ring-violet-400/40' : 'hover:bg-white/5'}">
-            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-sm font-bold text-white">${esc((c.other.name || 'F').slice(0, 1).toUpperCase())}</span>
-            <span class="min-w-0 flex-1">
-              <span class="flex items-center justify-between gap-2">
-                <span class="truncate text-sm font-semibold text-white">${esc(c.other.name || 'Foydalanuvchi')}</span>
-                ${c.unread ? `<span class="shrink-0 rounded-full bg-rose-500/25 px-1.5 text-[10px] font-bold text-rose-200">${c.unread}</span>` : ''}
+          <div class="flex items-center gap-1 rounded-xl pr-1 transition ${active ? 'bg-violet-500/15 ring-1 ring-violet-400/40' : 'hover:bg-white/5'}">
+            <button data-open-conv="${esc(c.conversation_id)}" class="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-2.5 text-left">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-sm font-bold text-white">${esc((c.other.name || 'F').slice(0, 1).toUpperCase())}</span>
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center justify-between gap-2">
+                  <span class="truncate text-sm font-semibold text-white">${esc(c.other.name || 'Foydalanuvchi')}</span>
+                  ${c.unread ? `<span class="shrink-0 rounded-full bg-rose-500/25 px-1.5 text-[10px] font-bold text-rose-200">${c.unread}</span>` : ''}
+                </span>
+                <span class="block truncate text-xs text-slate-400">${esc(preview)}</span>
               </span>
-              <span class="block truncate text-xs text-slate-400">${esc(preview)}</span>
-            </span>
-          </button>`;
-      }).join('') || '<p class="px-3 py-8 text-center text-sm text-slate-500">Hali suhbatlar yo\'q</p>';
+            </button>
+            <div class="flex shrink-0 items-center gap-0.5">
+              <button data-star-conv="${esc(c.conversation_id)}" title="${starred ? 'Muhimdan olib tashlash' : 'Muhim deb belgilash'}" class="grid h-7 w-7 place-items-center rounded-lg ${starred ? 'text-amber-300' : 'text-slate-500 hover:text-amber-300'}">${star.replace('{fill}', starred ? 'currentColor' : 'none')}</button>
+              <button data-archive-conv="${esc(c.conversation_id)}" title="${chatShowArchived ? 'Arxivdan qaytarish' : 'Arxivlash'}" class="grid h-7 w-7 place-items-center rounded-lg text-slate-500 hover:text-violet-300">${chatShowArchived ? restoreIco : archiveIco}</button>
+            </div>
+          </div>`;
+      }).join('') || `<p class="px-3 py-8 text-center text-sm text-slate-500">${chatShowArchived ? 'Arxivda suhbat yo\'q' : chatStarredOnly ? 'Muhim suhbatlar yo\'q' : chatFilter !== 'all' ? 'Bu davrda suhbat yo\'q' : 'Hali suhbatlar yo\'q'}</p>`;
     }
 
     function attachHtml(m) {
@@ -1986,6 +2046,8 @@
 
     function initMessagesView() {
       chatFile = null;
+      loadChatFlags();
+      renderConvFilter();
       renderConvList();
       renderThreadPanel();
       if (chatPoll) clearInterval(chatPoll);
@@ -2542,6 +2604,30 @@
       if (mfr) { chatFile = null; renderMsgFilePrev(); return; }
       const msell = t.closest('[data-msg-seller]');
       if (msell) return messageSeller(Number(msell.dataset.msgSeller));
+
+      // Xabar filtri / yulduzcha / arxiv
+      const cf = t.closest('[data-chat-filter]');
+      if (cf) { chatFilter = cf.dataset.chatFilter; renderConvFilter(); renderConvList(); return; }
+      const cst = t.closest('[data-chat-starred-toggle]');
+      if (cst) { chatStarredOnly = !chatStarredOnly; renderConvFilter(); renderConvList(); return; }
+      const cat = t.closest('[data-chat-archived-toggle]');
+      if (cat) { chatShowArchived = !chatShowArchived; renderConvFilter(); renderConvList(); return; }
+      const starC = t.closest('[data-star-conv]');
+      if (starC) {
+        const cid = starC.dataset.starConv;
+        if (chatStarred.has(cid)) chatStarred.delete(cid); else chatStarred.add(cid);
+        saveChatFlags('starred'); renderConvList(); return;
+      }
+      const arcC = t.closest('[data-archive-conv]');
+      if (arcC) {
+        const cid = arcC.dataset.archiveConv;
+        if (chatArchived.has(cid)) chatArchived.delete(cid); else chatArchived.add(cid);
+        saveChatFlags('archived');
+        if (cid === chatSel) { chatSel = null; renderThreadPanel(); }
+        renderConvList();
+        toast(chatArchived.has(cid) ? 'Suhbat arxivlandi' : 'Arxivdan qaytarildi');
+        return;
+      }
 
       // Do'kon boshqaruvi (arxivlash / qaytarish / olib tashlash)
       const sArch = t.closest('[data-shop-archive]');
