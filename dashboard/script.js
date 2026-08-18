@@ -119,6 +119,19 @@
     let marketCategory = 'Barchasi';
     let messengerSel = 'instagram';   // Messenjer bo'limida tanlangan platforma
 
+    // Foydalanuvchi kartalari — lokal saqlanadi (faqat turi + oxirgi 4 raqam
+    // ko'rsatiladi; to'liq karta raqami hech qayerga yuborilmaydi).
+    let savedCards = [];
+    function cardsKey() { const u = window.__SOTIBBER_USER; return 'sotibber_cards_' + ((u && u.id) || 'guest'); }
+    function loadCards() {
+      try { savedCards = JSON.parse(localStorage.getItem(cardsKey()) || '[]'); }
+      catch (e) { savedCards = []; }
+      if (!Array.isArray(savedCards)) savedCards = [];
+      return savedCards;
+    }
+    function persistCards() { try { localStorage.setItem(cardsKey(), JSON.stringify(savedCards)); } catch (e) {} }
+    function cardLabel(c) { return c.type + ' •• ' + c.last4; }
+
     // Do'kon tartib raqamini 4 xonali qilib formatlaymiz (1 -> 0001)
     function shopIdStr(no) { return (no == null || no === '') ? '' : String(no).padStart(4, '0'); }
 
@@ -720,20 +733,31 @@
         </div>`;
       },
 
-      wallet: () => `
+      wallet: () => {
+        loadCards();
+        const hasCards = savedCards.length > 0;
+        const cardTiles = savedCards.map((c) => paymentCardHtml(c)).join('');
+        return `
         <div class="view-enter space-y-6">
-          <h2 class="font-display text-lg font-bold text-white">Hamyon</h2>
+          <div>
+            <h2 class="font-display text-lg font-bold text-white">Hamyon</h2>
+            <p class="text-sm text-slate-400">Balans, kartalar va pul chiqarish</p>
+          </div>
 
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <!-- Balance + payout -->
             <div class="space-y-4 lg:col-span-2">
-              <div class="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white shadow-xl shadow-emerald-500/20">
-                <p class="text-sm text-emerald-50">Mavjud balans</p>
-                <p class="font-display mt-1 text-3xl font-bold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-emerald-100">so'm</span></p>
-                <button data-action="wallet-withdraw" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-lg transition hover:bg-emerald-50 active:scale-95">
-                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16"/></svg>
-                  Pul chiqarish
-                </button>
+              <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white shadow-xl shadow-emerald-500/20">
+                <div class="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10"></div>
+                <div class="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-white/5"></div>
+                <div class="relative">
+                  <p class="text-sm text-emerald-50/90">Mavjud balans</p>
+                  <p class="font-display mt-1 text-3xl font-bold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-emerald-100">so'm</span></p>
+                  <button data-action="wallet-withdraw" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-lg transition hover:bg-emerald-50 active:scale-95">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16"/></svg>
+                    Pul chiqarish
+                  </button>
+                </div>
               </div>
 
               <!-- Withdrawal history -->
@@ -769,21 +793,26 @@
 
             <!-- Saved cards -->
             <div class="space-y-4">
-              <h3 class="font-display font-bold text-white">Mening kartalarim</h3>
+              <div class="flex items-center justify-between">
+                <h3 class="font-display font-bold text-white">Mening kartalarim</h3>
+                ${hasCards ? `<span class="rounded-full bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-slate-300 ring-1 ring-white/10">${savedCards.length} ta</span>` : ''}
+              </div>
+              ${hasCards ? `<div class="space-y-3">${cardTiles}</div>` : `
               <div class="glass flex flex-col items-center justify-center rounded-2xl border-dashed py-10 text-center">
                 <span class="grid h-11 w-11 place-items-center rounded-full bg-white/5 text-slate-400">
                   <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">${icon.wallet}</svg>
                 </span>
                 <p class="mt-3 text-sm font-semibold text-slate-300">Hali karta qo'shilmagan</p>
                 <p class="mt-1 max-w-[200px] text-xs text-slate-500">Pul chiqarish uchun karta qo'shing</p>
-              </div>
+              </div>`}
               <button data-action="add-card" class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 py-4 text-sm font-semibold text-slate-400 transition hover:border-violet-400/60 hover:text-violet-300">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Yangi karta qo'shish
               </button>
             </div>
           </div>
-        </div>`,
+        </div>`;
+      },
     };
 
     const VIEWS = { seller: sellerViews, affiliate: affiliateViews };
@@ -1282,8 +1311,72 @@
     }
 
     /* ---- Withdraw modal (shared, fee = 1%) ---- */
+    // Karta turiga qarab gradient (Uzcard/Humo/Visa)
+    function cardGrad(type) {
+      const t = (type || '').toLowerCase();
+      if (t.indexOf('humo') !== -1) return 'from-sky-500 to-blue-700';
+      if (t.indexOf('visa') !== -1) return 'from-slate-600 to-slate-900';
+      return 'from-indigo-500 to-violet-700';
+    }
+    // Bank-karta ko'rinishidagi plitka (Hamyon bo'limida)
+    function paymentCardHtml(c) {
+      return `
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br ${cardGrad(c.type)} p-5 text-white shadow-lg ring-1 ring-white/10">
+          <div class="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10"></div>
+          <div class="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-white/5"></div>
+          <div class="relative flex items-start justify-between">
+            <span class="text-xs font-bold uppercase tracking-widest text-white/80">${esc(c.type)}</span>
+            <button type="button" data-card-remove="${esc(c.id)}" title="O'chirish" class="grid h-7 w-7 place-items-center rounded-full bg-black/25 text-white/80 transition hover:bg-rose-500 hover:text-white">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <div class="relative mt-5 h-7 w-10 rounded-md bg-gradient-to-br from-amber-200 to-amber-400 ring-1 ring-amber-500/30"></div>
+          <p class="relative mt-3 font-mono text-lg tracking-[0.2em]">•••• •••• •••• ${esc(c.last4)}</p>
+          <div class="relative mt-3 flex items-end justify-between text-xs text-white/70">
+            <span>Muddat <span class="font-semibold text-white">${esc(c.exp || '--/--')}</span></span>
+            <svg class="h-6 w-6 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">${icon.wallet}</svg>
+          </div>
+        </div>`;
+    }
+
+    function removeCard(id) {
+      loadCards();
+      savedCards = savedCards.filter((c) => c.id !== id);
+      persistCards();
+      toast("Karta o'chirildi");
+      renderView();
+    }
+
     function withdrawModal(theme = 'violet') {
+      loadCards();
       const accentBtn = theme === 'emerald' ? 'bg-gradient-to-br from-emerald-500 to-teal-500' : 'btn-grad';
+
+      // Karta yo'q bo'lsa — avval karta qo'shishni so'raymiz
+      if (!savedCards.length) {
+        openModal(`
+          <div>
+            <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+              <h3 class="font-display text-lg font-bold text-white">Pul chiqarish</h3>
+              <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="p-8 text-center">
+              <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white/5 text-slate-400">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">${icon.wallet}</svg>
+              </span>
+              <p class="mt-4 text-sm font-bold text-slate-100">Sizda karta yo'q</p>
+              <p class="mx-auto mt-1 max-w-[240px] text-xs text-slate-500">Pul chiqarish uchun avval o'z kartangizni qo'shing.</p>
+              <button type="button" data-action="add-card" class="btn-grad mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition active:scale-95">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Karta qo'shish
+              </button>
+            </div>
+          </div>`);
+        return;
+      }
+
+      const options = savedCards.map((c) => `<option class="bg-ink-800" value="${esc(c.id)}">${esc(cardLabel(c))}</option>`).join('');
       openModal(`
         <form id="withdrawForm">
           <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
@@ -1296,9 +1389,7 @@
             <label class="block">
               <span class="text-sm font-semibold text-slate-200">Kartani tanlang</span>
               <select class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none">
-                <option class="bg-ink-800">Uzcard •• 4821</option>
-                <option class="bg-ink-800">Humo •• 9037</option>
-                <option class="bg-ink-800">+ Yangi karta qo'shish</option>
+                ${options}
               </select>
             </label>
             <label class="block">
@@ -1352,16 +1443,16 @@
           <div class="space-y-4 p-6">
             <label class="block">
               <span class="text-sm font-semibold text-slate-200">Karta raqami</span>
-              <input required inputmode="numeric" placeholder="8600 0000 0000 0000" maxlength="19" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 font-mono text-sm outline-none" />
+              <input id="cardNum" required inputmode="numeric" placeholder="8600 0000 0000 0000" maxlength="19" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 font-mono text-sm outline-none" />
             </label>
             <div class="grid grid-cols-2 gap-4">
               <label class="block">
                 <span class="text-sm font-semibold text-slate-200">Amal qilish muddati</span>
-                <input required placeholder="MM/YY" maxlength="5" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+                <input id="cardExp" required placeholder="MM/YY" maxlength="5" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
               </label>
               <label class="block">
                 <span class="text-sm font-semibold text-slate-200">Karta turi</span>
-                <select class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none">
+                <select id="cardType" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none">
                   <option class="bg-ink-800">Uzcard</option><option class="bg-ink-800">Humo</option>
                 </select>
               </label>
@@ -1377,7 +1468,38 @@
           </div>
         </form>
       `);
-      $('#cardForm').addEventListener('submit', (e) => { e.preventDefault(); closeModal(); toast('Karta muvaffaqiyatli qo\'shildi ✓'); });
+      // Karta raqamini yozayotganda avtomatik bo'shliq (4 talab)
+      const numInput = $('#cardNum');
+      numInput.addEventListener('input', () => {
+        const d = numInput.value.replace(/\D/g, '').slice(0, 16);
+        numInput.value = d.replace(/(.{4})/g, '$1 ').trim();
+      });
+      // Muddatni MM/YY ko'rinishida formatlash
+      const expInput = $('#cardExp');
+      expInput.addEventListener('input', () => {
+        let d = expInput.value.replace(/\D/g, '').slice(0, 4);
+        if (d.length >= 3) d = d.slice(0, 2) + '/' + d.slice(2);
+        expInput.value = d;
+      });
+
+      $('#cardForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const digits = numInput.value.replace(/\D/g, '');
+        if (digits.length < 16) { toast('Karta raqamini to\'liq kiriting'); return; }
+        const exp = expInput.value.trim();
+        if (!/^\d{2}\/\d{2}$/.test(exp)) { toast('Muddatni MM/YY ko\'rinishida kiriting'); return; }
+        loadCards();
+        savedCards.push({
+          id: 'c' + Date.now(),
+          type: $('#cardType').value,
+          last4: digits.slice(-4),
+          exp,
+        });
+        persistCards();
+        closeModal();
+        toast('Karta muvaffaqiyatli qo\'shildi ✓');
+        renderView();
+      });
     }
 
     /* ---- Order details modal (merchant) ---- */
@@ -2493,6 +2615,8 @@
       if (msel) { messengerSel = msel.dataset.msgrSel; return renderView(); }
       const srem = t.closest('[data-social-remove]');
       if (srem) return removeSocial(srem.dataset.socialRemove);
+      const crem = t.closest('[data-card-remove]');
+      if (crem) return removeCard(crem.dataset.cardRemove);
 
       // Copy link buttons
       const cp = t.closest('[data-copy]');
