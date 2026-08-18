@@ -531,20 +531,29 @@
        AFFILIATE VIEWS
     ========================================================= */
     const affiliateViews = {
-      dashboard: () => `
+      dashboard: () => {
+        // Real ko'rsatkichlarni ma'lumotdan hisoblaymiz
+        const soldUnits = agentLinks.reduce((s, l) => s + (Number(l.sales) || 0), 0);
+        const notDone = (o) => o.status !== 'Yetkazildi' && o.status !== 'Rad etildi' && o.status !== 'Rad etilgan';
+        const pendingComm = agentSales.filter(notDone).reduce((s, o) => s + (Number(o.commission) || 0), 0);
+        const earnedComm = agentSales.filter((o) => o.status === 'Yetkazildi').reduce((s, o) => s + (Number(o.commission) || 0), 0);
+        const clicks = agentLinks.reduce((s, l) => s + (Number(l.clicks) || 0), 0);
+        const conversions = agentSales.length;
+        const convRate = clicks > 0 ? Math.round(conversions / clicks * 100) : 0;
+        return `
         <div class="view-enter space-y-6">
           <!-- Summary cards -->
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div class="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 p-5 text-white shadow-lg shadow-emerald-500/20">
               <p class="text-sm text-emerald-50">Mening balansim</p>
-              <p class="font-display mt-1 text-3xl font-bold">${uzs(0)} <span class="text-base font-semibold text-emerald-100">so'm</span></p>
+              <p class="font-display mt-1 text-3xl font-bold">${uzs(earnedComm)} <span class="text-base font-semibold text-emerald-100">so'm</span></p>
               <button data-action="wallet-withdraw" class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold backdrop-blur transition hover:bg-white/25">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3"/></svg>
                 Pul chiqarish
               </button>
             </div>
-            ${statCard({ label: 'Kutilayotgan komissiya', value: uzs(0) + ' so\'m', sub: "Yo'ldagi buyurtmalardan", accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
-            ${statCard({ label: 'Jami sotilgan mahsulotlar', value: '0 ta', accent: 'violet', icon: icon.box })}
+            ${statCard({ label: 'Kutilayotgan komissiya', value: uzs(pendingComm) + ' so\'m', sub: "Yo'ldagi buyurtmalardan", accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
+            ${statCard({ label: 'Jami sotilgan mahsulotlar', value: soldUnits + ' ta', accent: 'violet', icon: icon.box })}
           </div>
 
           <!-- Referral performance -->
@@ -557,19 +566,20 @@
               <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
                   <div class="flex items-center gap-2 text-slate-400"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg><span class="text-xs font-medium">Bosishlar (Clicks)</span></div>
-                  <p class="font-display mt-2 text-2xl font-bold text-white">0</p>
+                  <p class="font-display mt-2 text-2xl font-bold text-white">${clicks}</p>
                 </div>
                 <div class="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
                   <div class="flex items-center gap-2 text-slate-400"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-xs font-medium">Konversiyalar</span></div>
-                  <p class="font-display mt-2 text-2xl font-bold text-white">0 <span class="text-sm font-semibold text-slate-500">(0%)</span></p>
+                  <p class="font-display mt-2 text-2xl font-bold text-white">${conversions} <span class="text-sm font-semibold text-slate-500">(${convRate}%)</span></p>
                 </div>
                 <div class="rounded-xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
                   <div class="flex items-center gap-2 text-emerald-300"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg><span class="text-xs font-medium">Ishlangan komissiya</span></div>
-                  <p class="font-display mt-2 text-2xl font-bold text-emerald-300">${uzs(0)} so'm</p>
+                  <p class="font-display mt-2 text-2xl font-bold text-emerald-300">${uzs(earnedComm)} so'm</p>
                 </div>
               </div>
             </div>`)}
-        </div>`,
+        </div>`;
+      },
 
       market: () => {
         // marketProducts — barcha sotuvchilarning sklad mavjud mahsulotlari,
