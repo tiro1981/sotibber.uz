@@ -467,29 +467,26 @@
         <div class="view-enter space-y-6">
           <h2 class="font-display text-lg font-bold text-white">Moliya</h2>
 
-          <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <!-- Balance card -->
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-deep via-violet-brand to-emerald-500 p-6 text-white shadow-xl shadow-violet-500/20 lg:col-span-2">
-              <div class="flex items-start justify-between">
-                <div>
-                  <p class="text-sm text-violet-100">Umumiy balans</p>
-                  <p class="font-display mt-1 text-3xl font-bold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-violet-200">so'm</span></p>
-                </div>
+          <!-- Balans (ixcham glass bar + iridescent nur) -->
+          <div class="glass relative overflow-hidden rounded-2xl p-5 sm:p-6">
+            <div class="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full opacity-40 blur-3xl" style="background:radial-gradient(circle at 40% 40%, #ff6a2e, #8b5cf6 55%, transparent 72%)"></div>
+            <div class="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p class="text-sm text-slate-400">Umumiy balans</p>
+                <p class="font-display mt-1 text-3xl font-bold text-white sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-slate-500">so'm</span></p>
+                <p class="mt-1.5 text-xs text-slate-500">Escrow (muzlatilgan): <b class="text-slate-300">${uzs(0)} so'm</b> · yetkazilgach ochiladi</p>
               </div>
-              <div class="mt-6 flex flex-wrap items-center gap-3">
-                <button data-action="withdraw" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-violet-brand shadow-lg transition hover:bg-slate-100 active:scale-95">
-                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6"/></svg>
-                  Pul chiqarish
-                </button>
-                <div class="text-sm text-violet-100">Escrow: <b class="text-white">${uzs(0)} so'm</b></div>
-              </div>
+              <button data-action="withdraw" class="btn-grad inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition active:scale-95">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16M4 6v12a2 2 0 002 2h12a2 2 0 002-2V6"/></svg>
+                Pul chiqarish
+              </button>
             </div>
+          </div>
 
-            <!-- Quick stats -->
-            <div class="grid grid-cols-2 gap-4 lg:grid-cols-1">
-              ${statCard({ label: 'Bu oy tushum', value: uzs(0), accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/>' })}
-              ${statCard({ label: 'Bu oy yechilgan', value: uzs(0), sub: '0 ta operatsiya', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4m0 0l6-6m-6 6l6 6"/>' })}
-            </div>
+          <!-- Oylik ko'rsatkichlar -->
+          <div class="grid grid-cols-2 gap-4">
+            ${statCard({ label: 'Bu oy tushum', value: uzs(0), accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/>' })}
+            ${statCard({ label: 'Bu oy yechilgan', value: uzs(0), sub: '0 ta operatsiya', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4m0 0l6-6m-6 6l6 6"/>' })}
           </div>
 
           <!-- Transactions -->
@@ -747,13 +744,14 @@
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <!-- Balance + payout -->
             <div class="space-y-4 lg:col-span-2">
-              <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white shadow-xl shadow-emerald-500/20">
-                <div class="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10"></div>
-                <div class="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-white/5"></div>
-                <div class="relative">
-                  <p class="text-sm text-emerald-50/90">Mavjud balans</p>
-                  <p class="font-display mt-1 text-3xl font-bold sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-emerald-100">so'm</span></p>
-                  <button data-action="wallet-withdraw" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-lg transition hover:bg-emerald-50 active:scale-95">
+              <div class="glass relative overflow-hidden rounded-2xl p-5 sm:p-6">
+                <div class="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full opacity-40 blur-3xl" style="background:radial-gradient(circle at 40% 40%, #10b981, #8b5cf6 55%, transparent 72%)"></div>
+                <div class="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p class="text-sm text-slate-400">Mavjud balans</p>
+                    <p class="font-display mt-1 text-3xl font-bold text-white sm:text-4xl">${uzs(0)} <span class="text-lg font-semibold text-slate-500">so'm</span></p>
+                  </div>
+                  <button data-action="wallet-withdraw" class="btn-grad inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition active:scale-95">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m0 0l-3-3m3 3l3-3M4 6h16"/></svg>
                     Pul chiqarish
                   </button>
