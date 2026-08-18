@@ -1723,6 +1723,16 @@
           </div>`;
       }).join('') || '<p class="py-8 text-center text-sm text-slate-500">Birinchi xabarni yozing</p>';
 
+      // Qayta chizishdan oldin yozilayotgan matn/fokus/kursorni saqlab qolamiz
+      // (poll har 12s panelni yangilaganda yozayotgan xabar yo'qolmasin)
+      const prevInp = $('#msgInput');
+      const keepInput = (prevInp && renderThreadPanel._conv === chatSel) ? {
+        value: prevInp.value,
+        start: prevInp.selectionStart,
+        end: prevInp.selectionEnd,
+        focused: document.activeElement === prevInp,
+      } : null;
+
       panel.innerHTML = `
         <div class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
           <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc((conv.other.name || 'F').slice(0, 1).toUpperCase())}</span>
@@ -1740,6 +1750,18 @@
             <button type="submit" class="btn-grad grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg></button>
           </div>
         </form>`;
+
+      renderThreadPanel._conv = chatSel;
+      if (keepInput) {
+        const inp = $('#msgInput');
+        if (inp) {
+          inp.value = keepInput.value;
+          if (keepInput.focused) {
+            inp.focus();
+            try { inp.setSelectionRange(keepInput.start, keepInput.end); } catch (_) {}
+          }
+        }
+      }
 
       const t = $('#chatThread');
       if (t) t.scrollTop = t.scrollHeight;
@@ -1853,6 +1875,11 @@
         if (error) throw error;
         messages = data || [];
       } catch (e) { console.warn('Xabarlarni yangilash:', e); return; }
+      // Xabarlar to'plami o'zgarmagan bo'lsa, qayta chizmaymiz — aks holda
+      // har 12s panel yangilanib, yozilayotgan matn/fokus va scroll buziladi
+      const sig = messages.map((m) => m.id + (m.read_by_recipient ? '1' : '0')).join(',');
+      if (sig === reloadMessages._sig) return;
+      reloadMessages._sig = sig;
       if (state.view === 'messages') { renderConvList(); renderThreadPanel(); }
       renderSidebar();
     }
