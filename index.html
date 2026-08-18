@@ -48,14 +48,14 @@
   </script>
 
   <!-- Custom styles -->
-  <link rel="stylesheet" href="/landing/style.css" />
+  <link rel="stylesheet" href="/landing/style.css?v=20260818-7" />
 </head>
 
 <body class="page-bg font-sans text-slate-200 antialiased">
 
   <!-- ============================= NAVBAR ============================= -->
-  <header class="sticky top-0 z-40 w-full border-b border-white/5 bg-ink-900/70 backdrop-blur-xl">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+  <header class="sticky top-0 z-40 w-full">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
       <!-- Logo -->
       <a href="#" class="flex items-center gap-2">
         <span class="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-brand to-violet-deep text-white shadow-lg shadow-violet-500/30">
@@ -70,7 +70,7 @@
       </a>
 
       <!-- Desktop links -->
-      <div class="hidden items-center gap-8 md:flex">
+      <div class="nav-pill hidden items-center gap-7 px-7 py-2.5 md:flex">
         <a href="#how" data-i18n="nav_how" class="text-sm font-medium text-slate-400 transition hover:text-white">Qanday ishlaydi?</a>
         <a href="#features" data-i18n="nav_features" class="text-sm font-medium text-slate-400 transition hover:text-white">Imkoniyatlar</a>
         <a href="#process" data-i18n="nav_process" class="text-sm font-medium text-slate-400 transition hover:text-white">Jarayon</a>
@@ -92,7 +92,7 @@
             <button type="button" data-lang="en" class="lang-opt flex w-full items-center px-3.5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">English</button>
           </div>
         </div>
-        <button data-goto="login" data-i18n="nav_login" class="btn-grad rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition active:scale-95">
+        <button data-goto="login" data-i18n="nav_login" class="btn-light rounded-full px-5 py-2.5 text-sm font-bold transition active:scale-95">
           Kirish
         </button>
         <button id="menuBtn" class="grid h-10 w-10 place-items-center rounded-xl text-slate-300 transition hover:bg-white/10 md:hidden" aria-label="Menyu">
@@ -112,9 +112,13 @@
 
   <!-- ============================= HERO ============================= -->
   <section class="grid-overlay relative overflow-hidden">
-    <div class="glow left-1/2 top-[-160px] h-[420px] w-[620px] -translate-x-1/2" style="background:radial-gradient(closest-side, rgba(124,58,237,.55), transparent)"></div>
+    <!-- Suyuq iridescent blob'lar (asosiy vizual) -->
+    <div class="orb orb-warm right-[-30px] top-[20px] h-[360px] w-[440px] sm:right-[4%]"></div>
+    <div class="orb orb-cool left-[-70px] top-[120px] h-[320px] w-[400px] sm:left-[2%]"></div>
+    <div class="orb orb-iris left-1/2 top-[200px] h-[440px] w-[560px] -translate-x-1/2"></div>
+    <div class="orb orb-ember right-[8%] top-[440px] h-[300px] w-[360px]"></div>
 
-    <div class="relative mx-auto max-w-4xl px-4 pt-20 pb-10 text-center sm:px-6 lg:px-8 lg:pt-28">
+    <div class="relative z-10 mx-auto max-w-4xl px-4 pt-20 pb-10 text-center sm:px-6 lg:px-8 lg:pt-28">
       <div class="animate-fadeUp">
         <span class="badge-pill inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-violet-200">
           <span class="h-2 w-2 rounded-full bg-violet-400" style="animation:pulseDot 1.6s infinite"></span>
@@ -239,7 +243,8 @@
 
   <!-- ============================= FEATURES (bento) ============================= -->
   <section id="features" class="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-    <div class="glow left-1/2 top-1/3 h-[360px] w-[560px] -translate-x-1/2" style="background:radial-gradient(closest-side, rgba(99,102,241,.22), transparent)"></div>
+    <div class="orb orb-cool left-[-60px] top-[8%] h-[300px] w-[360px]"></div>
+    <div class="orb orb-warm right-[-40px] top-1/2 h-[280px] w-[340px]"></div>
 
     <div class="reveal relative mx-auto max-w-2xl text-center">
       <span class="badge-pill inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-violet-200">
@@ -452,7 +457,7 @@
   <!-- ============================= CTA STRIP ============================= -->
   <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
     <div class="reveal relative overflow-hidden rounded-3xl border border-white/10 px-6 py-14 text-center sm:px-12" style="background:linear-gradient(135deg, rgba(124,58,237,.35), rgba(79,70,229,.25)), #0d0b18">
-      <div class="glow left-1/2 top-0 h-[280px] w-[520px] -translate-x-1/2" style="background:radial-gradient(closest-side, rgba(139,92,246,.5), transparent)"></div>
+      <div class="orb orb-iris left-1/2 top-[-60px] h-[300px] w-[480px] -translate-x-1/2"></div>
       <div class="relative">
         <h2 data-i18n="cta_title" class="font-display text-2xl font-bold text-white sm:text-4xl">Bugun boshlang — ertaga daromad oling</h2>
         <p data-i18n="cta_sub" class="mx-auto mt-3 max-w-xl text-slate-300">Ro'yxatdan o'tish bepul. Bir necha daqiqada birinchi do'koningizni oching.</p>
