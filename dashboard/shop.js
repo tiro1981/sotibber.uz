@@ -639,7 +639,7 @@
       const mine = !m.sender_id; // mehmon xabari
       return `
         <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
-          <div class="max-w-[82%] rounded-2xl px-3.5 py-2 ${mine ? 'bg-gradient-to-br from-violet-brand to-violet-deep text-white' : 'bg-white/8 text-slate-100 ring-1 ring-white/10'}">
+          <div class="max-w-[82%] rounded-2xl px-3.5 py-2 ${mine ? 'bg-gradient-to-br from-violet-brand to-violet-deep text-white' : 'bg-gradient-to-br from-emerald-500 to-green-600 text-white ring-1 ring-emerald-400/20'}">
             ${m.body ? `<p class="whitespace-pre-wrap break-words">${esc(m.body)}</p>` : ''}
             ${chatAttachHtml(m)}
           </div>

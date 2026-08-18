@@ -1715,10 +1715,10 @@
         const mine = m.sender_id === ME;
         return `
           <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
-            <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${mine ? 'bg-gradient-to-br from-violet-brand to-violet-deep text-white' : 'bg-white/8 text-slate-100 ring-1 ring-white/10'}">
+            <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${mine ? 'bg-gradient-to-br from-violet-brand to-violet-deep text-white' : 'bg-gradient-to-br from-emerald-500 to-green-600 text-white ring-1 ring-emerald-400/20'}">
               ${m.body ? `<p class="whitespace-pre-wrap break-words">${esc(m.body)}</p>` : ''}
               ${attachHtml(m)}
-              <p class="mt-1 text-[10px] ${mine ? 'text-white/60' : 'text-slate-400'}">${timeStr(m.created_at)}</p>
+              <p class="mt-1 text-[10px] ${mine ? 'text-white/60' : 'text-white/70'}">${timeStr(m.created_at)}</p>
             </div>
           </div>`;
       }).join('') || '<p class="py-8 text-center text-sm text-slate-500">Birinchi xabarni yozing</p>';
