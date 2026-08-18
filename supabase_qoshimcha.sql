@@ -333,9 +333,13 @@ create policy "AffProducts: sotuvchi ko'radi"
   on public.affiliate_products for select to authenticated
   using (product_id in (select id from public.products where seller_id = auth.uid()));
 
--- 8.2) Sotib beruvchining Instagram havolasi (profilda)
+-- 8.2) Sotib beruvchining ijtimoiy tarmoqlari (profilda)
+--   instagram — eski (moslik uchun qoldirilgan), socials — barcha
+--   platformalar: { instagram, telegram, facebook, tiktok, youtube }
 alter table public.profiles
   add column if not exists instagram text;
+alter table public.profiles
+  add column if not exists socials jsonb not null default '{}'::jsonb;
 
 -- Login qilgan foydalanuvchi profillarni ko'radi (ism/do'kon/instagram).
 -- Loyihaning mavjud ochiq modeliga mos (anon allaqachon ko'radi).

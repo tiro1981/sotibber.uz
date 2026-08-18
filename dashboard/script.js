@@ -117,6 +117,7 @@
     const CATEGORIES = ['Elektronika', 'Kiyim-kechak', 'Poyabzal', "Go'zallik", "Uy-ro'zg'or", 'Oziq-ovqat', 'Bolalar', 'Sport', 'Aksessuar', 'Boshqa'];
     let marketQuery = '';
     let marketCategory = 'Barchasi';
+    let messengerSel = 'instagram';   // Messenjer bo'limida tanlangan platforma
 
     // Do'kon tartib raqamini 4 xonali qilib formatlaymiz (1 -> 0001)
     function shopIdStr(no) { return (no == null || no === '') ? '' : String(no).padStart(4, '0'); }
@@ -210,6 +211,10 @@
       shop: '<path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11a1 1 0 01-1 1H5a1 1 0 01-1-1L5 9z"/>',
       chat: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l.8-4.2A7.9 7.9 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
       insta: '<rect x="3" y="3" width="18" height="18" rx="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/>',
+      telegram: '<path stroke-linecap="round" stroke-linejoin="round" d="M21.5 4.5l-19 7.2 5.4 1.9 2 6 2.9-3.4 4.6 3.3zM7.9 13.6L18 6.5"/>',
+      facebook: '<path stroke-linecap="round" stroke-linejoin="round" d="M15 3h-2.5A3.5 3.5 0 009 6.5V9H6.5v3H9v9h3v-9h2.5l.5-3H12V6.5a.5.5 0 01.5-.5H15z"/>',
+      tiktok: '<path stroke-linecap="round" stroke-linejoin="round" d="M14 4c.3 2.8 2.2 4.7 5 5v3c-1.9 0-3.6-.6-5-1.7V15a5.5 5.5 0 11-5.5-5.5c.35 0 .7.03 1 .09v3.1a2.5 2.5 0 101.5 2.31V4z"/>',
+      youtube: '<rect x="2.5" y="5.5" width="19" height="13" rx="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.5 9.3l5 2.7-5 2.7z" fill="currentColor" stroke="none"/>',
       users: '<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/>',
     };
 
@@ -1887,9 +1892,31 @@
     /* =========================================================
        MESSENJER (sotib beruvchi) — Instagram ulash + statistika
     ========================================================= */
-    function messengerView() {
+    // Ulanadigan ijtimoiy tarmoq / messenjerlar
+    const MSGR_PLATFORMS = [
+      { key: 'instagram', name: 'Instagram', ic: 'insta',    grad: 'from-pink-500 to-fuchsia-500', base: 'https://instagram.com/', at: true,  ph: 'username yoki havola' },
+      { key: 'telegram',  name: 'Telegram',  ic: 'telegram', grad: 'from-sky-400 to-blue-500',     base: 'https://t.me/',         at: true,  ph: 'kanal yoki havola' },
+      { key: 'facebook',  name: 'Facebook',  ic: 'facebook', grad: 'from-blue-500 to-blue-700',    base: 'https://facebook.com/', at: false, ph: 'sahifa yoki havola' },
+      { key: 'tiktok',    name: 'TikTok',    ic: 'tiktok',   grad: 'from-neutral-700 to-black',    base: 'https://tiktok.com/@',  at: true,  ph: 'username yoki havola' },
+      { key: 'youtube',   name: 'YouTube',   ic: 'youtube',  grad: 'from-red-500 to-red-600',      base: 'https://youtube.com/@', at: true,  ph: 'kanal yoki havola' },
+    ];
+    function msgrPlatform(key) { return MSGR_PLATFORMS.find((p) => p.key === key) || MSGR_PLATFORMS[0]; }
+    function msgrHref(p, val) {
+      if (!val) return '#';
+      if (/^https?:/i.test(val)) return val;
+      return p.base + String(val).replace(/^@/, '');
+    }
+    // Profil socials (yangi) + eski instagram ustunini birlashtiradi
+    function currentSocials() {
       const profile = window.__SOTIBBER_PROFILE || {};
-      const ig = profile.instagram || '';
+      const s = Object.assign({}, profile.socials || {});
+      if (profile.instagram && !s.instagram) s.instagram = profile.instagram;
+      return s;
+    }
+
+    function messengerView() {
+      const socials = currentSocials();
+      const sel = msgrPlatform(messengerSel);
       const activeCount = agentLinks.filter((l) => !l.archived).length;
       const totalSold = agentLinks.reduce((s, l) => s + l.sales, 0);
       const totalCommission = agentSales.reduce((s, o) => s + (Number(o.commission) || 0), 0);
@@ -1900,31 +1927,62 @@
           <p class="font-display mt-3 text-2xl font-bold text-white">${value}</p>
           <p class="mt-0.5 text-xs text-slate-400">${label}</p>
         </div>`;
+
+      // Ulangan platformalar — to'rt burchak (kvadrat) plitkalar, yonma-yon
+      const tiles = MSGR_PLATFORMS.filter((p) => socials[p.key]).map((p) => {
+        const val = socials[p.key];
+        const label = (p.at ? '@' : '') + String(val).replace(/^@/, '').replace(/^https?:\/\/[^/]+\/?/i, '');
+        return `
+          <div class="relative">
+            <a href="${esc(msgrHref(p, val))}" target="_blank" rel="noopener" title="${p.name}: ${esc(val)}"
+               class="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl bg-gradient-to-br ${p.grad} p-3 text-white shadow-lg ring-1 ring-white/10 transition hover:scale-[1.03]">
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon[p.ic]}</svg>
+              <span class="max-w-full truncate text-[11px] font-semibold">${esc(label) || p.name}</span>
+            </a>
+            <button type="button" data-social-remove="${p.key}" title="O'chirish"
+              class="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-rose-500 text-white shadow ring-2 ring-black/50 transition hover:bg-rose-600">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>`;
+      }).join('');
+
+      // Platforma tanlash chiplari
+      const chips = MSGR_PLATFORMS.map((p) => {
+        const on = p.key === messengerSel;
+        return `<button type="button" data-msgr-sel="${p.key}"
+          class="flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${on ? 'bg-gradient-to-br ' + p.grad + ' text-white shadow' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon[p.ic]}</svg>${p.name}</button>`;
+      }).join('');
+
+      const existing = socials[sel.key] || '';
+
       return `
         <div class="view-enter space-y-6">
           <div>
             <h2 class="font-display text-lg font-bold text-white">Messenjer</h2>
-            <p class="text-sm text-slate-400">Instagram akkauntingizni ulang va statistikani kuzating</p>
+            <p class="text-sm text-slate-400">Ijtimoiy tarmoq va messenjerlaringizni ulang</p>
           </div>
 
-          <!-- Instagram ulash -->
+          <!-- Ulangan platformalar -->
           <div class="glass rounded-2xl p-6">
-            <div class="flex items-center gap-3">
-              <span class="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-pink-500 to-fuchsia-500 text-white"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.insta}</svg></span>
-              <div>
-                <h3 class="font-display font-bold text-white">Instagram</h3>
-                <p class="text-xs text-slate-400">Do'koningizni Instagram orqali targ'ib qiling</p>
-              </div>
-              ${ig ? '<span class="ml-auto rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-300">Ulangan</span>' : ''}
-            </div>
-            <form id="igForm" class="mt-4 flex flex-col gap-2 sm:flex-row">
+            <h3 class="font-display mb-4 font-bold text-white">Ulangan tarmoqlar</h3>
+            ${tiles
+              ? `<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">${tiles}</div>`
+              : `<p class="rounded-xl border border-dashed border-white/10 bg-white/5 py-8 text-center text-sm text-slate-500">Hali tarmoq ulanmagan — quyidan tanlab qo'shing</p>`}
+          </div>
+
+          <!-- Yangi qo'shish -->
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-display mb-3 font-bold text-white">Yangi qo'shish</h3>
+            <div class="flex flex-wrap gap-2">${chips}</div>
+            <form id="msgrForm" class="mt-4 flex flex-col gap-2 sm:flex-row">
               <div class="relative flex-1">
-                <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">@</span>
-                <input id="igInput" type="text" value="${esc(ig.replace(/^@/, ''))}" placeholder="username yoki havola" class="fld w-full rounded-xl py-2.5 pl-7 pr-3 text-sm outline-none" />
+                ${sel.at ? '<span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">@</span>' : ''}
+                <input id="msgrInput" type="text" value="${esc(String(existing).replace(/^@/, ''))}" placeholder="${sel.name} — ${sel.ph}" class="fld w-full rounded-xl py-2.5 ${sel.at ? 'pl-7' : 'pl-3'} pr-3 text-sm outline-none" />
               </div>
-              <button type="submit" class="btn-grad rounded-xl px-5 py-2.5 text-sm font-bold text-white transition active:scale-95">Saqlash</button>
-              ${ig ? `<a href="${esc(/^https?:/.test(ig) ? ig : 'https://instagram.com/' + ig.replace(/^@/, ''))}" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/10">Ochish</a>` : ''}
+              <button type="submit" class="btn-grad rounded-xl px-5 py-2.5 text-sm font-bold text-white transition active:scale-95">${existing ? 'Yangilash' : "Qo'shish"}</button>
             </form>
+            <p class="mt-2 text-xs text-slate-500">${sel.name} uchun username yoki to'liq havola kiriting.</p>
           </div>
 
           <!-- Statistika -->
@@ -1995,21 +2053,45 @@
         </div>`;
     }
 
-    async function saveInstagram(form) {
+    // Bitta platformani saqlash/o'chirish — profiles.socials (jsonb) ichida
+    async function persistSocials(socials) {
       const user = window.__SOTIBBER_USER;
-      if (!user || !window.sb) { toast('Tizimga qayta kiring'); return; }
-      const val = form.querySelector('#igInput').value.trim();
-      const btn = form.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      const { error } = await window.sb.from('profiles').upsert({ id: user.id, instagram: val }, { onConflict: 'id' });
-      btn.disabled = false;
+      if (!user || !window.sb) { toast('Tizimga qayta kiring'); return false; }
+      // Eski kod (sotib beruvchilar/do'kon) instagram ustunini o'qiydi — sinxron saqlaymiz
+      const row = { id: user.id, socials, instagram: socials.instagram || '' };
+      const { error } = await window.sb.from('profiles').upsert(row, { onConflict: 'id' });
       if (error) {
-        console.error('Instagram:', error);
-        toast(/instagram|column .* does not exist|schema cache/i.test(error.message || '') ? "'instagram' ustuni yo'q — supabase_qoshimcha.sql'ni ishga tushiring" : 'Xatolik: ' + (error.message || ''));
-        return;
+        console.error('Socials:', error);
+        toast(/socials|column .* does not exist|schema cache/i.test(error.message || '')
+          ? "'socials' ustuni yo'q — supabase_qoshimcha.sql'ni ishga tushiring"
+          : 'Xatolik: ' + (error.message || ''));
+        return false;
       }
-      window.__SOTIBBER_PROFILE = Object.assign({}, window.__SOTIBBER_PROFILE || {}, { instagram: val });
-      toast('Instagram saqlandi ✓');
+      window.__SOTIBBER_PROFILE = Object.assign({}, window.__SOTIBBER_PROFILE || {}, { socials, instagram: socials.instagram || '' });
+      return true;
+    }
+
+    async function saveSocial(form) {
+      const p = msgrPlatform(messengerSel);
+      const val = form.querySelector('#msgrInput').value.trim();
+      const btn = form.querySelector('button[type="submit"]');
+      if (!val) { toast('Username yoki havola kiriting'); return; }
+      btn.disabled = true;
+      const socials = currentSocials();
+      socials[p.key] = val;
+      const ok = await persistSocials(socials);
+      btn.disabled = false;
+      if (!ok) return;
+      toast(p.name + ' saqlandi ✓');
+      renderView();
+    }
+
+    async function removeSocial(key) {
+      const p = msgrPlatform(key);
+      const socials = currentSocials();
+      delete socials[key];
+      if (!(await persistSocials(socials))) return;
+      toast(p.name + " o'chirildi");
       renderView();
     }
 
@@ -2406,6 +2488,12 @@
       const buy = t.closest('[data-buy]');
       if (buy) { closeModal(); return buyProductModal(Number(buy.dataset.buy)); }
 
+      // Messenjer: platforma tanlash + plitkani o'chirish
+      const msel = t.closest('[data-msgr-sel]');
+      if (msel) { messengerSel = msel.dataset.msgrSel; return renderView(); }
+      const srem = t.closest('[data-social-remove]');
+      if (srem) return removeSocial(srem.dataset.socialRemove);
+
       // Copy link buttons
       const cp = t.closest('[data-copy]');
       if (cp) {
@@ -2439,8 +2527,8 @@
     document.addEventListener('submit', (e) => {
       const mform = e.target.closest('#msgForm');
       if (mform) { e.preventDefault(); sendCurrentMessage(mform); return; }
-      const igf = e.target.closest('#igForm');
-      if (igf) { e.preventDefault(); saveInstagram(igf); }
+      const mgf = e.target.closest('#msgrForm');
+      if (mgf) { e.preventDefault(); saveSocial(mgf); }
     });
 
     /* =========================================================
