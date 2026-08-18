@@ -412,7 +412,7 @@
                   </div>
                   <div class="mt-2 flex gap-1.5">
                     <button data-product-detail="${i}" class="flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10">Ko'rish</button>
-                    <button class="flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10">Statistika</button>
+                    <button data-product-stats="${i}" class="flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10">Statistika</button>
                   </div>
                 </div>
               </div>`).join('') || `
@@ -1505,6 +1505,68 @@
     }
 
     /* ---- Order details modal (merchant) ---- */
+    // Mahsulot statistikasi — sotib olishlar, sotib beruvchilar, sklad qoldig'i
+    function productStatsModal(idx) {
+      const p = merchantProducts[idx];
+      if (!p) return;
+      const purchases = merchantOrders.filter((o) => o.productId === p.id);
+      const unitsSold = purchases.reduce((s, o) => s + (Number(o.quantity) || 1), 0);
+      const revenue = purchases.reduce((s, o) => s + (Number(o.total) || 0), 0);
+      const rels = myResellers.filter((r) => r.product_id === p.id);
+      const activeRels = rels.filter((r) => !r.archived);
+
+      const stat = (label, value, sub, tint, ic) => `
+        <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+          <span class="grid h-9 w-9 place-items-center rounded-xl ${tint}"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic}</svg></span>
+          <p class="font-display mt-2 text-2xl font-bold text-white">${value}</p>
+          <p class="text-xs text-slate-400">${label}</p>
+          ${sub ? `<p class="mt-0.5 text-[11px] text-slate-500">${sub}</p>` : ''}
+        </div>`;
+
+      const relList = rels.length
+        ? rels.slice().sort((a, b) => b.sold - a.sold).map((r) => `
+          <div class="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
+            <div class="flex min-w-0 items-center gap-2.5">
+              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc((r.name || 'S').slice(0, 1).toUpperCase())}</span>
+              <span class="min-w-0 truncate text-sm font-medium text-slate-100">${esc(r.name)}${r.archived ? ' <span class="text-[10px] text-slate-500">(arxiv)</span>' : ''}</span>
+            </div>
+            <span class="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">${r.sold} ta sotgan</span>
+          </div>`).join('')
+        : '<p class="rounded-xl bg-white/5 px-3 py-6 text-center text-sm text-slate-500 ring-1 ring-white/10">Hali hech kim do\'koniga qo\'shmagan</p>';
+
+      openModal(`
+        <div>
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <div class="min-w-0">
+              <h3 class="truncate font-display text-lg font-bold text-white">${esc(p.name)}</h3>
+              <p class="text-xs text-slate-400">Mahsulot statistikasi</p>
+            </div>
+            <button type="button" data-close class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 hover:bg-white/10">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="space-y-4 p-6">
+            <div class="grid grid-cols-3 gap-3">
+              ${stat('Sotib olishlar', purchases.length, unitsSold + ' dona', 'bg-emerald-500/15 text-emerald-300', icon.cart)}
+              ${stat('Sotib beruvchilar', rels.length, activeRels.length + ' faol', 'bg-violet-500/15 text-violet-300', icon.users)}
+              ${stat('Skladda', p.stock, p.stock === 0 ? 'tugadi' : 'qoldi', 'bg-amber-500/15 text-amber-300', icon.box)}
+            </div>
+            <div class="flex items-center justify-between rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+              <span class="text-sm text-slate-400">Umumiy tushum</span>
+              <span class="font-display font-bold text-white">${uzs(revenue)} so'm</span>
+            </div>
+            <div>
+              <p class="mb-2 text-sm font-semibold text-slate-300">Do'koniga qo'shgan sotib beruvchilar</p>
+              <div class="space-y-2">${relList}</div>
+            </div>
+          </div>
+          <div class="border-t border-white/10 p-6">
+            <button type="button" data-close class="w-full rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
+          </div>
+        </div>
+      `);
+    }
+
     function orderDetailsModal(id) {
       const o = merchantOrders.find((x) => x.id === id);
       if (!o) return;
@@ -2659,7 +2721,9 @@
         if (a === 'add-card') return addCardModal();
       }
 
-      // Product detail modals
+      // Product stats + detail modals
+      const pstat = t.closest('[data-product-stats]');
+      if (pstat) return productStatsModal(Number(pstat.dataset.productStats));
       const pd = t.closest('[data-product-detail]');
       if (pd) return productDetailModal('seller', Number(pd.dataset.productDetail));
       const md = t.closest('[data-market-detail]');

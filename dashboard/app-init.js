@@ -12,7 +12,7 @@
   'use strict';
 
   // Asset versiyasi — script.js keshini yangilash uchun. Har deployda oshiring.
-  var ASSET_V = '20260819-3';
+  var ASSET_V = '20260819-4';
 
   // bfcache guard: brauzer "orqaga/oldinga" bilan sahifani keshdan tiklaganda
   // skriptlar qayta ishlamaydi — natijada chiqib bo'lingandan keyin ham eski
@@ -106,6 +106,7 @@
     return {
       id: '#' + String(o.id).slice(0, 6),
       dbId: o.id,
+      productId: o.product_id || null,
       product: o.product_name || 'Mahsulot',
       customer: o.customer_name || '',
       phone: o.customer_phone || '',
