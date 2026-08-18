@@ -71,9 +71,9 @@
 
       <!-- Desktop links -->
       <div class="hidden items-center gap-8 md:flex">
-        <a href="#how" class="text-sm font-medium text-slate-400 transition hover:text-white">Qanday ishlaydi?</a>
-        <a href="#features" class="text-sm font-medium text-slate-400 transition hover:text-white">Imkoniyatlar</a>
-        <a href="#process" class="text-sm font-medium text-slate-400 transition hover:text-white">Jarayon</a>
+        <a href="#how" data-i18n="nav_how" class="text-sm font-medium text-slate-400 transition hover:text-white">Qanday ishlaydi?</a>
+        <a href="#features" data-i18n="nav_features" class="text-sm font-medium text-slate-400 transition hover:text-white">Imkoniyatlar</a>
+        <a href="#process" data-i18n="nav_process" class="text-sm font-medium text-slate-400 transition hover:text-white">Jarayon</a>
         <a href="#faq" class="text-sm font-medium text-slate-400 transition hover:text-white">FAQ</a>
       </div>
 
@@ -92,7 +92,7 @@
             <button type="button" data-lang="en" class="lang-opt flex w-full items-center px-3.5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">English</button>
           </div>
         </div>
-        <button data-goto="login" class="btn-grad rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition active:scale-95">
+        <button data-goto="login" data-i18n="nav_login" class="btn-grad rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition active:scale-95">
           Kirish
         </button>
         <button id="menuBtn" class="grid h-10 w-10 place-items-center rounded-xl text-slate-300 transition hover:bg-white/10 md:hidden" aria-label="Menyu">
@@ -103,9 +103,9 @@
 
     <!-- Mobile dropdown menu -->
     <div id="mobileMenu" class="hidden border-t border-white/5 bg-ink-800 px-4 py-3 md:hidden">
-      <a href="#how" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5">Qanday ishlaydi?</a>
-      <a href="#features" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5">Imkoniyatlar</a>
-      <a href="#process" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5">Jarayon</a>
+      <a href="#how" data-i18n="nav_how" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5">Qanday ishlaydi?</a>
+      <a href="#features" data-i18n="nav_features" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5">Imkoniyatlar</a>
+      <a href="#process" data-i18n="nav_process" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5">Jarayon</a>
       <a href="#faq" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5">FAQ</a>
     </div>
   </header>
@@ -118,26 +118,26 @@
       <div class="animate-fadeUp">
         <span class="badge-pill inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-violet-200">
           <span class="h-2 w-2 rounded-full bg-violet-400" style="animation:pulseDot 1.6s infinite"></span>
-          O'zbekistondagi #1 dropshipping platformasi
+          <span data-i18n="hero_badge">O'zbekistondagi #1 dropshipping platformasi</span>
         </span>
 
-        <h1 class="font-display mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
+        <h1 data-i18n-html="hero_title" class="font-display mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
           Sarmoyasiz biznesni
           <br class="hidden sm:block" />
           <span class="text-grad-violet">daromadga aylantiring.</span>
         </h1>
 
-        <p class="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-400 sm:text-lg">
+        <p data-i18n="hero_sub" class="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-400 sm:text-lg">
           Sotuvchilar mahsulotini yuklaydi, sotib beruvchilar esa ijtimoiy tarmoqlarda
           (Telegram, Instagram, TikTok) sotib, har bir buyurtmadan ulush oladi.
         </p>
 
         <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <button data-goto="register" class="btn-grad group inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition active:scale-95">
-            Boshlash
+            <span data-i18n="hero_start">Boshlash</span>
             <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
           </button>
-          <button data-goto="login" class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur transition hover:border-white/30 hover:bg-white/10 active:scale-95">
+          <button data-goto="login" data-i18n="hero_login" class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur transition hover:border-white/30 hover:bg-white/10 active:scale-95">
             Hisobga kirish
           </button>
         </div>
@@ -156,8 +156,8 @@
             sotibber
           </div>
           <div class="hidden items-center gap-2 sm:flex">
-            <span class="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-400">Boshqaruv paneli</span>
-            <span class="rounded-full badge-pill px-3 py-1 text-[11px] font-semibold text-violet-200">Yangi</span>
+            <span data-i18n="mock_panel" class="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-400">Boshqaruv paneli</span>
+            <span data-i18n="mock_new" class="rounded-full badge-pill px-3 py-1 text-[11px] font-semibold text-violet-200">Yangi</span>
           </div>
         </div>
 
@@ -166,7 +166,7 @@
           <div class="glass sm:col-span-2 rounded-xl p-4">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs text-slate-400">Bu oy daromad</p>
+                <p data-i18n="mock_income" class="text-xs text-slate-400">Bu oy daromad</p>
                 <p class="font-display mt-1 text-3xl font-bold text-white">45.5<span class="text-violet-400">M</span> <span class="text-base font-medium text-slate-500">so'm</span></p>
               </div>
               <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
@@ -197,21 +197,21 @@
           <!-- side stats -->
           <div class="flex flex-col gap-3">
             <div class="glass rounded-xl p-4">
-              <p class="text-xs text-slate-400">Joriy balans</p>
+              <p data-i18n="mock_balance" class="text-xs text-slate-400">Joriy balans</p>
               <p class="font-display mt-1 text-2xl font-bold text-white">4 256 <span class="text-sm font-medium text-slate-500">so'm</span></p>
-              <button class="btn-grad mt-3 w-full rounded-lg py-2 text-xs font-semibold text-white">Yechib olish</button>
+              <button data-i18n="mock_withdraw" class="btn-grad mt-3 w-full rounded-lg py-2 text-xs font-semibold text-white">Yechib olish</button>
             </div>
             <div class="glass rounded-xl p-4">
-              <p class="text-xs text-slate-400">Faol buyurtmalar</p>
+              <p data-i18n="mock_active" class="text-xs text-slate-400">Faol buyurtmalar</p>
               <div class="mt-2 space-y-2">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-slate-300">Krossovka</span><span class="font-semibold text-emerald-400">+18 000</span>
+                  <span data-i18n="mock_p1" class="text-slate-300">Krossovka</span><span class="font-semibold text-emerald-400">+18 000</span>
                 </div>
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-slate-300">Soatlar</span><span class="font-semibold text-emerald-400">+42 000</span>
+                  <span data-i18n="mock_p2" class="text-slate-300">Soatlar</span><span class="font-semibold text-emerald-400">+42 000</span>
                 </div>
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-slate-300">Sumka</span><span class="font-semibold text-emerald-400">+12 500</span>
+                  <span data-i18n="mock_p3" class="text-slate-300">Sumka</span><span class="font-semibold text-emerald-400">+12 500</span>
                 </div>
               </div>
             </div>
@@ -225,8 +225,8 @@
   <section class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
     <div class="flex flex-col items-center gap-8 md:flex-row md:justify-between">
       <div class="text-center md:text-left">
-        <p class="font-display text-lg font-semibold text-white">Ilhomlantiruvchi natijalar</p>
-        <p class="text-sm text-slate-500">Startaplardan yirik bizneslargacha ishonch bilan tanlaydi</p>
+        <p data-i18n="logos_title" class="font-display text-lg font-semibold text-white">Ilhomlantiruvchi natijalar</p>
+        <p data-i18n="logos_sub" class="text-sm text-slate-500">Startaplardan yirik bizneslargacha ishonch bilan tanlaydi</p>
       </div>
       <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
         <span class="logo-mark font-display text-lg font-bold tracking-wide text-slate-300">TEZKOR</span>
@@ -244,12 +244,12 @@
     <div class="reveal relative mx-auto max-w-2xl text-center">
       <span class="badge-pill inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-violet-200">
         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        Imkoniyatlar
+        <span data-i18n="feat_badge">Imkoniyatlar</span>
       </span>
-      <h2 class="font-display mt-5 text-3xl font-bold tracking-tight text-white sm:text-5xl">
+      <h2 data-i18n-html="feat_title" class="font-display mt-5 text-3xl font-bold tracking-tight text-white sm:text-5xl">
         Savdoni <span class="text-grad-violet">soddalashtiruvchi</span> kuchli vositalar
       </h2>
-      <p class="mt-4 text-slate-400">Platformamiz mahsuldorligingizni oshiradi va kundalik ishingizni yengillashtiradi.</p>
+      <p data-i18n="feat_sub" class="mt-4 text-slate-400">Platformamiz mahsuldorligingizni oshiradi va kundalik ishingizni yengillashtiradi.</p>
     </div>
 
     <div class="reveal relative mt-14 grid gap-5 lg:grid-cols-2">
@@ -258,8 +258,8 @@
         <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-violet-brand to-violet-deep text-white shadow-lg shadow-violet-500/30">
           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg>
         </span>
-        <h3 class="mt-6 text-xl font-bold text-white">Nol sarmoya bilan boshlash</h3>
-        <p class="mt-2 max-w-md text-sm leading-relaxed text-slate-400">Sotib beruvchilar uchun mutlaqo bepul. Ombor, tovar yoki boshlang'ich kapital talab qilinmaydi — faqat telefoningiz kifoya.</p>
+        <h3 data-i18n="feat1_title" class="mt-6 text-xl font-bold text-white">Nol sarmoya bilan boshlash</h3>
+        <p data-i18n="feat1_desc" class="mt-2 max-w-md text-sm leading-relaxed text-slate-400">Sotib beruvchilar uchun mutlaqo bepul. Ombor, tovar yoki boshlang'ich kapital talab qilinmaydi — faqat telefoningiz kifoya.</p>
       </div>
 
       <!-- Card: Smart links -->
@@ -269,13 +269,13 @@
             <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-brand text-white shadow-lg shadow-indigo-500/30">
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
             </span>
-            <h3 class="mt-6 text-xl font-bold text-white">Tayyor havolalar</h3>
-            <p class="mt-2 text-sm leading-relaxed text-slate-400">Telegram va Instagram uchun tayyor linklar. Xaridor bossa — to'g'ridan-to'g'ri shaxsiy do'koningizga o'tadi.</p>
+            <h3 data-i18n="feat2_title" class="mt-6 text-xl font-bold text-white">Tayyor havolalar</h3>
+            <p data-i18n="feat2_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Telegram va Instagram uchun tayyor linklar. Xaridor bossa — to'g'ridan-to'g'ri shaxsiy do'koningizga o'tadi.</p>
           </div>
           <div class="hidden w-44 space-y-2 sm:block">
-            <div class="glass flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-300"><span>Link yaratish</span><span class="grid h-5 w-5 place-items-center rounded-md bg-violet-500/20 text-violet-300">+</span></div>
-            <div class="glass flex items-center justify-between rounded-xl border-violet-500/40 px-3 py-2 text-xs text-white"><span>Do'kon topish</span><span class="grid h-5 w-5 place-items-center rounded-md bg-violet-brand text-white">+</span></div>
-            <div class="glass flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-400"><span>Ulashildi</span><span class="grid h-5 w-5 place-items-center rounded-md bg-white/10">✓</span></div>
+            <div class="glass flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-300"><span data-i18n="feat2_link1">Link yaratish</span><span class="grid h-5 w-5 place-items-center rounded-md bg-violet-500/20 text-violet-300">+</span></div>
+            <div class="glass flex items-center justify-between rounded-xl border-violet-500/40 px-3 py-2 text-xs text-white"><span data-i18n="feat2_link2">Do'kon topish</span><span class="grid h-5 w-5 place-items-center rounded-md bg-violet-brand text-white">+</span></div>
+            <div class="glass flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-400"><span data-i18n="feat2_link3">Ulashildi</span><span class="grid h-5 w-5 place-items-center rounded-md bg-white/10">✓</span></div>
           </div>
         </div>
       </div>
@@ -283,26 +283,26 @@
       <!-- Card: Prototypes / product upload -->
       <div class="glass glass-hover card-sheen rounded-3xl p-8">
         <div class="glass mb-6 rounded-2xl p-4">
-          <p class="text-xs text-slate-400">Mahsulot qaysi turkumga mo'ljallangan?</p>
+          <p data-i18n="feat3_q" class="text-xs text-slate-400">Mahsulot qaysi turkumga mo'ljallangan?</p>
           <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-            <span class="rounded-lg bg-violet-brand/30 py-2 font-semibold text-white ring-1 ring-violet-400/40">Kiyim</span>
-            <span class="rounded-lg bg-white/5 py-2 text-slate-300">Texnika</span>
-            <span class="rounded-lg bg-white/5 py-2 text-slate-300">Aksessuar</span>
+            <span data-i18n="feat3_cat1" class="rounded-lg bg-violet-brand/30 py-2 font-semibold text-white ring-1 ring-violet-400/40">Kiyim</span>
+            <span data-i18n="feat3_cat2" class="rounded-lg bg-white/5 py-2 text-slate-300">Texnika</span>
+            <span data-i18n="feat3_cat3" class="rounded-lg bg-white/5 py-2 text-slate-300">Aksessuar</span>
           </div>
         </div>
-        <h3 class="text-xl font-bold text-white">Mahsulotni bir zumda yuklang</h3>
-        <p class="mt-2 text-sm leading-relaxed text-slate-400">Rasm, tavsif, narx va komissiya — hammasi bir joyda. Bir necha soniyada do'koningiz onlaynda.</p>
+        <h3 data-i18n="feat3_title" class="text-xl font-bold text-white">Mahsulotni bir zumda yuklang</h3>
+        <p data-i18n="feat3_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Rasm, tavsif, narx va komissiya — hammasi bir joyda. Bir necha soniyada do'koningiz onlaynda.</p>
       </div>
 
       <!-- Card: Reliable payments -->
       <div class="glass glass-hover card-sheen rounded-3xl p-8">
         <div class="mb-6 space-y-2">
-          <div class="glass ml-auto w-fit rounded-xl px-3 py-1.5 text-xs text-slate-300">Buyurtma tasdiqlandi</div>
-          <div class="glass w-fit rounded-xl border-violet-500/40 px-3 py-1.5 text-xs text-white">Balans to'ldirildi ✓</div>
+          <div data-i18n="feat4_b1" class="glass ml-auto w-fit rounded-xl px-3 py-1.5 text-xs text-slate-300">Buyurtma tasdiqlandi</div>
+          <div data-i18n="feat4_b2" class="glass w-fit rounded-xl border-violet-500/40 px-3 py-1.5 text-xs text-white">Balans to'ldirildi ✓</div>
           <div class="glass ml-8 w-fit rounded-xl px-3 py-1.5 text-xs text-emerald-400">+342 000 so'm</div>
         </div>
-        <h3 class="text-xl font-bold text-white">Ishonchli to'lovlar</h3>
-        <p class="mt-2 text-sm leading-relaxed text-slate-400">Muvaffaqiyatli buyurtmadan so'ng pullar darhol balansingizda aks etadi. Xavfsiz va shaffof hisob-kitob.</p>
+        <h3 data-i18n="feat4_title" class="text-xl font-bold text-white">Ishonchli to'lovlar</h3>
+        <p data-i18n="feat4_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Muvaffaqiyatli buyurtmadan so'ng pullar darhol balansingizda aks etadi. Xavfsiz va shaffof hisob-kitob.</p>
       </div>
     </div>
   </section>
@@ -310,17 +310,17 @@
   <!-- ============================= HOW IT WORKS (tabbed) ============================= -->
   <section id="how" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
     <div class="reveal mx-auto max-w-2xl text-center">
-      <h2 class="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">Qanday ishlaydi?</h2>
-      <p class="mt-4 text-slate-400">Ikkala tomon uchun ham oddiy va foydali. O'zingizga mos rolni tanlang.</p>
+      <h2 data-i18n="how_title" class="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">Qanday ishlaydi?</h2>
+      <p data-i18n="how_sub" class="mt-4 text-slate-400">Ikkala tomon uchun ham oddiy va foydali. O'zingizga mos rolni tanlang.</p>
     </div>
 
     <!-- Tab switcher -->
     <div class="reveal mt-10 flex justify-center">
       <div class="glass inline-flex rounded-2xl p-1.5">
-        <button data-tab="seller" class="tab-btn rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-400 transition sm:px-8">
+        <button data-tab="seller" data-i18n="how_tab_seller" class="tab-btn rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-400 transition sm:px-8">
           Sotuvchilar uchun
         </button>
-        <button data-tab="affiliate" class="tab-btn rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-400 transition sm:px-8">
+        <button data-tab="affiliate" data-i18n="how_tab_aff" class="tab-btn rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-400 transition sm:px-8">
           Sotib beruvchilar uchun
         </button>
       </div>
@@ -332,18 +332,18 @@
       <div data-panel="seller" class="grid gap-6 md:grid-cols-3">
         <div class="glass glass-hover relative rounded-3xl p-7">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/15 text-lg font-extrabold text-violet-300">1</span>
-          <h3 class="mt-5 text-lg font-bold text-white">Mahsulotni yuklang</h3>
-          <p class="mt-2 text-sm leading-relaxed text-slate-400">Mahsulotingizni yuklang va narxini belgilang. Rasm, tavsif va zaxira — hammasi bir joyda.</p>
+          <h3 data-i18n="seller1_title" class="mt-5 text-lg font-bold text-white">Mahsulotni yuklang</h3>
+          <p data-i18n="seller1_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Mahsulotingizni yuklang va narxini belgilang. Rasm, tavsif va zaxira — hammasi bir joyda.</p>
         </div>
         <div class="glass glass-hover relative rounded-3xl p-7">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/15 text-lg font-extrabold text-violet-300">2</span>
-          <h3 class="mt-5 text-lg font-bold text-white">Komissiyani belgilang</h3>
-          <p class="mt-2 text-sm leading-relaxed text-slate-400">Sotib beruvchilar uchun komissiya foizini belgilang. Yuqori foiz — ko'proq agent.</p>
+          <h3 data-i18n="seller2_title" class="mt-5 text-lg font-bold text-white">Komissiyani belgilang</h3>
+          <p data-i18n="seller2_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Sotib beruvchilar uchun komissiya foizini belgilang. Yuqori foiz — ko'proq agent.</p>
         </div>
         <div class="glass glass-hover relative rounded-3xl p-7">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/15 text-lg font-extrabold text-emerald-300">3</span>
-          <h3 class="mt-5 text-lg font-bold text-white">Daromadni oling</h3>
-          <p class="mt-2 text-sm leading-relaxed text-slate-400">Buyurtmalarni qabul qiling va daromadni oling. Yuzlab agent siz uchun sotadi.</p>
+          <h3 data-i18n="seller3_title" class="mt-5 text-lg font-bold text-white">Daromadni oling</h3>
+          <p data-i18n="seller3_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Buyurtmalarni qabul qiling va daromadni oling. Yuzlab agent siz uchun sotadi.</p>
         </div>
       </div>
 
@@ -351,18 +351,18 @@
       <div data-panel="affiliate" class="hidden grid gap-6 md:grid-cols-3">
         <div class="glass glass-hover relative rounded-3xl p-7">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/15 text-lg font-extrabold text-violet-300">1</span>
-          <h3 class="mt-5 text-lg font-bold text-white">Buyurtmani tanlang</h3>
-          <p class="mt-2 text-sm leading-relaxed text-slate-400">O'zingizga yoqqan mahsulot buyurtmasini tanlang. Minglab mahsulot mavjud.</p>
+          <h3 data-i18n="aff1_title" class="mt-5 text-lg font-bold text-white">Buyurtmani tanlang</h3>
+          <p data-i18n="aff1_desc" class="mt-2 text-sm leading-relaxed text-slate-400">O'zingizga yoqqan mahsulot buyurtmasini tanlang. Minglab mahsulot mavjud.</p>
         </div>
         <div class="glass glass-hover relative rounded-3xl p-7">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-violet-500/15 text-lg font-extrabold text-violet-300">2</span>
-          <h3 class="mt-5 text-lg font-bold text-white">Linkni ulashing</h3>
-          <p class="mt-2 text-sm leading-relaxed text-slate-400">Sizga ochib berilgan shaxsiy do'kon linkini oling va ijtimoiy tarmoqlarga joylang.</p>
+          <h3 data-i18n="aff2_title" class="mt-5 text-lg font-bold text-white">Linkni ulashing</h3>
+          <p data-i18n="aff2_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Sizga ochib berilgan shaxsiy do'kon linkini oling va ijtimoiy tarmoqlarga joylang.</p>
         </div>
         <div class="glass glass-hover relative rounded-3xl p-7">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/15 text-lg font-extrabold text-emerald-300">3</span>
-          <h3 class="mt-5 text-lg font-bold text-white">Ulushni oling</h3>
-          <p class="mt-2 text-sm leading-relaxed text-slate-400">Har bir sotilgan mahsulotdan kafolatlangan ulushingizni hisobingizga oling.</p>
+          <h3 data-i18n="aff3_title" class="mt-5 text-lg font-bold text-white">Ulushni oling</h3>
+          <p data-i18n="aff3_desc" class="mt-2 text-sm leading-relaxed text-slate-400">Har bir sotilgan mahsulotdan kafolatlangan ulushingizni hisobingizga oling.</p>
         </div>
       </div>
     </div>
@@ -373,12 +373,12 @@
     <div class="reveal mx-auto max-w-2xl text-center">
       <span class="badge-pill inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-violet-200">
         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 14h6v6h-6zM14 4h6v6h-6zM4 14h6v6H4z"/></svg>
-        Ish jarayoni
+        <span data-i18n="proc_badge">Ish jarayoni</span>
       </span>
-      <h2 class="font-display mt-5 text-3xl font-bold tracking-tight text-white sm:text-5xl">
+      <h2 data-i18n-html="proc_title" class="font-display mt-5 text-3xl font-bold tracking-tight text-white sm:text-5xl">
         Boshlash <span class="text-grad-violet">3 ta oddiy qadamda</span>
       </h2>
-      <p class="mt-4 text-slate-400">Ro'yxatdan o'tishdan birinchi daromadgacha — atigi bir necha daqiqa.</p>
+      <p data-i18n="proc_sub" class="mt-4 text-slate-400">Ro'yxatdan o'tishdan birinchi daromadgacha — atigi bir necha daqiqa.</p>
     </div>
 
     <div class="reveal mt-14 space-y-4">
@@ -389,10 +389,10 @@
         </span>
         <div class="flex-1">
           <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold text-violet-300">Qadam 01</span>
+            <span data-i18n="proc_step1" class="text-xs font-semibold text-violet-300">Qadam 01</span>
           </div>
-          <h3 class="mt-1 text-lg font-bold text-white">Ro'yxatdan o'ting</h3>
-          <p class="mt-1 text-sm text-slate-400">Bir daqiqada hisob oching — sotuvchi yoki sotib beruvchi rolini tanlang.</p>
+          <h3 data-i18n="proc1_title" class="mt-1 text-lg font-bold text-white">Ro'yxatdan o'ting</h3>
+          <p data-i18n="proc1_desc" class="mt-1 text-sm text-slate-400">Bir daqiqada hisob oching — sotuvchi yoki sotib beruvchi rolini tanlang.</p>
         </div>
       </div>
       <!-- Step 2 -->
@@ -401,9 +401,9 @@
           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16v12H4z"/></svg>
         </span>
         <div class="flex-1">
-          <span class="text-xs font-semibold text-violet-300">Qadam 02</span>
-          <h3 class="mt-1 text-lg font-bold text-white">Mahsulot yuklang yoki tanlang</h3>
-          <p class="mt-1 text-sm text-slate-400">Sotuvchilar tovarini joylaydi, sotib beruvchilar tayyor mahsulotni tanlaydi.</p>
+          <span data-i18n="proc_step2" class="text-xs font-semibold text-violet-300">Qadam 02</span>
+          <h3 data-i18n="proc2_title" class="mt-1 text-lg font-bold text-white">Mahsulot yuklang yoki tanlang</h3>
+          <p data-i18n="proc2_desc" class="mt-1 text-sm text-slate-400">Sotuvchilar tovarini joylaydi, sotib beruvchilar tayyor mahsulotni tanlaydi.</p>
         </div>
       </div>
       <!-- Step 3 -->
@@ -412,9 +412,9 @@
           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg>
         </span>
         <div class="flex-1">
-          <span class="text-xs font-semibold text-emerald-300">Qadam 03</span>
-          <h3 class="mt-1 text-lg font-bold text-white">Soting va daromad oling</h3>
-          <p class="mt-1 text-sm text-slate-400">Ijtimoiy tarmoqlarda ulashing, har bir buyurtmadan ulushingizni balansga oling.</p>
+          <span data-i18n="proc_step3" class="text-xs font-semibold text-emerald-300">Qadam 03</span>
+          <h3 data-i18n="proc3_title" class="mt-1 text-lg font-bold text-white">Soting va daromad oling</h3>
+          <p data-i18n="proc3_desc" class="mt-1 text-sm text-slate-400">Ijtimoiy tarmoqlarda ulashing, har bir buyurtmadan ulushingizni balansga oling.</p>
         </div>
       </div>
     </div>
@@ -423,27 +423,27 @@
   <!-- ============================= FAQ ============================= -->
   <section id="faq" class="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
     <div class="reveal text-center">
-      <h2 class="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">Ko'p beriladigan savollar</h2>
-      <p class="mt-4 text-slate-400">Savollaringizga tez javoblar.</p>
+      <h2 data-i18n="faq_title" class="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">Ko'p beriladigan savollar</h2>
+      <p data-i18n="faq_sub" class="mt-4 text-slate-400">Savollaringizga tez javoblar.</p>
     </div>
 
     <div class="reveal mt-10 space-y-4">
       <div class="faq-item glass overflow-hidden rounded-2xl">
         <button class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left">
-          <span class="text-base font-semibold text-white">Sotibber.uz saytidan pul chiqarish qanday bo'ladi?</span>
+          <span data-i18n="faq1_q" class="text-base font-semibold text-white">Sotibber.uz saytidan pul chiqarish qanday bo'ladi?</span>
           <svg class="faq-chevron h-5 w-5 flex-shrink-0 text-violet-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div class="faq-answer px-6">
-          <p class="pb-5 text-sm leading-relaxed text-slate-400">Siz sotgan mahsulotingizdan kelgan daromadni bank kartangizga atigi 1% komissiya bilan osongina yechib olasiz. Jarayon bir necha daqiqa davom etadi.</p>
+          <p data-i18n="faq1_a" class="pb-5 text-sm leading-relaxed text-slate-400">Siz sotgan mahsulotingizdan kelgan daromadni bank kartangizga atigi 1% komissiya bilan osongina yechib olasiz. Jarayon bir necha daqiqa davom etadi.</p>
         </div>
       </div>
       <div class="faq-item glass overflow-hidden rounded-2xl">
         <button class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left">
-          <span class="text-base font-semibold text-white">Mahsulot nosoz yoki razmeri noto'g'ri bo'lsa nima bo'ladi?</span>
+          <span data-i18n="faq2_q" class="text-base font-semibold text-white">Mahsulot nosoz yoki razmeri noto'g'ri bo'lsa nima bo'ladi?</span>
           <svg class="faq-chevron h-5 w-5 flex-shrink-0 text-violet-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div class="faq-answer px-6">
-          <p class="pb-5 text-sm leading-relaxed text-slate-400">Xaridor sotuvchi bilan to'g'ridan-to'g'ri bog'lanadi yoki platformamizning arbitraj tizimi orqali muammo adolatli hal qilinadi. Agentning obro'siga ziyon yetmaydi.</p>
+          <p data-i18n="faq2_a" class="pb-5 text-sm leading-relaxed text-slate-400">Xaridor sotuvchi bilan to'g'ridan-to'g'ri bog'lanadi yoki platformamizning arbitraj tizimi orqali muammo adolatli hal qilinadi. Agentning obro'siga ziyon yetmaydi.</p>
         </div>
       </div>
     </div>
@@ -454,10 +454,10 @@
     <div class="reveal relative overflow-hidden rounded-3xl border border-white/10 px-6 py-14 text-center sm:px-12" style="background:linear-gradient(135deg, rgba(124,58,237,.35), rgba(79,70,229,.25)), #0d0b18">
       <div class="glow left-1/2 top-0 h-[280px] w-[520px] -translate-x-1/2" style="background:radial-gradient(closest-side, rgba(139,92,246,.5), transparent)"></div>
       <div class="relative">
-        <h2 class="font-display text-2xl font-bold text-white sm:text-4xl">Bugun boshlang — ertaga daromad oling</h2>
-        <p class="mx-auto mt-3 max-w-xl text-slate-300">Ro'yxatdan o'tish bepul. Bir necha daqiqada birinchi do'koningizni oching.</p>
+        <h2 data-i18n="cta_title" class="font-display text-2xl font-bold text-white sm:text-4xl">Bugun boshlang — ertaga daromad oling</h2>
+        <p data-i18n="cta_sub" class="mx-auto mt-3 max-w-xl text-slate-300">Ro'yxatdan o'tish bepul. Bir necha daqiqada birinchi do'koningizni oching.</p>
         <button data-goto="register" class="btn-grad mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 text-base font-bold text-white transition active:scale-95">
-          Ro'yxatdan o'tish
+          <span data-i18n="cta_btn">Ro'yxatdan o'tish</span>
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
         </button>
       </div>
@@ -475,11 +475,11 @@
             </span>
             <span class="font-display text-lg font-bold text-white">sotibber<span class="text-violet-400">.uz</span></span>
           </a>
-          <p class="mt-3 max-w-xs text-sm text-slate-500">Sarmoyasiz biznes va cheksiz sotuvlar platformasi.</p>
+          <p data-i18n="foot_tagline" class="mt-3 max-w-xs text-sm text-slate-500">Sarmoyasiz biznes va cheksiz sotuvlar platformasi.</p>
         </div>
 
         <div class="text-center md:text-right">
-          <p class="text-sm font-semibold text-slate-300">Bizni kuzatib boring</p>
+          <p data-i18n="foot_follow" class="text-sm font-semibold text-slate-300">Bizni kuzatib boring</p>
           <div class="mt-4 flex items-center justify-center gap-3 md:justify-end">
             <a href="#" data-social="telegram" aria-label="Telegram" class="grid h-10 w-10 place-items-center rounded-xl bg-white/5 text-slate-300 ring-1 ring-white/10 transition hover:bg-violet-brand hover:text-white">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.5 20c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13.6 1.9 12c-1-.3-1-1 .2-1.5l18.2-7c.9-.3 1.6.2 1.6 1.8Z"/></svg>
@@ -495,17 +495,17 @@
       </div>
 
       <div class="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 text-center sm:flex-row sm:text-left">
-        <p class="text-sm text-slate-500">© 2026 sotibber.uz. Barcha huquqlar himoyalangan.</p>
+        <p data-i18n="foot_rights" class="text-sm text-slate-500">© 2026 sotibber.uz. Barcha huquqlar himoyalangan.</p>
         <div class="flex items-center gap-6">
-          <a href="#" class="text-sm text-slate-500 transition hover:text-violet-300">Foydalanish shartlari</a>
-          <a href="#" class="text-sm text-slate-500 transition hover:text-violet-300">Maxfiylik siyosati</a>
+          <a href="#" data-i18n="foot_terms" class="text-sm text-slate-500 transition hover:text-violet-300">Foydalanish shartlari</a>
+          <a href="#" data-i18n="foot_privacy" class="text-sm text-slate-500 transition hover:text-violet-300">Maxfiylik siyosati</a>
         </div>
       </div>
     </div>
   </footer>
 
   <!-- ============================= JAVASCRIPT ============================= -->
-  <script src="/landing/script.js?v=20260818-5"></script>
+  <script src="/landing/script.js?v=20260818-6"></script>
 
   <!-- Messenjer havolalari: admin panelda kiritilgan linklarni Supabase'dan
        yuklab, footer tugmalariga qo'yamiz -->
