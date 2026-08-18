@@ -2246,19 +2246,21 @@
           <p class="mt-0.5 text-xs text-slate-400">${label}</p>
         </div>`;
 
-      // Ulangan platformalar — to'rt burchak (kvadrat) plitkalar, yonma-yon
+      // Ulangan platformalar — ixcham "ulangan akkaunt" kartasi (brend + username)
       const tiles = MSGR_PLATFORMS.filter((p) => socials[p.key]).map((p) => {
         const val = socials[p.key];
         const label = (p.at ? '@' : '') + String(val).replace(/^@/, '').replace(/^https?:\/\/[^/]+\/?/i, '');
         return `
-          <div class="relative">
-            <a href="${esc(msgrHref(p, val))}" target="_blank" rel="noopener" title="${p.name}: ${esc(val)}"
-               class="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl bg-gradient-to-br ${p.grad} p-3 text-white shadow-lg ring-1 ring-white/10 transition hover:scale-[1.03]">
-              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon[p.ic]}</svg>
-              <span class="max-w-full truncate text-[11px] font-semibold">${esc(label) || p.name}</span>
-            </a>
+          <div class="relative flex items-center gap-3 rounded-2xl bg-white/5 p-3 pr-9 ring-1 ring-white/10 transition hover:bg-white/[0.07]">
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${p.grad} text-white shadow-lg">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon[p.ic]}</svg>
+            </span>
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-white">${p.name}</p>
+              <a href="${esc(msgrHref(p, val))}" target="_blank" rel="noopener" title="${esc(val)}" class="block truncate text-xs text-slate-400 hover:text-violet-300">${esc(label) || p.name}</a>
+            </div>
             <button type="button" data-social-remove="${p.key}" title="O'chirish"
-              class="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-rose-500 text-white shadow ring-2 ring-black/50 transition hover:bg-rose-600">
+              class="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-white/10 text-slate-400 transition hover:bg-rose-500 hover:text-white">
               <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>`;
@@ -2285,7 +2287,7 @@
           <div class="glass rounded-2xl p-6">
             <h3 class="font-display mb-4 font-bold text-white">Ulangan tarmoqlar</h3>
             ${tiles
-              ? `<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">${tiles}</div>`
+              ? `<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">${tiles}</div>`
               : `<p class="rounded-xl border border-dashed border-white/10 bg-white/5 py-8 text-center text-sm text-slate-500">Hali tarmoq ulanmagan — quyidan tanlab qo'shing</p>`}
           </div>
 
