@@ -910,7 +910,7 @@
       const m = openBtn.dataset.open;
       if (m === 'info') return infoModal();
       if (m === 'addresses') return addressesModal();
-      if (m === 'contact') return contactModal();
+      if (m === 'contact') return openChatModal();
       if (m === 'about') return aboutModal();
     }
 
