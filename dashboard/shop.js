@@ -811,20 +811,15 @@
   /* ---------------- Router ---------------- */
   const RENDER = { home: renderHome, cart: renderCart, checkout: renderCheckout, orders: renderOrders, profile: renderProfile };
   function paintNav() {
+    // Faol tab: kengayadi + gradient pill + yozuv ko'rinadi. Nofaol: faqat ikonka.
+    const onCls = ['bg-gradient-to-r', 'from-violet-500', 'to-fuchsia-500', 'text-white', 'shadow-lg', 'shadow-violet-500/30'];
+    const offCls = ['text-slate-400'];
     $$('.nav-tab').forEach((b) => {
       const active = b.dataset.go === view || (view === 'checkout' && b.dataset.go === 'cart');
-      const ico = b.querySelector('.nav-ico');
+      onCls.forEach((c) => b.classList.toggle(c, active));
+      offCls.forEach((c) => b.classList.toggle(c, !active));
       const lbl = b.querySelector('.nav-lbl');
-      if (ico) {
-        ico.classList.toggle('bg-violet-500/20', active);
-        ico.classList.toggle('text-violet-200', active);
-        ico.classList.toggle('text-slate-400', !active);
-        ico.classList.toggle('scale-105', active);
-      }
-      if (lbl) {
-        lbl.classList.toggle('text-violet-300', active);
-        lbl.classList.toggle('text-slate-500', !active);
-      }
+      if (lbl) lbl.classList.toggle('hidden', !active);
     });
   }
   function go(v) {
