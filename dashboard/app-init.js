@@ -12,7 +12,7 @@
   'use strict';
 
   // Asset versiyasi — script.js keshini yangilash uchun. Har deployda oshiring.
-  var ASSET_V = '20260819-5';
+  var ASSET_V = '20260819-6';
 
   // bfcache guard: brauzer "orqaga/oldinga" bilan sahifani keshdan tiklaganda
   // skriptlar qayta ishlamaydi — natijada chiqib bo'lingandan keyin ham eski
@@ -179,6 +179,13 @@
       const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
       profile = data;
     } catch (e) { /* profil hali yaratilmagan bo'lishi mumkin */ }
+
+    // Admin tomonidan bloklangan bo'lsa — tizimdan chiqaramiz
+    if (profile && profile.blocked) {
+      try { await sb.auth.signOut({ scope: 'local' }); } catch (e) {}
+      window.location.replace(`login.html?blocked=1`);
+      return;
+    }
     // Do'kon manzili (shop_slug) yo'q bo'lsa — yaratamiz
     profile = await ensureShopSlug(sb, user, profile);
     // Do'kon tartib raqami (0001, 0002 ...) — yo'q bo'lsa RPC orqali beriladi

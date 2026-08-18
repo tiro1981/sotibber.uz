@@ -166,11 +166,14 @@
 
     let PRODUCTS = [];
     let PROFILES = [];
+    let ORDERS = [];
+    let AFF_PRODUCTS = [];
     let CHAT = [];
     let SETTINGS = {};
     let NOTIFS = [];
     let chatSelectedUser = null;
     let currentView = 'stats';
+    let userQuery = '';
 
     /* ---------------- Toast ---------------- */
     function toast(msg) {
@@ -221,6 +224,18 @@
         if (error) throw error;
         PROFILES = data || [];
       } catch (e) { console.error('Foydalanuvchilar:', e); PROFILES = []; }
+
+      try {
+        const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        ORDERS = data || [];
+      } catch (e) { console.error('Buyurtmalar:', e); ORDERS = []; }
+
+      try {
+        const { data, error } = await sb.from('affiliate_products').select('affiliate_id, product_id, archived, created_at');
+        if (error) throw error;
+        AFF_PRODUCTS = data || [];
+      } catch (e) { console.error('Do\'kon mahsulotlari:', e); AFF_PRODUCTS = []; }
 
       try {
         const { data, error } = await sb.from('support_messages').select('*').order('created_at', { ascending: true });
@@ -364,41 +379,232 @@
         ${(PRODUCTS.length === 0 && window.__ADMIN_LOAD_ERROR) ? policyHint() : ''}`;
     }
 
-    function renderUsers() {
-      const rows = PROFILES.map((u) => {
+    // Pul formati
+    function money(n) { return (Math.round(Number(n) || 0)).toLocaleString('ru-RU'); }
+
+    // Foydalanuvchi roli — profildagi role yoki ma'lumotdan aniqlaymiz
+    function userRoles(u) {
+      const isSeller = u.role === 'seller' || PRODUCTS.some((p) => p.seller_id === u.id);
+      const isReseller = u.role === 'affiliate' || AFF_PRODUCTS.some((a) => a.affiliate_id === u.id);
+      return { isSeller, isReseller };
+    }
+    function roleBadges(u) {
+      const { isSeller, isReseller } = userRoles(u);
+      let out = '';
+      if (isSeller) out += '<span class="inline-flex items-center rounded-full bg-violet-500/15 px-2 py-0.5 text-[11px] font-semibold text-violet-300 ring-1 ring-violet-400/25">Sotuvchi</span>';
+      if (isReseller) out += ' <span class="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-400/25">Sotib beruvchi</span>';
+      return out || '<span class="text-xs text-slate-500">—</span>';
+    }
+
+    function filteredUsers() {
+      const q = userQuery.trim().toLowerCase();
+      if (!q) return PROFILES;
+      return PROFILES.filter((u) =>
+        String(u.id || '').toLowerCase().includes(q) ||
+        String(u.full_name || '').toLowerCase().includes(q) ||
+        String(u.shop_name || '').toLowerCase().includes(q) ||
+        String(u.phone || '').toLowerCase().includes(q) ||
+        (u.shop_no != null && String(u.shop_no).includes(q))
+      );
+    }
+
+    function renderUsersRows() {
+      const tb = $('#usersTbody');
+      if (!tb) return;
+      const rows = filteredUsers().map((u) => {
         const count = PRODUCTS.filter((p) => p.seller_id === u.id).length;
         const date = u.created_at ? new Date(u.created_at).toLocaleDateString('ru-RU') : '—';
+        const blocked = !!u.blocked;
         return `
-          <tr class="border-b border-white/5">
+          <tr class="border-b border-white/5 transition hover:bg-white/5 ${blocked ? 'opacity-60' : ''}">
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
                 <span class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc((u.full_name || 'U').slice(0, 1).toUpperCase())}</span>
-                <span class="text-sm font-medium text-slate-100">${esc(u.full_name || 'Nomsiz')}</span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2"><span class="truncate text-sm font-medium text-slate-100">${esc(u.full_name || 'Nomsiz')}</span>${blocked ? '<span class="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-300 ring-1 ring-rose-500/30">Bloklangan</span>' : ''}</div>
+                  <div class="mt-0.5 flex flex-wrap gap-1">${roleBadges(u)}</div>
+                </div>
               </div>
             </td>
             <td class="px-4 py-3 text-sm text-slate-400">${esc(u.phone || '—')}</td>
             <td class="px-4 py-3 text-sm text-slate-300">${count} ta</td>
             <td class="px-4 py-3 text-sm text-slate-400">${esc(date)}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-1.5">
+                <button data-user-detail="${esc(u.id)}" class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">Batafsil</button>
+                <button data-user-block="${esc(u.id)}" data-block="${blocked ? '0' : '1'}" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold ring-1 transition ${blocked ? 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/25 hover:bg-emerald-500/25' : 'bg-amber-500/15 text-amber-300 ring-amber-500/25 hover:bg-amber-500/25'}">${blocked ? 'Ochish' : 'Bloklash'}</button>
+                <button data-user-delete="${esc(u.id)}" class="rounded-lg bg-rose-500/10 px-2.5 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/20 transition hover:bg-rose-500/20">O'chirish</button>
+              </div>
+            </td>
           </tr>`;
       }).join('');
+      tb.innerHTML = rows || `<tr><td colspan="5" class="px-4 py-10 text-center text-sm text-slate-500">Foydalanuvchi topilmadi.</td></tr>`;
+    }
 
+    function renderUsers() {
       $('#viewRoot').innerHTML = `
+        <div class="mb-4">
+          <div class="relative max-w-md">
+            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+            <input id="userSearch" type="text" value="${esc(userQuery)}" placeholder="ism, telefon, do'kon № yoki user ID bilan qidirish" class="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
+          </div>
+        </div>
         <div class="glass overflow-hidden rounded-2xl">
           <div class="overflow-x-auto">
-            <table class="w-full min-w-[560px]">
+            <table class="w-full min-w-[680px]">
               <thead>
                 <tr class="border-b border-white/10 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th class="px-4 py-3 font-semibold">Foydalanuvchi</th>
                   <th class="px-4 py-3 font-semibold">Telefon</th>
                   <th class="px-4 py-3 font-semibold">Mahsulotlari</th>
                   <th class="px-4 py-3 font-semibold">Ro'yxatdan o'tgan</th>
+                  <th class="px-4 py-3 text-right font-semibold">Amallar</th>
                 </tr>
               </thead>
-              <tbody>${rows || `<tr><td colspan="4" class="px-4 py-10 text-center text-sm text-slate-500">Foydalanuvchi topilmadi.</td></tr>`}</tbody>
+              <tbody id="usersTbody"></tbody>
             </table>
           </div>
         </div>
         ${(PROFILES.length === 0 && window.__ADMIN_LOAD_ERROR) ? policyHint() : ''}`;
+      renderUsersRows();
+      const si = $('#userSearch');
+      if (si) si.addEventListener('input', (e) => { userQuery = e.target.value; renderUsersRows(); });
+    }
+
+    /* ---------------- Foydalanuvchi: modal / blok / o'chirish ---------------- */
+    function openModal(html) {
+      let root = document.getElementById('adminModalRoot');
+      if (!root) { root = document.createElement('div'); root.id = 'adminModalRoot'; document.body.appendChild(root); }
+      root.innerHTML = `<div class="fixed inset-0 z-[80] flex items-center justify-center p-4"><div data-mclose class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div><div class="glass relative z-10 max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl text-slate-200 shadow-2xl">${html}</div></div>`;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() { const r = document.getElementById('adminModalRoot'); if (r) r.innerHTML = ''; document.body.style.overflow = ''; }
+
+    function userDetailModal(uid) {
+      const u = PROFILES.find((p) => p.id === uid);
+      if (!u) return;
+      const { isSeller, isReseller } = userRoles(u);
+      const ownProducts = PRODUCTS.filter((p) => p.seller_id === uid);
+      const resellerLinks = AFF_PRODUCTS.filter((a) => a.affiliate_id === uid);
+      const prodName = (pid) => { const p = PRODUCTS.find((x) => x.id === pid); return p ? p.name : 'Mahsulot'; };
+      const sellerOrders = ORDERS.filter((o) => o.seller_id === uid);
+      const resellerOrders = ORDERS.filter((o) => o.affiliate_id === uid);
+      const sellerEarn = sellerOrders.reduce((s, o) => s + ((Number(o.total) || 0) - (Number(o.commission) || 0)), 0);
+      const resellerEarn = resellerOrders.reduce((s, o) => s + (Number(o.commission) || 0), 0);
+      const balance = sellerEarn + resellerEarn;
+      const allOrders = Array.from(new Map([...sellerOrders, ...resellerOrders].map((o) => [o.id, o])).values())
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      const soc = (u.socials && typeof u.socials === 'object') ? u.socials : {};
+      const messengers = [
+        ['Instagram', soc.instagram || u.instagram],
+        ['Telegram', soc.telegram],
+        ['Facebook', soc.facebook],
+        ['TikTok', soc.tiktok],
+        ['YouTube', soc.youtube],
+      ].filter(([, v]) => v);
+
+      const stat = (label, value, tint) => `
+        <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+          <p class="font-display text-2xl font-bold text-white">${value}</p>
+          <p class="text-xs text-slate-400">${label}</p>
+        </div>`;
+
+      const prodRow = (name, sub, right) => `
+        <div class="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
+          <span class="min-w-0"><span class="block truncate text-sm text-slate-100">${esc(name)}</span>${sub ? `<span class="block text-[11px] text-slate-500">${esc(sub)}</span>` : ''}</span>
+          ${right || ''}
+        </div>`;
+
+      const ownList = ownProducts.length ? ownProducts.map((p) => prodRow(p.name, (money(p.price) + " so'm · Sklad: " + (p.stock ?? 0)), badge(p.status))).join('') : '<p class="px-1 py-2 text-xs text-slate-500">Mahsulot yo\'q</p>';
+      const relList = resellerLinks.length ? resellerLinks.map((a) => prodRow(prodName(a.product_id), a.archived ? 'arxivlangan' : "do'konida", '')).join('') : '<p class="px-1 py-2 text-xs text-slate-500">Hech narsa qo\'shmagan</p>';
+      const salesList = allOrders.length ? allOrders.slice(0, 40).map((o) => `
+        <div class="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 text-sm ring-1 ring-white/10">
+          <span class="min-w-0"><span class="block truncate text-slate-100">${esc(o.product_name || 'Mahsulot')}</span><span class="block text-[11px] text-slate-500">${esc(o.customer_name || '')}${o.customer_phone ? ' · ' + esc(o.customer_phone) : ''} · ${o.created_at ? new Date(o.created_at).toLocaleDateString('ru-RU') : ''}</span></span>
+          <span class="shrink-0 text-right"><span class="block font-bold text-white">${money(o.total)} so'm</span>${badge(o.status)}</span>
+        </div>`).join('') : '<p class="px-1 py-3 text-center text-xs text-slate-500">Savdo yo\'q</p>';
+
+      const messengerList = messengers.length ? messengers.map(([n, v]) => `
+        <span class="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-200 ring-1 ring-white/10">${n}: <span class="text-slate-400">${esc(String(v).replace(/^https?:\/\/(www\.)?/, ''))}</span></span>`).join('') : '<p class="text-xs text-slate-500">Hech qanday messenjer ulanmagan</p>';
+
+      openModal(`
+        <div>
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-sm font-bold text-white">${esc((u.full_name || 'U').slice(0, 1).toUpperCase())}</span>
+              <div class="min-w-0">
+                <h3 class="truncate font-display text-lg font-bold text-white">${esc(u.full_name || 'Nomsiz')}</h3>
+                <div class="mt-0.5 flex flex-wrap items-center gap-1.5">${roleBadges(u)}${u.blocked ? '<span class="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-300 ring-1 ring-rose-500/30">Bloklangan</span>' : ''}</div>
+              </div>
+            </div>
+            <button type="button" data-mclose class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div class="space-y-4 p-6">
+            <div class="rounded-2xl bg-white/5 p-3 text-xs text-slate-400 ring-1 ring-white/10">
+              <div class="flex justify-between gap-3 py-0.5"><span>User ID</span><span class="font-mono text-slate-300">${esc(u.id)}</span></div>
+              <div class="flex justify-between gap-3 py-0.5"><span>Telefon</span><span class="text-slate-300">${esc(u.phone || '—')}</span></div>
+              <div class="flex justify-between gap-3 py-0.5"><span>Do'kon №</span><span class="text-slate-300">${u.shop_no != null ? String(u.shop_no).padStart(4, '0') : '—'}${u.shop_name ? ' · ' + esc(u.shop_name) : ''}</span></div>
+              <div class="flex justify-between gap-3 py-0.5"><span>Ro'yxatdan o'tgan</span><span class="text-slate-300">${u.created_at ? new Date(u.created_at).toLocaleString('ru-RU') : '—'}</span></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              ${stat('Hisobida (hisoblangan)', money(balance) + " so'm", '')}
+              ${stat('Chiqarilgan', '0 so\'m', '')}
+              ${stat('Savdolar', allOrders.length, '')}
+              ${stat("Do'kondagi mahsulot", ownProducts.length + resellerLinks.length, '')}
+            </div>
+            <p class="-mt-2 text-[11px] text-slate-500">Daromad buyurtmalardan hisoblanadi: sotuvchi uchun (summa − komissiya), sotib beruvchi uchun komissiya. Pul chiqarish tizimi hali ulanmagani uchun "Chiqarilgan" = 0.</p>
+
+            <div>
+              <p class="mb-2 text-sm font-semibold text-slate-300">Ulangan messenjerlar</p>
+              <div class="flex flex-wrap gap-2">${messengerList}</div>
+            </div>
+
+            ${isSeller ? `<div><p class="mb-2 text-sm font-semibold text-slate-300">O'z mahsulotlari (sotuvchi) — ${ownProducts.length} ta</p><div class="space-y-1.5">${ownList}</div></div>` : ''}
+            ${isReseller ? `<div><p class="mb-2 text-sm font-semibold text-slate-300">Do'koniga qo'shgan (sotib beruvchi) — ${resellerLinks.length} ta</p><div class="space-y-1.5">${relList}</div></div>` : ''}
+
+            <div>
+              <p class="mb-2 text-sm font-semibold text-slate-300">Barcha savdolari — ${allOrders.length} ta</p>
+              <div class="space-y-1.5">${salesList}</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-3 border-t border-white/10 p-6">
+            <button type="button" data-mclose class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
+            <button type="button" data-user-block="${esc(u.id)}" data-block="${u.blocked ? '0' : '1'}" class="flex-1 rounded-xl py-3 text-sm font-bold transition ${u.blocked ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25 hover:bg-emerald-500/25' : 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/25 hover:bg-amber-500/25'}">${u.blocked ? 'Blokni ochish' : 'Bloklash'}</button>
+            <button type="button" data-user-delete="${esc(u.id)}" class="flex-1 rounded-xl bg-rose-500/15 py-3 text-sm font-bold text-rose-300 ring-1 ring-rose-500/25 transition hover:bg-rose-500/25">O'chirish</button>
+          </div>
+        </div>
+      `);
+    }
+
+    async function blockUser(uid, block) {
+      const u = PROFILES.find((p) => p.id === uid);
+      if (!u) return;
+      if (block && !confirm((u.full_name || 'Foydalanuvchi') + ' akkauntini bloklaysizmi? U tizimga kira olmaydi.')) return;
+      const { error } = await sb.from('profiles').update({ blocked: block }).eq('id', uid);
+      if (error) { console.error(error); toast(/blocked|column|policy|row-level|schema cache/i.test(error.message || '') ? "Bloklab bo'lmadi — supabase_qoshimcha.sql'ni ishga tushiring" : 'Xatolik: ' + (error.message || '')); return; }
+      u.blocked = block;
+      toast(block ? 'Foydalanuvchi bloklandi' : 'Blok ochildi');
+      closeModal();
+      renderUsersRows();
+    }
+
+    async function deleteUser(uid) {
+      const u = PROFILES.find((p) => p.id === uid);
+      if (!u) return;
+      if (!confirm((u.full_name || 'Foydalanuvchi') + " ma'lumotlarini butunlay o'chirasizmi? Profil, mahsulotlar va do'kon yozuvlari o'chadi. Qaytarib bo'lmaydi.")) return;
+      try {
+        await sb.from('affiliate_products').delete().eq('affiliate_id', uid);
+        await sb.from('products').delete().eq('seller_id', uid);
+        const { error } = await sb.from('profiles').delete().eq('id', uid);
+        if (error) throw error;
+        toast("Foydalanuvchi o'chirildi");
+        closeModal();
+        loadData();
+      } catch (e) {
+        console.error(e);
+        toast(/policy|row-level|permission/i.test(e.message || '') ? "O'chirib bo'lmadi — supabase_qoshimcha.sql'ni ishga tushiring" : 'Xatolik: ' + (e.message || ''));
+      }
     }
 
     /* ---------------- Chat (savol-javob) ---------------- */
@@ -721,6 +927,18 @@
         e.preventDefault();
         sendNotification(notifForm);
       }
+    });
+
+    // Foydalanuvchi amallari (jadval + modal) — hujjat darajasida
+    document.addEventListener('click', (e) => {
+      const ud = e.target.closest('[data-user-detail]');
+      if (ud) return userDetailModal(ud.dataset.userDetail);
+      const ub = e.target.closest('[data-user-block]');
+      if (ub) return blockUser(ub.dataset.userBlock, ub.dataset.block === '1');
+      const udl = e.target.closest('[data-user-delete]');
+      if (udl) return deleteUser(udl.dataset.userDelete);
+      const mc = e.target.closest('[data-mclose]');
+      if (mc) return closeModal();
     });
 
     document.querySelectorAll('.nav-link').forEach((btn) => {

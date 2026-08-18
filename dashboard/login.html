@@ -269,6 +269,8 @@
         }
 
         if (user) {
+          // Rolni profilga saqlaymiz (admin panel ko'rsatishi uchun)
+          try { await window.sb.from('profiles').upsert({ id: user.id, role: panel }, { onConflict: 'id' }); } catch (e) { /* role ustuni bo'lmasa — e'tibor bermaymiz */ }
           goToDashboard();
         } else {
           // Email tasdiqlash yoqiq — sessiya olib bo'lmadi
@@ -307,6 +309,11 @@
         b.addEventListener('click', () => applyLang(b.dataset.lang));
       });
       applyLang(LANG);
+
+      // Admin tomonidan bloklangan bo'lsa — ogohlantirish
+      if (params.get('blocked')) {
+        showMsg("Akkauntingiz administrator tomonidan bloklangan. Iltimos, qo'llab-quvvatlash bilan bog'laning.", 'error');
+      }
 
       function showMsg(text, kind) {
         const el = $('#formMsg');

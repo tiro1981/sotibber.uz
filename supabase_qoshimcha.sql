@@ -356,6 +356,29 @@ drop policy if exists "Profiles: login ko'radi" on public.profiles;
 create policy "Profiles: login ko'radi"
   on public.profiles for select to authenticated using (true);
 
+-- 8.3) Admin panel: foydalanuvchi roli + bloklash + o'chirish
+--   role — 'seller' yoki 'affiliate' (ro'yxatdan o'tishda saqlanadi)
+--   blocked — admin bloklagan bo'lsa true (app-init tizimdan chiqaradi)
+alter table public.profiles add column if not exists role text;
+alter table public.profiles add column if not exists blocked boolean not null default false;
+
+-- Admin (anon) profillarni yangilaydi (bloklash/rol) va o'chiradi.
+-- Loyihaning mavjud ochiq admin (anon) modeliga mos.
+drop policy if exists "Profiles: admin yangilaydi (anon)" on public.profiles;
+create policy "Profiles: admin yangilaydi (anon)"
+  on public.profiles for update to anon using (true) with check (true);
+drop policy if exists "Profiles: admin o'chiradi (anon)" on public.profiles;
+create policy "Profiles: admin o'chiradi (anon)"
+  on public.profiles for delete to anon using (true);
+
+-- Admin (anon) mahsulot va do'kon yozuvlarini o'chiradi (foydalanuvchini o'chirganda)
+drop policy if exists "Products: admin o'chiradi (anon)" on public.products;
+create policy "Products: admin o'chiradi (anon)"
+  on public.products for delete to anon using (true);
+drop policy if exists "AffProducts: admin o'chiradi (anon)" on public.affiliate_products;
+create policy "AffProducts: admin o'chiradi (anon)"
+  on public.affiliate_products for delete to anon using (true);
+
 -- =====================================================================
 -- 9) BILDIRISHNOMALAR — admin -> foydalanuvchilarga xabar
 --
