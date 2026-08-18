@@ -11,6 +11,9 @@
 (function () {
   'use strict';
 
+  // Asset versiyasi — script.js keshini yangilash uchun. Har deployda oshiring.
+  var ASSET_V = '20260818-2';
+
   // bfcache guard: brauzer "orqaga/oldinga" bilan sahifani keshdan tiklaganda
   // skriptlar qayta ishlamaydi — natijada chiqib bo'lingandan keyin ham eski
   // dashboard ko'rinib qolishi mumkin. Shu holatda sahifani qayta yuklaymiz,
@@ -352,6 +355,6 @@
       window.__SOTIBBER_NOTIFICATIONS = [];
     }
 
-    await loadScript('script.js');
+    await loadScript('script.js?v=' + ASSET_V);
   })();
 })();
