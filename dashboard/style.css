@@ -56,6 +56,19 @@ body > .min-h-screen { position: relative; z-index: 1; }
 }
 .btn-grad:hover { box-shadow: 0 18px 52px -10px rgba(255,90,80,0.72); }
 
+/* ---- Chek (receipt) chop etish — faqat chek chiqadi ---- */
+@media print {
+  body * { visibility: hidden !important; }
+  .orb { display: none !important; }
+  #receiptArea, #receiptArea * { visibility: visible !important; color: #000 !important; }
+  #receiptArea {
+    position: fixed; left: 0; top: 0; width: 100%;
+    padding: 24px; background: #fff !important;
+  }
+  #receiptArea [class*="border-"] { border-color: #999 !important; }
+  .no-print { display: none !important; }
+}
+
 /* Forma maydonlari */
 .fld {
   background: rgba(255,255,255,0.04);

@@ -1521,21 +1521,93 @@
             <div class="flex items-center justify-between">
               <span class="text-sm text-slate-400">Holat</span>${badge(o.status)}
             </div>
+            <!-- Yetkazish manzili + mijoz -->
+            <div class="rounded-2xl bg-white/5 p-4 text-sm ring-1 ring-white/10">
+              <div class="mb-2 flex items-center gap-2 text-slate-300">
+                <svg class="h-4 w-4 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>
+                <span class="font-semibold text-white">Yetkazish manzili</span>
+              </div>
+              <p class="text-slate-100">${o.address ? esc(o.address) : '<span class="text-slate-500">Manzil ko\'rsatilmagan</span>'}</p>
+              <div class="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+                <div><p class="text-[11px] text-slate-400">Mijoz</p><p class="font-medium text-slate-100">${o.customer ? esc(o.customer) : '—'}</p></div>
+                <div><p class="text-[11px] text-slate-400">Telefon</p><p class="font-medium text-slate-100">${o.phone ? `<a href="tel:${esc(o.phone)}" class="text-violet-300 hover:underline">${esc(o.phone)}</a>` : '—'}</p></div>
+              </div>
+            </div>
+            <!-- Buyurtma tafsilotlari -->
             <div class="space-y-3 rounded-2xl bg-white/5 p-4 text-sm ring-1 ring-white/10">
               <div class="flex justify-between"><span class="text-slate-400">Mahsulot</span><span class="font-semibold text-slate-100">${esc(o.product)}</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Mijoz telefoni</span><span class="font-medium text-slate-200">${esc(o.phone)}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Miqdor × narx</span><span class="font-medium text-slate-200">${o.quantity} × ${uzs(o.unitPrice)} so'm</span></div>
+              ${o.payment ? `<div class="flex justify-between"><span class="text-slate-400">To'lov turi</span><span class="font-medium text-slate-200">${esc(o.payment)}</span></div>` : ''}
               <div class="flex justify-between"><span class="text-slate-400">Sotib beruvchi (agent)</span><span class="font-medium text-slate-200">${esc(o.agent)}</span></div>
               <div class="flex justify-between border-t border-white/10 pt-3"><span class="text-slate-400">Umumiy summa</span><span class="font-bold text-white">${uzs(o.total)} so'm</span></div>
               <div class="flex justify-between"><span class="text-slate-400">Agent komissiyasi</span><span class="font-bold text-emerald-300">${uzs(o.commission)} so'm</span></div>
               <div class="flex justify-between"><span class="text-slate-400">Sizning foydangiz</span><span class="font-bold text-violet-300">${uzs(o.total - o.commission)} so'm</span></div>
             </div>
           </div>
-          <div class="flex gap-3 border-t border-white/10 p-6">
+          <div class="flex flex-wrap gap-3 border-t border-white/10 p-6">
             <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
+            <button data-receipt="${o.id}" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-bold text-slate-100 transition hover:bg-white/10">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6h6v6M7 3h10a2 2 0 012 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 012-2z"/></svg>
+              Chek
+            </button>
             ${o.status === 'Yangi' ? `<button data-mark-shipped="${o.id}" class="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700">Yuborildi deb belgilash</button>` : ''}
           </div>
         </div>
       `);
+    }
+
+    // Chek (receipt) — bitta sotuv uchun chop etiladigan hujjat
+    function receiptModal(id) {
+      const o = merchantOrders.find((x) => x.id === id);
+      if (!o) return;
+      const prof = window.__SOTIBBER_PROFILE || {};
+      const shopName = prof.shop_name || myName() || 'sotibber.uz';
+      const when = o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : o.date;
+      const line = (l, v, cls = 'text-slate-100') => `<div class="flex justify-between gap-4 py-1"><span class="text-slate-500">${l}</span><span class="text-right font-medium ${cls}">${v}</span></div>`;
+      openModal(`
+        <div>
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4 no-print">
+            <h3 class="font-display text-lg font-bold text-white">Chek</h3>
+            <button type="button" data-close class="grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-white/10">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div id="receiptArea" class="receipt-print px-6 py-5 text-sm">
+            <div class="text-center">
+              <p class="font-display text-xl font-bold text-white">${esc(shopName)}</p>
+              <p class="text-xs text-slate-400">sotibber.uz · savdo cheki</p>
+            </div>
+            <div class="my-4 border-t border-dashed border-white/15"></div>
+            ${line('Chek №', esc(o.id))}
+            ${line('Sana', esc(when))}
+            ${line('Holat', esc(o.status))}
+            <div class="my-3 border-t border-dashed border-white/15"></div>
+            <p class="mb-1 font-semibold text-white">${esc(o.product)}</p>
+            ${line('Miqdor × narx', `${o.quantity} × ${uzs(o.unitPrice)} so'm`)}
+            ${o.payment ? line("To'lov turi", esc(o.payment)) : ''}
+            <div class="my-3 border-t border-dashed border-white/15"></div>
+            ${line('Jami', `${uzs(o.total)} so'm`, 'text-white font-bold')}
+            ${line('Agent komissiyasi', `${uzs(o.commission)} so'm`, 'text-emerald-300')}
+            ${line('Sotuvchi foydasi', `${uzs(o.total - o.commission)} so'm`, 'text-violet-300 font-bold')}
+            <div class="my-3 border-t border-dashed border-white/15"></div>
+            <p class="mb-1 font-semibold text-white">Mijoz va yetkazish</p>
+            ${line('Mijoz', o.customer ? esc(o.customer) : '—')}
+            ${line('Telefon', o.phone ? esc(o.phone) : '—')}
+            <div class="flex flex-col gap-0.5 py-1"><span class="text-slate-500">Manzil</span><span class="font-medium text-slate-100">${o.address ? esc(o.address) : '—'}</span></div>
+            <div class="my-4 border-t border-dashed border-white/15"></div>
+            <p class="text-center text-xs text-slate-400">Xaridingiz uchun rahmat!</p>
+          </div>
+          <div class="flex gap-3 border-t border-white/10 p-6 no-print">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
+            <button type="button" data-print-receipt class="btn-grad flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
+              Chop etish / PDF
+            </button>
+          </div>
+        </div>
+      `);
+      const pb = $('#modalRoot [data-print-receipt]');
+      if (pb) pb.addEventListener('click', () => window.print());
     }
 
     /* ---- Start selling success modal (affiliate) ---- */
@@ -2671,6 +2743,9 @@
       // Order details + mark shipped
       const od = t.closest('[data-order-details]');
       if (od) return orderDetailsModal(od.dataset.orderDetails);
+
+      const rcpt = t.closest('[data-receipt]');
+      if (rcpt) return receiptModal(rcpt.dataset.receipt);
 
       const ms = t.closest('[data-mark-shipped]');
       if (ms) {

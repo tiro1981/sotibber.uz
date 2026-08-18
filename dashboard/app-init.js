@@ -12,7 +12,7 @@
   'use strict';
 
   // Asset versiyasi — script.js keshini yangilash uchun. Har deployda oshiring.
-  var ASSET_V = '20260818-8';
+  var ASSET_V = '20260819-1';
 
   // bfcache guard: brauzer "orqaga/oldinga" bilan sahifani keshdan tiklaganda
   // skriptlar qayta ishlamaydi — natijada chiqib bo'lingandan keyin ham eski
@@ -107,11 +107,17 @@
       id: '#' + String(o.id).slice(0, 6),
       dbId: o.id,
       product: o.product_name || 'Mahsulot',
+      customer: o.customer_name || '',
       phone: o.customer_phone || '',
+      address: o.address || '',
+      quantity: Number(o.quantity) || 1,
+      unitPrice: Number(o.unit_price) || 0,
+      payment: o.payment_method || '',
       agent: o.affiliate_name || 'Sotib beruvchi',
       commission: Number(o.commission) || 0,
       total: Number(o.total) || 0,
       date: fmtDate(o.created_at),
+      createdAt: o.created_at,
       status: o.status || 'Yangi',
     };
   }
