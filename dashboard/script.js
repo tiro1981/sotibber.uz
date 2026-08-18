@@ -392,27 +392,27 @@
             </button>
           </div>
 
-          <!-- Product cards grid -->
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <!-- Product cards grid (ixcham) -->
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
             ${merchantProducts.map((p, i) => `
-              <div class="glass glass-hover group overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
+              <div class="glass glass-hover group overflow-hidden rounded-xl transition hover:-translate-y-0.5">
                 <div class="relative">
-                  ${productMedia(p.images, p.name)}
-                  <div class="absolute right-3 top-3 z-10">${badge(p.status)}</div>
+                  ${productMedia(p.images, p.name, 'aspect-square')}
+                  <div class="absolute right-2 top-2 z-10">${badge(p.status)}</div>
                 </div>
-                <div class="p-4">
-                  <button data-product-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
-                  <div class="mt-2 flex items-center justify-between">
-                    <span class="font-display text-lg font-bold text-white">${uzs(p.price)} <span class="text-xs font-medium text-slate-500">so'm</span></span>
-                    <span class="text-xs font-medium text-slate-400">Sklad: <b class="${p.stock === 0 ? 'text-rose-400' : 'text-slate-200'}">${p.stock}</b></span>
+                <div class="p-2.5">
+                  <button data-product-detail="${i}" class="block w-full truncate text-left text-sm font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
+                  <div class="mt-1.5 flex items-center justify-between gap-2">
+                    <span class="font-display text-sm font-bold text-white">${uzs(p.price)} <span class="text-[10px] font-medium text-slate-500">so'm</span></span>
+                    <span class="whitespace-nowrap text-[10px] font-medium text-slate-400">Sklad: <b class="${p.stock === 0 ? 'text-rose-400' : 'text-slate-200'}">${p.stock}</b></span>
                   </div>
-                  <div class="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 ring-1 ring-emerald-500/20">
-                    <span class="text-xs font-medium text-emerald-300">Komissiya</span>
-                    <span class="text-sm font-bold text-emerald-300">${p.commission}% (${uzs(Math.round(p.price * p.commission / 100))} so'm)</span>
+                  <div class="mt-2 flex items-center justify-between gap-1 rounded-lg bg-emerald-500/10 px-2 py-1.5 ring-1 ring-emerald-500/20">
+                    <span class="text-[10px] font-medium text-emerald-300">Komissiya</span>
+                    <span class="text-[11px] font-bold text-emerald-300">${p.commission}%</span>
                   </div>
-                  <div class="mt-3 flex gap-2">
-                    <button data-product-detail="${i}" class="flex-1 rounded-lg border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10">Ko'rish</button>
-                    <button class="flex-1 rounded-lg border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10">Statistika</button>
+                  <div class="mt-2 flex gap-1.5">
+                    <button data-product-detail="${i}" class="flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10">Ko'rish</button>
+                    <button class="flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10">Statistika</button>
                   </div>
                 </div>
               </div>`).join('') || `
@@ -1263,7 +1263,7 @@
             price: priceVal,
             stock: stockVal,
             commission: commissionVal,
-            status: 'Moderatsiyada',
+            status: 'Faol',
             image_url: imageUrl,
             color,
           };
@@ -1276,7 +1276,7 @@
           // (migratsiya ishga tushirilmagan) — ularsiz baribir saqlaymiz.
           if (error && /image_urls|category|column .* does not exist|schema cache/i.test(error.message || '')) {
             console.warn("Yangi ustun topilmadi — supabase_qoshimcha.sql'ni ishga tushiring. Mahsulot soddalashtirilgan holda saqlanadi.");
-            const noExtra = { seller_id: user.id, name, description: basePayload.description, price: priceVal, stock: stockVal, commission: commissionVal, status: 'Moderatsiyada', image_url: imageUrl, color };
+            const noExtra = { seller_id: user.id, name, description: basePayload.description, price: priceVal, stock: stockVal, commission: commissionVal, status: 'Faol', image_url: imageUrl, color };
             ({ data, error } = await window.sb.from('products').insert(noExtra).select().single());
           }
           if (error) throw error;
@@ -1296,7 +1296,7 @@
           });
 
           closeModal();
-          toast('Mahsulot moderatsiyaga yuborildi ✓');
+          toast('Mahsulot qo\'shildi ✓');
           if (state.panel === 'seller' && state.view === 'products') renderView();
         } catch (err) {
           console.error('Mahsulotni saqlashda xatolik:', err);
@@ -2752,10 +2752,16 @@
         const order = merchantOrders.find((o) => o.id === ms.dataset.markShipped);
         if (order) {
           order.status = "Yo'lda";
-          // Supabase'da holatni yangilaymiz
+          order.shippedAt = new Date().toISOString();
+          // Supabase'da holat + yuborilgan vaqtni yozamiz (3 kunlik avto-yetkazish uchun)
           if (order.dbId && window.sb) {
-            window.sb.from('orders').update({ status: "Yo'lda" }).eq('id', order.dbId)
-              .then(({ error }) => { if (error) console.warn('Holatni yangilashda xatolik:', error); });
+            window.sb.from('orders').update({ status: "Yo'lda", shipped_at: order.shippedAt }).eq('id', order.dbId)
+              .then(({ error }) => {
+                if (error && /shipped_at|column .* does not exist|schema cache/i.test(error.message || '')) {
+                  // shipped_at ustuni yo'q — holatni baribir yangilaymiz
+                  window.sb.from('orders').update({ status: "Yo'lda" }).eq('id', order.dbId).then(() => {});
+                } else if (error) { console.warn('Holatni yangilashda xatolik:', error); }
+              });
           }
         }
         closeModal();

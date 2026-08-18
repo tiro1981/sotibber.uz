@@ -12,7 +12,7 @@
   'use strict';
 
   // Asset versiyasi — script.js keshini yangilash uchun. Har deployda oshiring.
-  var ASSET_V = '20260819-1';
+  var ASSET_V = '20260819-2';
 
   // bfcache guard: brauzer "orqaga/oldinga" bilan sahifani keshdan tiklaganda
   // skriptlar qayta ishlamaydi — natijada chiqib bo'lingandan keyin ham eski
@@ -118,6 +118,7 @@
       total: Number(o.total) || 0,
       date: fmtDate(o.created_at),
       createdAt: o.created_at,
+      shippedAt: o.shipped_at || null,
       status: o.status || 'Yangi',
     };
   }
@@ -275,7 +276,18 @@
     try {
       const { data, error } = await sb.from('orders').select('*').eq('seller_id', user.id).order('created_at', { ascending: false });
       if (error) throw error;
-      window.__SOTIBBER_ORDERS = (data || []).map(mapOrderRow);
+      const rows = data || [];
+      // 3 kunlik avto-yetkazish: "Yo'lda" bo'lib 3 kundan oshgan buyurtmalar
+      // mijoz tasdiqlamasa, avtomatik "Yetkazildi" bo'ladi.
+      const THREE_DAYS = 3 * 864e5;
+      const stale = rows.filter((o) => o.status === "Yo'lda" && o.shipped_at && (Date.now() - new Date(o.shipped_at).getTime() > THREE_DAYS));
+      if (stale.length) {
+        try {
+          await sb.from('orders').update({ status: 'Yetkazildi' }).in('id', stale.map((o) => o.id));
+          stale.forEach((o) => { o.status = 'Yetkazildi'; });
+        } catch (e2) { console.warn('Avto-yetkazishda xatolik:', e2); }
+      }
+      window.__SOTIBBER_ORDERS = rows.map(mapOrderRow);
     } catch (e) {
       console.error('Buyurtmalarni yuklashda xatolik:', e);
       window.__SOTIBBER_ORDERS = [];

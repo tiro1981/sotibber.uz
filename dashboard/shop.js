@@ -357,9 +357,11 @@
       status: 'Yangi',
     }));
 
+    let dbIds = [];
     try {
-      const { error } = await sb.from('orders').insert(rows);
+      const { data, error } = await sb.from('orders').insert(rows).select('id');
       if (error) throw error;
+      dbIds = (data || []).map((r) => r.id);
     } catch (err) {
       console.error('Buyurtma:', err);
       btn.disabled = false; btn.textContent = orig;
@@ -368,32 +370,46 @@
       return;
     }
 
-    // Mahalliy tarixga yozamiz (bu qurilmadagi buyurtmalar)
+    // Mahalliy tarixga yozamiz (bu qurilmadagi buyurtmalar) — dbIds orqali jonli holatni kuzatamiz
     const myOrders = getMyOrders();
     const orderNo = '#' + Date.now().toString().slice(-6);
-    myOrders.unshift({ orderNo, date: new Date().toISOString(), status: 'Yangi', items: rows.map((r) => ({ name: r.product_name, qty: r.quantity, total: r.total })), total: rows.reduce((s, r) => s + r.total, 0) });
+    myOrders.unshift({ orderNo, dbIds, date: new Date().toISOString(), status: 'Yangi', items: rows.map((r) => ({ name: r.product_name, qty: r.quantity, total: r.total })), total: rows.reduce((s, r) => s + r.total, 0) });
     writeLS(K.orders(), myOrders);
 
     setCart([]);
     orderSuccessModal(orderNo);
   }
 
-  function renderOrders() {
-    const orders = getMyOrders();
+  function orderBadge(st) {
+    const map = {
+      'Yangi': 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+      "Yo'lda": 'bg-blue-500/15 text-blue-300 ring-blue-500/30',
+      'Yetkazildi': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+      'Rad etildi': 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
+    };
+    return `<span class="rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${map[st] || map['Yangi']}">${esc(st)}</span>`;
+  }
+
+  function paintOrders(orders) {
     const body = orders.length ? `
       <div class="space-y-3">
-        ${orders.map((o) => `
+        ${orders.map((o) => {
+          const st = o.status || 'Yangi';
+          return `
           <div class="glass rounded-2xl p-4">
             <div class="flex items-center justify-between">
               <span class="font-mono text-sm font-bold text-violet-300">${o.orderNo}</span>
-              <span class="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-300 ring-1 ring-amber-500/30">${esc(o.status)}</span>
+              ${orderBadge(st)}
             </div>
             <p class="mt-1 text-xs text-slate-500">${new Date(o.date).toLocaleString('ru-RU')}</p>
             <div class="mt-3 space-y-1 text-sm">
               ${o.items.map((it) => `<div class="flex justify-between"><span class="text-slate-400">${esc(it.name)} × ${it.qty}</span><span class="text-slate-200">${uzs(it.total)} so'm</span></div>`).join('')}
             </div>
             <div class="mt-2 flex justify-between border-t border-white/10 pt-2 text-sm"><span class="font-semibold text-slate-200">Jami</span><span class="font-bold text-emerald-300">${uzs(o.total)} so'm</span></div>
-          </div>`).join('')}
+            ${st === "Yo'lda" && (o.dbIds || []).length ? `<button data-confirm-delivery="${esc(o.orderNo)}" class="btn-grad mt-3 w-full rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-95">✓ Yetkazib olindim</button>
+            <p class="mt-1.5 text-center text-[11px] text-slate-500">3 kun ichida tasdiqlamasangiz, avtomatik "Yetkazildi" bo'ladi</p>` : ''}
+          </div>`;
+        }).join('')}
       </div>` : `
       <div class="glass mt-4 flex flex-col items-center rounded-2xl p-10 text-center">
         <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg></span>
@@ -407,6 +423,56 @@
         <p class="mb-3 text-xs text-slate-500">Bu qurilmada berilgan buyurtmalar</p>
         ${body}
       </div>`;
+  }
+
+  function renderOrders() { paintOrders(getMyOrders()); syncOrders(); }
+
+  // Jonli holatni DB'dan olamiz + 3 kunlik avto-yetkazish (mijoz tasdiqlamasa)
+  async function syncOrders() {
+    const orders = getMyOrders();
+    const allIds = orders.reduce((a, o) => a.concat(o.dbIds || []), []);
+    if (!allIds.length || !sb) return;
+    let byId = {};
+    try {
+      const { data, error } = await sb.from('orders').select('id, status, shipped_at').in('id', allIds);
+      if (error) throw error;
+      (data || []).forEach((r) => { byId[r.id] = r; });
+      const THREE = 3 * 864e5;
+      const stale = (data || []).filter((r) => r.status === "Yo'lda" && r.shipped_at && (Date.now() - new Date(r.shipped_at).getTime() > THREE));
+      if (stale.length) {
+        try { await sb.from('orders').update({ status: 'Yetkazildi' }).in('id', stale.map((r) => r.id)); stale.forEach((r) => { byId[r.id].status = 'Yetkazildi'; }); } catch (e) {}
+      }
+    } catch (e) { console.warn('Buyurtma holati:', e); return; }
+    let changed = false;
+    orders.forEach((o) => {
+      const sts = (o.dbIds || []).map((id) => (byId[id] || {}).status).filter(Boolean);
+      if (!sts.length) return;
+      let st = 'Yangi';
+      if (sts.every((s) => s === 'Yetkazildi')) st = 'Yetkazildi';
+      else if (sts.some((s) => s === "Yo'lda")) st = "Yo'lda";
+      else if (sts.some((s) => s === 'Rad etildi')) st = 'Rad etildi';
+      if (o.status !== st) { o.status = st; changed = true; }
+    });
+    if (changed) writeLS(K.orders(), orders);
+    if (view === 'orders') paintOrders(orders);
+  }
+
+  // Mijoz "Yetkazib olindim" tasdig'i
+  async function confirmDelivery(orderNo) {
+    const orders = getMyOrders();
+    const o = orders.find((x) => x.orderNo === orderNo);
+    if (!o || !(o.dbIds || []).length || !sb) return;
+    try {
+      const { error } = await sb.from('orders').update({ status: 'Yetkazildi' }).in('id', o.dbIds);
+      if (error) throw error;
+      o.status = 'Yetkazildi';
+      writeLS(K.orders(), orders);
+      paintOrders(orders);
+      toast('Yetkazib olinganini tasdiqladingiz ✓');
+    } catch (e) {
+      console.error('Tasdiqlash:', e);
+      toast(/permission|policy|row-level/i.test(e.message || '') ? "Tasdiqlab bo'lmadi — supabase_qoshimcha.sql'ni ishga tushiring" : 'Xatolik: tasdiqlab bo\'lmadi');
+    }
   }
 
   const menuIco = {
@@ -835,6 +901,9 @@
     const t = e.target;
     const goBtn = t.closest('[data-go]');
     if (goBtn) return go(goBtn.dataset.go);
+
+    const cd = t.closest('[data-confirm-delivery]');
+    if (cd) return confirmDelivery(cd.dataset.confirmDelivery);
 
     const openBtn = t.closest('[data-open]');
     if (openBtn) {

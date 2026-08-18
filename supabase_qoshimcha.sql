@@ -213,6 +213,15 @@ drop policy if exists "Orders: admin ko'radi" on public.orders;
 create policy "Orders: admin ko'radi"
   on public.orders for select to anon using (true);
 
+-- Yuborilgan vaqt (3 kunlik avto-yetkazish uchun)
+alter table public.orders add column if not exists shipped_at timestamptz;
+
+-- Web-ilova mijozi (anon): buyurtma holatini yangilaydi ("Yetkazildi" tasdig'i).
+-- Loyihaning mavjud ochiq anon modeliga mos.
+drop policy if exists "Orders: mijoz yangilaydi (anon)" on public.orders;
+create policy "Orders: mijoz yangilaydi (anon)"
+  on public.orders for update to anon using (true) with check (true);
+
 -- =====================================================================
 -- 6) DO'KON TARTIB RAQAMI — har bir do'kon 0001, 0002, ... oladi
 --
