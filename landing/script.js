@@ -14,6 +14,53 @@
     a.addEventListener('click', () => mobileMenu.classList.add('hidden'))
   );
 
+  /* -------------------- Til tanlash (UZ / RU / EN) --------------------
+     Bosilganda menyu ochiladi; til tanlanadi va localStorage'ga saqlanadi
+     (dashboard/login bilan bir xil "sotibber_lang" kaliti). Landing matni
+     o'zgarmaydi — bu faqat platforma tilini belgilaydi. */
+  (function initLang() {
+    var KEY = 'sotibber_lang';
+    var LABEL = { uz: "O'z", ru: 'Ру', en: 'En' };
+    var langBtn = document.getElementById('langBtn');
+    var langMenu = document.getElementById('langMenu');
+    var langLabel = document.getElementById('langLabel');
+    if (!langBtn || !langMenu) return;
+
+    var lang = 'uz';
+    try { lang = localStorage.getItem(KEY) || 'uz'; } catch (e) {}
+    if (!LABEL[lang]) lang = 'uz';
+
+    function paint() {
+      if (langLabel) langLabel.textContent = LABEL[lang];
+      document.documentElement.lang = lang;
+      langMenu.querySelectorAll('[data-lang]').forEach(function (o) {
+        var on = o.dataset.lang === lang;
+        o.classList.toggle('bg-white/5', on);
+        o.classList.toggle('text-white', on);
+        o.classList.toggle('text-slate-200', !on);
+      });
+    }
+    function closeMenu() { langMenu.classList.add('hidden'); langBtn.setAttribute('aria-expanded', 'false'); }
+
+    paint();
+    langBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = langMenu.classList.toggle('hidden');
+      langBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
+    });
+    langMenu.querySelectorAll('[data-lang]').forEach(function (o) {
+      o.addEventListener('click', function () {
+        lang = o.dataset.lang;
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+        paint();
+        closeMenu();
+      });
+    });
+    document.addEventListener('click', function (e) {
+      if (!langMenu.classList.contains('hidden') && !langMenu.contains(e.target) && !langBtn.contains(e.target)) closeMenu();
+    });
+  })();
+
   /* -------------------- Auth sahifasiga o'tish --------------------
      Rol (sotuvchi/sotib beruvchi) endi landing'da tanlanmaydi — u
      ro'yxatdan o'tgandan keyin login sahifasida tanlanadi. Shuning uchun

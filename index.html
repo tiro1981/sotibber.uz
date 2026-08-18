@@ -79,6 +79,19 @@
 
       <!-- CTA + mobile menu -->
       <div class="flex items-center gap-2">
+        <!-- Til tanlash (bosilganda tanlanadi) -->
+        <div class="relative">
+          <button id="langBtn" type="button" aria-haspopup="true" aria-expanded="false" class="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
+            <span id="langLabel">O'z</span>
+            <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div id="langMenu" class="absolute right-0 z-50 mt-2 hidden w-36 overflow-hidden rounded-xl border border-white/10 bg-ink-800 py-1 shadow-2xl shadow-black/50">
+            <button type="button" data-lang="uz" class="lang-opt flex w-full items-center px-3.5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">O'zbekcha</button>
+            <button type="button" data-lang="ru" class="lang-opt flex w-full items-center px-3.5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">Русский</button>
+            <button type="button" data-lang="en" class="lang-opt flex w-full items-center px-3.5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/5">English</button>
+          </div>
+        </div>
         <button data-goto="login" class="btn-grad rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition active:scale-95">
           Kirish
         </button>
@@ -492,7 +505,7 @@
   </footer>
 
   <!-- ============================= JAVASCRIPT ============================= -->
-  <script src="/landing/script.js"></script>
+  <script src="/landing/script.js?v=20260818-5"></script>
 
   <!-- Messenjer havolalari: admin panelda kiritilgan linklarni Supabase'dan
        yuklab, footer tugmalariga qo'yamiz -->
