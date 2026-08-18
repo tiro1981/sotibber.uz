@@ -57,6 +57,8 @@
     .nav-link.active { background: linear-gradient(135deg, rgba(255,138,80,.28), rgba(139,92,246,.24)); color:#fff; }
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 8px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -174,6 +176,21 @@
     let chatSelectedUser = null;
     let currentView = 'stats';
     let userQuery = '';
+    // Chat filtri / muhim / arxiv (localStorage'da saqlanadi)
+    let chatFilter = 'all';       // all | day | week | month
+    let chatShowArchived = false;
+    let chatStarredOnly = false;
+    let chatArchived = new Set();
+    let chatStarred = new Set();
+    function chatLSKey(kind) { return 'sotibber_admin_chat_' + kind; }
+    function loadChatFlags() {
+      try { chatArchived = new Set(JSON.parse(localStorage.getItem(chatLSKey('archived')) || '[]')); } catch (e) { chatArchived = new Set(); }
+      try { chatStarred = new Set(JSON.parse(localStorage.getItem(chatLSKey('starred')) || '[]')); } catch (e) { chatStarred = new Set(); }
+    }
+    function saveChatFlags(kind) {
+      try { localStorage.setItem(chatLSKey(kind), JSON.stringify([...(kind === 'archived' ? chatArchived : chatStarred)])); } catch (e) {}
+    }
+    loadChatFlags();
 
     /* ---------------- Toast ---------------- */
     function toast(msg) {
@@ -618,7 +635,33 @@
       return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     }
 
+    function convInPeriod(c) {
+      if (chatFilter === 'all') return true;
+      if (!c.last) return true;
+      const span = chatFilter === 'day' ? 864e5 : chatFilter === 'week' ? 7 * 864e5 : 30 * 864e5;
+      return (Date.now() - new Date(c.last.created_at).getTime()) <= span;
+    }
+
+    function chatFilterBar() {
+      const periods = [['all', 'Barchasi'], ['day', 'Kunlik'], ['week', 'Haftalik'], ['month', 'Oylik']];
+      const pill = (v, l) => `<button data-chat-filter="${v}" class="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${chatFilter === v ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${l}</button>`;
+      const starI = '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01z"/></svg>';
+      const arcI = '<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18v4H3zM5 8v11a1 1 0 001 1h12a1 1 0 001-1V8M9.5 12h5"/></svg>';
+      return `
+        <div class="glass rounded-2xl p-2">
+          <div class="no-scrollbar flex gap-1.5 overflow-x-auto">${periods.map(([v, l]) => pill(v, l)).join('')}</div>
+          <div class="mt-1.5 flex gap-1.5">
+            <button data-chat-starred-toggle class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${chatStarredOnly ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${starI} Muhim</button>
+            <button data-chat-archived-toggle class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${chatShowArchived ? 'bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${arcI} Arxiv</button>
+          </div>
+        </div>`;
+    }
+
     function renderChat() {
+      // Yozilayotgan javob matnini saqlab qolamiz (filter/arxiv bosilganda yo'qolmasin)
+      const prevReply = $('#chatReplyInput');
+      const keepReply = prevReply ? { v: prevReply.value, f: document.activeElement === prevReply } : null;
+
       // Suhbatlarni foydalanuvchi bo'yicha guruhlaymiz
       const byUser = {};
       CHAT.forEach((m) => {
@@ -631,24 +674,40 @@
         return { uid, msgs, last, unread };
       }).sort((a, b) => new Date(b.last.created_at) - new Date(a.last.created_at));
 
-      // Tanlangan suhbat topilmasa, birinchisini olamiz
-      if (chatSelectedUser && !byUser[chatSelectedUser]) chatSelectedUser = null;
-      if (!chatSelectedUser && convos.length) chatSelectedUser = convos[0].uid;
+      // Filtrlar: arxiv / muhim / davr
+      let list = convos.filter((c) => (chatShowArchived ? chatArchived.has(c.uid) : !chatArchived.has(c.uid)));
+      if (chatStarredOnly) list = list.filter((c) => chatStarred.has(c.uid));
+      list = list.filter(convInPeriod);
 
-      const listHtml = convos.map((c) => {
+      // Tanlangan suhbat topilmasa, ro'yxatdagi birinchisini olamiz
+      if (chatSelectedUser && !byUser[chatSelectedUser]) chatSelectedUser = null;
+      if (!chatSelectedUser && list.length) chatSelectedUser = list[0].uid;
+
+      const star = '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="{fill}" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01z"/></svg>';
+      const restoreI = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15l-4-4 4-4M5 11h9a5 5 0 010 10h-3"/></svg>';
+      const archiveI = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18v4H3zM5 8v11a1 1 0 001 1h12a1 1 0 001-1V8M9.5 12h5"/></svg>';
+
+      const listHtml = list.map((c) => {
         const active = c.uid === chatSelectedUser;
+        const starred = chatStarred.has(c.uid);
         return `
-          <button data-open-convo="${c.uid}" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${active ? 'bg-violet-500/15 ring-1 ring-violet-400/40' : 'hover:bg-white/5'}">
-            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc(userName(c.uid).slice(0, 1).toUpperCase())}</span>
-            <span class="min-w-0 flex-1">
-              <span class="flex items-center justify-between gap-2">
-                <span class="truncate text-sm font-semibold text-white">${esc(userName(c.uid))}</span>
-                ${c.unread ? `<span class="shrink-0 rounded-full bg-rose-500/25 px-1.5 text-[10px] font-bold text-rose-200">${c.unread}</span>` : ''}
+          <div class="flex items-center gap-1 rounded-xl pr-1 transition ${active ? 'bg-violet-500/15 ring-1 ring-violet-400/40' : 'hover:bg-white/5'}">
+            <button data-open-convo="${c.uid}" class="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-2.5 text-left">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-brand to-violet-deep text-xs font-bold text-white">${esc(userName(c.uid).slice(0, 1).toUpperCase())}</span>
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center justify-between gap-2">
+                  <span class="truncate text-sm font-semibold text-white">${esc(userName(c.uid))}</span>
+                  ${c.unread ? `<span class="shrink-0 rounded-full bg-rose-500/25 px-1.5 text-[10px] font-bold text-rose-200">${c.unread}</span>` : ''}
+                </span>
+                <span class="block truncate text-xs text-slate-400">${c.last.sender === 'admin' ? 'Siz: ' : ''}${esc(c.last.body)}</span>
               </span>
-              <span class="block truncate text-xs text-slate-400">${c.last.sender === 'admin' ? 'Siz: ' : ''}${esc(c.last.body)}</span>
-            </span>
-          </button>`;
-      }).join('') || '<p class="px-3 py-6 text-center text-sm text-slate-500">Hozircha savollar yo\'q.</p>';
+            </button>
+            <div class="flex shrink-0 items-center gap-0.5">
+              <button data-star-convo="${c.uid}" title="${starred ? 'Muhimdan olib tashlash' : 'Muhim'}" class="grid h-7 w-7 place-items-center rounded-lg ${starred ? 'text-amber-300' : 'text-slate-500 hover:text-amber-300'}">${star.replace('{fill}', starred ? 'currentColor' : 'none')}</button>
+              <button data-archive-convo="${c.uid}" title="${chatShowArchived ? 'Arxivdan qaytarish' : 'Arxivlash'}" class="grid h-7 w-7 place-items-center rounded-lg text-slate-500 hover:text-violet-300">${chatShowArchived ? restoreI : archiveI}</button>
+            </div>
+          </div>`;
+      }).join('') || `<p class="px-3 py-6 text-center text-sm text-slate-500">${chatShowArchived ? 'Arxivda suhbat yo\'q' : chatStarredOnly ? 'Muhim suhbatlar yo\'q' : chatFilter !== 'all' ? 'Bu davrda suhbat yo\'q' : 'Hozircha savollar yo\'q.'}</p>`;
 
       const sel = chatSelectedUser ? byUser[chatSelectedUser] : null;
       const threadHtml = sel ? sel.map((m) => {
@@ -664,9 +723,12 @@
 
       $('#viewRoot').innerHTML = `
         <div class="grid gap-4 lg:grid-cols-[300px_1fr]">
-          <!-- Suhbatlar ro'yxati -->
-          <div class="glass rounded-2xl p-2 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto">
-            ${listHtml}
+          <!-- Filter + suhbatlar ro'yxati -->
+          <div class="flex flex-col gap-2 lg:max-h-[calc(100vh-11rem)]">
+            ${chatFilterBar()}
+            <div class="glass min-h-0 flex-1 rounded-2xl p-2 lg:overflow-y-auto">
+              ${listHtml}
+            </div>
           </div>
           <!-- Tanlangan suhbat -->
           <div class="glass flex flex-col rounded-2xl lg:h-[calc(100vh-11rem)]">
@@ -697,6 +759,12 @@
       // Threadni pastga scroll qilamiz
       const thread = $('#chatThread');
       if (thread) thread.scrollTop = thread.scrollHeight;
+
+      // Yozilayotgan javob matnini tiklaymiz
+      if (keepReply) {
+        const inp = $('#chatReplyInput');
+        if (inp) { inp.value = keepReply.v; if (keepReply.f) inp.focus(); }
+      }
 
       // Ochilgan suhbatdagi o'qilmagan xabarlarni "o'qildi" deb belgilaymiz
       markConvoRead(chatSelectedUser);
@@ -902,11 +970,30 @@
       const dl = e.target.closest('[data-delete]');
       const cv = e.target.closest('[data-open-convo]');
       const dn = e.target.closest('[data-del-notif]');
-      if (ap) setStatus(ap.dataset.approve, 'Faol');
-      else if (rj) setStatus(rj.dataset.reject, 'Rad etilgan');
-      else if (dl) removeProduct(dl.dataset.delete);
-      else if (cv) { chatSelectedUser = cv.dataset.openConvo; renderChat(); }
-      else if (dn) deleteNotification(dn.dataset.delNotif);
+      if (ap) return setStatus(ap.dataset.approve, 'Faol');
+      if (rj) return setStatus(rj.dataset.reject, 'Rad etilgan');
+      if (dl) return removeProduct(dl.dataset.delete);
+      if (cv) { chatSelectedUser = cv.dataset.openConvo; return renderChat(); }
+      if (dn) return deleteNotification(dn.dataset.delNotif);
+
+      // Chat filtri / muhim / arxiv
+      const cfl = e.target.closest('[data-chat-filter]');
+      if (cfl) { chatFilter = cfl.dataset.chatFilter; return renderChat(); }
+      const cst = e.target.closest('[data-chat-starred-toggle]');
+      if (cst) { chatStarredOnly = !chatStarredOnly; return renderChat(); }
+      const cat = e.target.closest('[data-chat-archived-toggle]');
+      if (cat) { chatShowArchived = !chatShowArchived; return renderChat(); }
+      const scv = e.target.closest('[data-star-convo]');
+      if (scv) { const id = scv.dataset.starConvo; if (chatStarred.has(id)) chatStarred.delete(id); else chatStarred.add(id); saveChatFlags('starred'); return renderChat(); }
+      const acv = e.target.closest('[data-archive-convo]');
+      if (acv) {
+        const id = acv.dataset.archiveConvo;
+        if (chatArchived.has(id)) chatArchived.delete(id); else chatArchived.add(id);
+        saveChatFlags('archived');
+        if (id === chatSelectedUser) chatSelectedUser = null;
+        toast(chatArchived.has(id) ? 'Suhbat arxivlandi' : 'Arxivdan qaytarildi');
+        return renderChat();
+      }
     });
 
     // Formalar (delegatsiya orqali): chat javobi va sozlamalar
