@@ -2,15 +2,37 @@
 
 html { -webkit-font-smoothing: antialiased; }
 
-/* Sahifa foni — login/qonish sahifasi bilan bir xil to'q binafsha */
+/* Sahifa foni — landing/login bilan bir xil "fluid dark" */
 body {
+  position: relative;
   background:
-    radial-gradient(760px 460px at 50% -10%, rgba(124,58,237,.26), transparent 60%),
-    radial-gradient(680px 460px at 100% 0%, rgba(99,102,241,.16), transparent 55%),
-    radial-gradient(620px 440px at 0% 100%, rgba(16,185,129,.10), transparent 55%),
-    #07060d;
+    radial-gradient(900px 520px at 50% -12%, rgba(255,122,60,.09), transparent 60%),
+    radial-gradient(760px 520px at 100% 0%, rgba(99,102,241,.12), transparent 55%),
+    radial-gradient(680px 480px at 0% 100%, rgba(236,72,153,.07), transparent 55%),
+    #040406;
   min-height: 100vh;
+  overflow-x: hidden;
 }
+
+/* Fluid iridescent orbs (landing bilan bir xil) */
+.orb {
+  position: fixed; border-radius: 50%; filter: blur(50px); opacity: .55;
+  pointer-events: none; z-index: 0; mix-blend-mode: screen;
+  will-change: transform, border-radius;
+}
+.orb-warm { background: radial-gradient(60% 60% at 32% 30%, #ffb15a 0%, #ff6a2e 38%, rgba(255,61,74,.6) 62%, transparent 78%); animation: morph 18s ease-in-out infinite; }
+.orb-cool { background: radial-gradient(60% 60% at 60% 40%, #6ea8ff 0%, #4f6bff 40%, rgba(124,58,237,.55) 66%, transparent 80%); animation: morph 22s ease-in-out infinite reverse; }
+.orb-iris { background: radial-gradient(55% 55% at 40% 45%, #37e0c8 0%, #7c9cff 35%, #d95cff 62%, transparent 80%); animation: morph 26s ease-in-out infinite; }
+@keyframes morph {
+  0%,100% { border-radius: 44% 56% 62% 38% / 46% 42% 58% 54%; transform: translate(0,0) rotate(0deg) scale(1); }
+  33%     { border-radius: 62% 38% 44% 56% / 58% 60% 40% 42%; transform: translate(3%, -3%) rotate(24deg) scale(1.06); }
+  66%     { border-radius: 38% 62% 56% 44% / 42% 46% 54% 58%; transform: translate(-3%, 3%) rotate(-20deg) scale(.96); }
+}
+@media (prefers-reduced-motion: reduce) { .orb { animation: none !important; } }
+/* Yorug' temada orb'lar ko'rinmasin */
+html[data-theme="light"] .orb { display: none; }
+/* Asosiy kontent wrapperi orb'lar ustida tursin (orb'lar shaffof panellar ortidan ko'rinadi) */
+body > .min-h-screen { position: relative; z-index: 1; }
 
 /* Silliq scrollbar (to'q) */
 ::-webkit-scrollbar { width: 9px; height: 9px; }
@@ -20,19 +42,19 @@ body {
 
 /* "Shisha" (glass) yuzalar — kartalar, panellar, modallar */
 .glass {
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+  border: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
-.glass-hover:hover { border-color: rgba(139,92,246,0.35); background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)); }
+.glass-hover:hover { border-color: rgba(255,138,80,0.4); background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025)); }
 
-/* Asosiy gradient tugma */
+/* Asosiy gradient tugma — issiq iridescent */
 .btn-grad {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9 55%, #4f46e5);
-  box-shadow: 0 12px 34px -12px rgba(124,58,237,0.7), inset 0 1px 0 rgba(255,255,255,0.22);
+  background: linear-gradient(135deg, #ff8a3d 0%, #ff4d6a 48%, #8b5cf6 100%);
+  box-shadow: 0 14px 40px -12px rgba(255,90,80,0.55), inset 0 1px 0 rgba(255,255,255,0.26);
 }
-.btn-grad:hover { box-shadow: 0 16px 44px -10px rgba(124,58,237,0.9); }
+.btn-grad:hover { box-shadow: 0 18px 52px -10px rgba(255,90,80,0.72); }
 
 /* Forma maydonlari */
 .fld {
@@ -41,7 +63,7 @@ body {
   color: #f1f0f7;
 }
 .fld::placeholder { color: #6b7280; }
-.fld:focus { border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 3px rgba(124,58,237,0.18); outline: none; }
+.fld:focus { border-color: rgba(255,138,80,0.6); box-shadow: 0 0 0 3px rgba(255,138,80,0.16); outline: none; }
 
 /* Range slider rangi */
 input[type="range"] { accent-color: #7c3aed; }
