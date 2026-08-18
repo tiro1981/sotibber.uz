@@ -1120,17 +1120,17 @@
               </label>
             </div>
 
-            <!-- Commission slider with computed UZS -->
-            <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-semibold text-slate-200">Komissiya ulushi</span>
-                <span class="rounded-lg bg-white/10 px-2.5 py-1 text-sm font-bold text-violet-300"><span id="commPct">15</span>%</span>
+            <!-- Commission slider (minimalist) -->
+            <div class="rounded-2xl bg-white/5 p-5 ring-1 ring-white/10">
+              <div class="flex items-end justify-between">
+                <span class="text-sm font-semibold text-slate-300">Komissiya ulushi</span>
+                <span class="flex items-baseline gap-0.5"><span id="commPct" class="font-display text-3xl font-bold leading-none text-white">15</span><span class="text-lg font-bold text-[#ff6a2e]">%</span></span>
               </div>
-              <input id="commSlider" type="range" min="0" max="50" value="15" class="mt-3 w-full cursor-pointer" />
-              <div class="mt-2 flex items-center justify-between text-xs">
-                <span class="text-slate-500">0%</span>
-                <span class="rounded-lg bg-emerald-500/15 px-3 py-1 font-bold text-emerald-300">Agent oladi: <span id="commUzs">22 500</span> so'm</span>
-                <span class="text-slate-500">50%</span>
+              <input id="commSlider" type="range" min="0" max="50" value="15" style="--val:30%" class="range-mini mt-4 w-full" />
+              <div class="mt-3 flex items-center justify-between text-[11px] font-medium">
+                <span class="text-slate-600">0%</span>
+                <span class="text-slate-400">Agent oladi <span id="commUzs" class="font-bold text-emerald-300">22 500</span> so'm</span>
+                <span class="text-slate-600">50%</span>
               </div>
             </div>
           </div>
@@ -1147,9 +1147,11 @@
       const recompute = () => {
         pct.textContent = slider.value;
         uzsEl.textContent = uzs(Math.round((Number(price.value) || 0) * slider.value / 100));
+        slider.style.setProperty('--val', (slider.value / (slider.max || 50) * 100) + '%');
       };
       slider.addEventListener('input', recompute);
       price.addEventListener('input', recompute);
+      recompute();
 
       // ---- Ko'p rasm yuklash (up to 5 images) ----
       const MAX_IMAGES = 5;
