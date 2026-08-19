@@ -344,14 +344,23 @@
        MERCHANT VIEWS
     ========================================================= */
     const sellerViews = {
-      dashboard: () => `
+      dashboard: () => {
+        // Real ko'rsatkichlarni buyurtmalardan hisoblaymiz (foyda = summa − agent komissiyasi)
+        const notDone = (o) => o.status !== 'Yetkazildi' && o.status !== 'Rad etildi' && o.status !== 'Rad etilgan';
+        const profitOf = (o) => (Number(o.total) || 0) - (Number(o.commission) || 0);
+        const earned = merchantOrders.filter((o) => o.status === 'Yetkazildi').reduce((s, o) => s + profitOf(o), 0);
+        const pending = merchantOrders.filter(notDone).reduce((s, o) => s + profitOf(o), 0);
+        const totalOrders = merchantOrders.length;
+        const delivered = merchantOrders.filter((o) => o.status === 'Yetkazildi').length;
+        const successPct = totalOrders ? Math.round(delivered / totalOrders * 100) : 0;
+        return `
         <div class="view-enter space-y-6">
           <!-- Summary cards -->
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            ${statCard({ label: 'Umumiy balans', value: uzs(0) + ' so\'m', accent: 'emerald', icon: icon.wallet })}
-            ${statCard({ label: 'Muzlatilgan balans (Escrow)', value: uzs(0) + ' so\'m', sub: 'Yetkazilgach ochiladi', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>' })}
-            ${statCard({ label: 'Jami buyurtmalar', value: '0', accent: 'violet', icon: icon.cart })}
-            ${statCard({ label: 'Muvaffaqiyatli sotuvlar', value: '0%', sub: '0 ta yetkazildi', accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
+            ${statCard({ label: 'Umumiy balans', value: uzs(earned) + ' so\'m', accent: 'emerald', icon: icon.wallet })}
+            ${statCard({ label: 'Kutilayotgan foyda', value: uzs(pending) + ' so\'m', sub: 'Yetkazilgach ochiladi', accent: 'blue', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
+            ${statCard({ label: 'Jami buyurtmalar', value: String(totalOrders), accent: 'violet', icon: icon.cart })}
+            ${statCard({ label: 'Muvaffaqiyatli sotuvlar', value: successPct + '%', sub: delivered + ' ta yetkazildi', accent: 'emerald', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>' })}
           </div>
 
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -380,7 +389,8 @@
                 </div>
               </div>`)}
           </div>
-        </div>`,
+        </div>`;
+      },
 
       products: () => `
         <div class="view-enter space-y-5">

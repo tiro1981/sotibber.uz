@@ -277,10 +277,9 @@
         NOTIFS = data || [];
       } catch (e) { console.error('Bildirishnomalar:', e); NOTIFS = []; }
 
-      const pending = PRODUCTS.filter((p) => p.status === 'Moderatsiyada').length;
+      // Moderatsiya olib tashlandi (mahsulotlar avto-tasdiqlanadi) — pending belgisi yashirin
       const badgeEl = $('#pendingBadge');
-      if (pending > 0) { badgeEl.textContent = pending; badgeEl.classList.remove('hidden'); }
-      else badgeEl.classList.add('hidden');
+      if (badgeEl) badgeEl.classList.add('hidden');
 
       // Chat: admin o'qimagan (foydalanuvchidan kelgan) xabarlar soni
       const unread = CHAT.filter((m) => m.sender === 'user' && !m.read_by_admin).length;
@@ -307,7 +306,6 @@
     function renderStats() {
       const totalUsers = PROFILES.length;
       const totalProducts = PRODUCTS.length;
-      const pending = PRODUCTS.filter((p) => p.status === 'Moderatsiyada').length;
       const active = PRODUCTS.filter((p) => p.status === 'Faol' || p.status === 'Sotuvda').length;
       const inventoryValue = PRODUCTS.reduce((s, p) => s + (Number(p.price) || 0) * (Number(p.stock) || 0), 0);
 
@@ -325,7 +323,7 @@
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           ${card('Foydalanuvchilar', totalUsers, 'Ro\'yxatdan o\'tganlar', '<svg class="h-5 w-5 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg>', 'bg-violet-500/15')}
           ${card('Mahsulotlar', totalProducts, 'Jami yuklangan', '<svg class="h-5 w-5 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7"/></svg>', 'bg-indigo-500/15')}
-          ${card('Moderatsiyada', pending, 'Tasdiq kutmoqda', '<svg class="h-5 w-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>', 'bg-amber-500/15')}
+          ${card('Faol mahsulotlar', active, 'Sotuvda', '<svg class="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>', 'bg-emerald-500/15')}
           ${card('Sklad qiymati', uzs(inventoryValue) + ' <span class=\'text-base text-slate-500\'>so\'m</span>', active + ' ta faol mahsulot', '<svg class="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg>', 'bg-emerald-500/15')}
         </div>
 
@@ -349,7 +347,6 @@
       const rows = PRODUCTS.map((p) => {
         const owner = PROFILES.find((u) => u.id === p.seller_id);
         const ownerName = owner ? (owner.full_name || owner.phone || owner.id.slice(0, 8)) : (p.seller_id ? p.seller_id.slice(0, 8) : '—');
-        const isPending = p.status === 'Moderatsiyada';
         return `
           <tr class="border-b border-white/5">
             <td class="px-4 py-3">
@@ -367,12 +364,7 @@
             <td class="px-4 py-3">${badge(p.status)}</td>
             <td class="px-4 py-3">
               <div class="flex justify-end gap-2">
-                ${isPending ? `
-                  <button data-approve="${p.id}" class="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-500/30 hover:bg-emerald-500/25">Tasdiqlash</button>
-                  <button data-reject="${p.id}" class="rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/30 hover:bg-rose-500/25">Rad etish</button>
-                ` : `
-                  <button data-delete="${p.id}" class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 ring-1 ring-white/10 hover:bg-white/10">O'chirish</button>
-                `}
+                <button data-delete="${p.id}" class="rounded-lg bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/20 transition hover:bg-rose-500/20">O'chirish</button>
               </div>
             </td>
           </tr>`;
