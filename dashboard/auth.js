@@ -16,12 +16,12 @@
       return session ? session.user : null;
     },
 
-    async signUp({ email, password, fullName, phone }) {
+    async signUp({ email, password, fullName, phone, username }) {
       return window.sb.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName || '', phone: phone || '' },
+          data: { full_name: fullName || '', phone: phone || '', username: username || '' },
         },
       });
     },

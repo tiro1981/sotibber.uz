@@ -110,8 +110,8 @@
       <!-- LOGIN FORM -->
       <form id="loginForm" class="space-y-4">
         <label class="block">
-          <span data-i18n="email" class="text-sm font-semibold text-slate-300">Email</span>
-          <input required type="text" inputmode="email" autocomplete="username" id="loginEmail" data-i18n-ph="ph_email" placeholder="email@misol.uz" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          <span data-i18n="username" class="text-sm font-semibold text-slate-300">Username</span>
+          <input required type="text" autocomplete="username" id="loginUsername" data-i18n-ph="ph_username" placeholder="username" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
           <span data-i18n="password" class="text-sm font-semibold text-slate-300">Parol</span>
@@ -122,21 +122,31 @@
 
       <!-- REGISTER FORM -->
       <form id="registerForm" class="hidden space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block">
+            <span data-i18n="reg_first" class="text-sm font-semibold text-slate-300">Ism</span>
+            <input required type="text" id="regFirstName" data-i18n-ph="ph_first" placeholder="Ism" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          </label>
+          <label class="block">
+            <span data-i18n="reg_last" class="text-sm font-semibold text-slate-300">Familiya</span>
+            <input required type="text" id="regLastName" data-i18n-ph="ph_last" placeholder="Familiya" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          </label>
+        </div>
         <label class="block">
-          <span data-i18n="reg_name" class="text-sm font-semibold text-slate-300">Ism familiya</span>
-          <input required type="text" id="regName" data-i18n-ph="ph_name" placeholder="Ism Familiya" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          <span data-i18n="username" class="text-sm font-semibold text-slate-300">Username</span>
+          <input required type="text" id="regUsername" data-i18n-ph="ph_username" placeholder="username" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
           <span class="text-sm font-semibold text-slate-300"><span data-i18n="reg_phone">Telefon raqami</span> <span data-i18n="optional" class="font-normal text-slate-500">(ixtiyoriy)</span></span>
           <input type="tel" id="regPhone" placeholder="+998 90 123 45 67" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
-          <span data-i18n="email" class="text-sm font-semibold text-slate-300">Email</span>
-          <input required type="email" id="regEmail" data-i18n-ph="ph_email" placeholder="email@misol.uz" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
-        </label>
-        <label class="block">
           <span data-i18n="password" class="text-sm font-semibold text-slate-300">Parol</span>
           <input required type="password" id="regPassword" minlength="6" data-i18n-ph="ph_pass6" placeholder="Kamida 6 belgi" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+        </label>
+        <label class="block">
+          <span data-i18n="password2" class="text-sm font-semibold text-slate-300">Parolni tasdiqlang</span>
+          <input required type="password" id="regPassword2" minlength="6" placeholder="••••••••" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <button type="submit" data-i18n="register_btn" class="btn-grad w-full rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.99]">Ro'yxatdan o'tish</button>
       </form>
@@ -189,6 +199,10 @@
         email:          { uz: 'Email', ru: 'Эл. почта', en: 'Email' },
         password:       { uz: 'Parol', ru: 'Пароль', en: 'Password' },
         login_btn:      { uz: 'Kirish', ru: 'Войти', en: 'Log in' },
+        username:       { uz: 'Username', ru: 'Имя пользователя', en: 'Username' },
+        password2:      { uz: 'Parolni tasdiqlang', ru: 'Подтвердите пароль', en: 'Confirm password' },
+        reg_first:      { uz: 'Ism', ru: 'Имя', en: 'First name' },
+        reg_last:       { uz: 'Familiya', ru: 'Фамилия', en: 'Last name' },
         reg_name:       { uz: 'Ism familiya', ru: 'Имя и фамилия', en: 'Full name' },
         reg_phone:      { uz: 'Telefon raqami', ru: 'Номер телефона', en: 'Phone number' },
         optional:       { uz: '(ixtiyoriy)', ru: '(необязательно)', en: '(optional)' },
@@ -272,6 +286,11 @@
         if (user) {
           // Rolni profilga saqlaymiz (admin panel ko'rsatishi uchun)
           try { await window.sb.from('profiles').upsert({ id: user.id, role: panel }, { onConflict: 'id' }); } catch (e) { /* role ustuni bo'lmasa — e'tibor bermaymiz */ }
+          // Username / ism / telefonni ham profilga yozamiz (metadata'dan)
+          try {
+            const um = user.user_metadata || {};
+            await window.sb.from('profiles').upsert({ id: user.id, username: um.username || '', full_name: um.full_name || '', phone: um.phone || '' }, { onConflict: 'id' });
+          } catch (e) { /* username ustuni bo'lmasa — supabase_qoshimcha.sql'ni ishga tushiring */ }
           goToDashboard();
         } else {
           // Email tasdiqlash yoqiq — sessiya olib bo'lmadi
@@ -347,11 +366,17 @@
       const ADMIN_USER = 'tiro';
       const ADMIN_PASS = 'tiro19';
 
+      // Username'dan yashirin (ichki) email yasaymiz — Supabase auth email talab qiladi.
+      function usernameToEmail(u) {
+        const clean = String(u || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+        return clean + '@sotibber.uz';
+      }
+
       $('#loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         hideMsg();
 
-        const loginVal = $('#loginEmail').value.trim();
+        const loginVal = $('#loginUsername').value.trim();
         const passVal = $('#loginPassword').value;
         if (loginVal.toLowerCase() === ADMIN_USER && passVal === ADMIN_PASS) {
           try { sessionStorage.setItem('sotibber_admin', '1'); } catch (err) {}
@@ -361,7 +386,7 @@
 
         setLoading(e.target, true);
         const { error } = await window.SotibberAuth.signIn({
-          email: loginVal,
+          email: usernameToEmail(loginVal),
           password: passVal,
         });
         setLoading(e.target, false);
@@ -372,18 +397,32 @@
       $('#registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         hideMsg();
-        const email = $('#regEmail').value.trim();
+        const firstName = $('#regFirstName').value.trim();
+        const lastName = $('#regLastName').value.trim();
+        const username = $('#regUsername').value.trim();
         const password = $('#regPassword').value;
+        const password2 = $('#regPassword2').value;
+
+        const cleanUser = username.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+        if (cleanUser.length < 3) return showMsg("Username kamida 3 belgi (harf, raqam, . _ -) bo'lishi kerak", 'error');
+        if (password.length < 6) return showMsg('Parol kamida 6 belgi bo\'lishi kerak', 'error');
+        if (password !== password2) return showMsg('Parollar mos kelmadi', 'error');
+
+        const email = usernameToEmail(username);
 
         setLoading(e.target, true);
         const { error } = await window.SotibberAuth.signUp({
           email,
           password,
-          fullName: $('#regName').value.trim(),
+          fullName: (firstName + ' ' + lastName).trim(),
+          username: cleanUser,
           phone: (window.uzPhoneDigits && window.uzPhoneDigits($('#regPhone').value) === 0) ? '' : $('#regPhone').value.trim(),
         });
         setLoading(e.target, false);
-        if (error) return showMsg(window.SotibberAuth.translateError(error), 'error');
+        if (error) {
+          const msg = /already registered|already exists|duplicate/i.test(error.message || '') ? 'Bu username band — boshqasini tanlang' : window.SotibberAuth.translateError(error);
+          return showMsg(msg, 'error');
+        }
 
         // Ro'yxatdan o'tildi — endi DOIM rol tanlash ekranini ko'rsatamiz.
         // Kiritilgan ma'lumotni saqlaymiz: rol tanlaganda sessiya bo'lmasa,

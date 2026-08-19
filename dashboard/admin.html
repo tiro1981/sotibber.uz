@@ -494,6 +494,7 @@
       if (!q) return PROFILES;
       return PROFILES.filter((u) =>
         String(u.id || '').toLowerCase().includes(q) ||
+        String(u.username || '').toLowerCase().includes(q) ||
         String(u.full_name || '').toLowerCase().includes(q) ||
         String(u.shop_name || '').toLowerCase().includes(q) ||
         String(u.phone || '').toLowerCase().includes(q) ||
@@ -634,6 +635,7 @@
           </div>
           <div class="space-y-4 p-6">
             <div class="rounded-2xl bg-white/5 p-3 text-xs text-slate-400 ring-1 ring-white/10">
+              <div class="flex justify-between gap-3 py-0.5"><span>Username</span><span class="text-slate-300">${u.username ? '@' + esc(u.username) : '—'}</span></div>
               <div class="flex justify-between gap-3 py-0.5"><span>User ID</span><span class="font-mono text-slate-300">${esc(u.id)}</span></div>
               <div class="flex justify-between gap-3 py-0.5"><span>Telefon</span><span class="text-slate-300">${esc(u.phone || '—')}</span></div>
               <div class="flex justify-between gap-3 py-0.5"><span>Do'kon №</span><span class="text-slate-300">${u.shop_no != null ? String(u.shop_no).padStart(4, '0') : '—'}${u.shop_name ? ' · ' + esc(u.shop_name) : ''}</span></div>

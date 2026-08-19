@@ -361,6 +361,9 @@ create policy "Profiles: login ko'radi"
 --   blocked — admin bloklagan bo'lsa true (app-init tizimdan chiqaradi)
 alter table public.profiles add column if not exists role text;
 alter table public.profiles add column if not exists blocked boolean not null default false;
+-- Username (email o'rniga kirish uchun) — profilda ko'rsatish/izlash uchun
+alter table public.profiles add column if not exists username text;
+create unique index if not exists profiles_username_key on public.profiles (lower(username)) where username is not null and username <> '';
 
 -- Admin (anon) profillarni yangilaydi (bloklash/rol) va o'chiradi.
 -- Loyihaning mavjud ochiq admin (anon) modeliga mos.
