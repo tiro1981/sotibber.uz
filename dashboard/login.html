@@ -137,8 +137,9 @@
           <input required type="text" id="regUsername" data-i18n-ph="ph_username" placeholder="username" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
         </label>
         <label class="block">
-          <span class="text-sm font-semibold text-slate-300"><span data-i18n="reg_phone">Telefon raqami</span> <span data-i18n="optional" class="font-normal text-slate-500">(ixtiyoriy)</span></span>
-          <input type="tel" id="regPhone" placeholder="+998 90 123 45 67" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          <span class="text-sm font-semibold text-slate-300"><span data-i18n="reg_phone">Telefon raqami</span></span>
+          <input required type="tel" id="regPhone" placeholder="+998 90 123 45 67" class="fld mt-1.5 w-full rounded-xl px-3.5 py-2.5 text-sm outline-none" />
+          <span class="mt-1 block text-xs text-slate-500">Shu raqamni Telegram bot orqali tasdiqlaysiz — bir xil bo'lishi shart.</span>
         </label>
         <label class="block">
           <span data-i18n="password" class="text-sm font-semibold text-slate-300">Parol</span>
@@ -430,9 +431,18 @@
         if (password.length < 6) return showMsg('Parol kamida 6 belgi bo\'lishi kerak', 'error');
         if (password !== password2) return showMsg('Parollar mos kelmadi', 'error');
 
+        // Telefon raqami majburiy — bot shu raqam bilan solishtiradi
+        const phoneRaw = $('#regPhone').value.trim();
+        if (!(window.uzPhoneValid && window.uzPhoneValid(phoneRaw))) {
+          return showMsg("Telefon raqamini to'liq kiriting: +998 XX XXX XX XX", 'error');
+        }
+        // +998 bilan, faqat raqamlar ko'rinishida saqlaymiz (998901234567)
+        const phoneDigits = phoneRaw.replace(/\D/g, '').replace(/^998/, '');
+        const phoneFull = '998' + phoneDigits.slice(-9);
+
         // Ma'lumotni saqlaymiz va TELEGRAM tasdiqlash sahifasiga o'tamiz.
         // Ro'yxatdan o'tish faqat raqam tasdiqlangach yakunlanadi.
-        const pending = { firstName, lastName, username: cleanUser, password };
+        const pending = { firstName, lastName, username: cleanUser, password, phone: phoneFull };
         try { sessionStorage.setItem('sotibber_pending_reg', JSON.stringify(pending)); } catch (err) {}
         window.location.href = 'verify.html';
       });
