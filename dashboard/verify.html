@@ -59,7 +59,6 @@
       color: #fff;
       box-shadow: 0 14px 40px -12px rgba(45,143,214,0.65), inset 0 1px 0 rgba(255,255,255,0.28);
     }
-    /* Kod kataklari */
     .otp {
       width: 3.25rem; height: 3.75rem;
       text-align: center;
@@ -118,14 +117,12 @@
         Telegram botni ochish
       </a>
 
-      <!-- Kutish holati -->
-      <div id="waitHint" class="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400">
-        <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white"></span>
-        <span>Botda <b class="font-semibold text-slate-300">“📱 Raqamni yuborish”</b> tugmasini bosing…</span>
-      </div>
+      <p class="mt-4 text-center text-xs text-slate-500">
+        Botda <b class="text-slate-300">“📱 Raqamni yuborish”</b> tugmasini bosing, kelgan 4 xonali kodni kiriting.
+      </p>
 
       <!-- Kod kataklari -->
-      <div id="codeWrap" class="mt-6 hidden">
+      <div class="mt-5">
         <div id="codeBoxes" class="flex justify-center gap-2.5 sm:gap-3" dir="ltr">
           <input class="otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="1-raqam" />
           <input class="otp" type="text" inputmode="numeric" maxlength="1" aria-label="2-raqam" />
@@ -134,11 +131,6 @@
         </div>
         <p id="codeState" class="mt-4 text-center text-xs text-slate-500"></p>
       </div>
-
-      <button id="resendBtn" type="button"
-              class="mt-5 w-full text-center text-xs font-semibold text-slate-400 hover:text-white">
-        Kod kelmadimi? Qaytadan boshlash
-      </button>
     </div>
 
     <p class="mt-6 text-center text-sm text-slate-500">
@@ -152,18 +144,23 @@
       const $ = (s) => document.querySelector(s);
       const boxes = Array.from(document.querySelectorAll('.otp'));
 
-      // --- Ro'yxatdan o'tish ma'lumoti (login.html saqlagan) ---
+      // Ro'yxatdan o'tish ma'lumoti (login.html saqlagan)
       let pending = null;
       try { pending = JSON.parse(sessionStorage.getItem('sotibber_pending_reg') || 'null'); } catch (e) {}
-      if (!pending || !pending.username || !pending.password) {
+      if (!pending || !pending.username || !pending.password || !pending.phone) {
         window.location.replace('login.html?tab=register');
         return;
       }
 
       const BOT = (window.TELEGRAM_BOT_USERNAME || '').replace(/^@/, '');
-      let token = null;
-      let poller = null;
-      let codeShown = false;
+      if (BOT) {
+        const deep = 'https://t.me/' + BOT + '?start=go';
+        $('#openBot').href = deep;
+        $('#botLink').href = deep;
+        $('#botLink').textContent = '@' + BOT;
+      } else {
+        showMsg("Bot sozlanmagan: supabase-config.js dagi TELEGRAM_BOT_USERNAME ni to'ldiring.", 'error');
+      }
 
       function showMsg(text, kind) {
         const el = $('#msg');
@@ -176,88 +173,30 @@
       }
       function hideMsg() { $('#msg').classList.add('hidden'); }
 
-      function showCodeStep() {
-        if (codeShown) return;
-        codeShown = true;
-        hideMsg();
-        $('#waitHint').classList.add('hidden');
-        $('#codeWrap').classList.remove('hidden');
-        $('#codeState').textContent = "Bot yuborgan 4 xonali kodni kiriting.";
-        boxes[0].focus();
-      }
-
       function getCode() { return boxes.map((b) => b.value).join('').replace(/\D/g, ''); }
       function clearBoxes() { boxes.forEach((b) => { b.value = ''; b.classList.remove('filled'); }); boxes[0].focus(); }
 
-      // --- Yangi tasdiqlash sessiyasini boshlash ---
-      async function startSession() {
-        hideMsg();
-        codeShown = false;
-        $('#codeWrap').classList.add('hidden');
-        $('#waitHint').classList.remove('hidden');
-        clearBoxes();
-
-        if (!BOT) {
-          showMsg("Bot sozlanmagan: supabase-config.js dagi TELEGRAM_BOT_USERNAME ni to'ldiring.", 'error');
-          return;
-        }
-
-        const { data, error } = await window.sb.rpc('tg_verify_start', { p_phone: pending.phone || null });
-        if (error || !data) {
-          showMsg("Tasdiqlashni boshlab bo'lmadi. (Supabase'da SQL o'rnatilganini tekshiring)", 'error');
-          return;
-        }
-        token = data;
-        const deep = 'https://t.me/' + BOT + '?start=' + encodeURIComponent(token);
-        $('#openBot').href = deep;
-        $('#botLink').href = deep;
-        $('#botLink').textContent = '@' + BOT;
-
-        startPolling();
-      }
-
-      // --- Holatni kuzatish ---
-      function startPolling() {
-        if (poller) clearInterval(poller);
-        poller = setInterval(async () => {
-          if (!token) return;
-          const { data, error } = await window.sb.rpc('tg_verify_status', { p_token: token });
-          if (error) return;
-          if (data === 'code_sent' || data === 'verified') {
-            showCodeStep();
-          } else if (data === 'phone_mismatch') {
-            showMsg("Botga yuborgan raqamingiz ro'yxatda kiritilgan raqamga mos kelmadi. Botda to'g'ri raqamni qayta yuboring.", 'error');
-          } else if (data === 'expired' || data === 'unknown' || data === 'locked') {
-            clearInterval(poller); poller = null;
-            showMsg("Tasdiqlash muddati tugadi. “Qaytadan boshlash”ni bosing.", 'error');
-          } else if (data === 'pending' && codeShown === false) {
-            // kutishda — banner tozalanadi (mismatch xabaridan keyin)
-          }
-        }, 2500);
-      }
-
-      // --- Kodni tekshirish va ro'yxatdan o'tishni yakunlash ---
       let verifying = false;
       async function verifyCode() {
         const code = getCode();
         if (code.length !== 4 || verifying) return;
         verifying = true;
+        hideMsg();
         $('#codeState').textContent = 'Tekshirilmoqda…';
 
-        const { data, error } = await window.sb.rpc('tg_verify_check', { p_token: token, p_code: code });
+        const { data, error } = await window.sb.rpc('tg_check_code', { p_phone: pending.phone, p_code: code });
         if (error) {
           verifying = false;
           $('#codeState').textContent = '';
-          showMsg("Xatolik yuz berdi. Qayta urinib ko'ring.", 'error');
+          showMsg("Xatolik yuz berdi. (Supabase'da SQL o'rnatilganini tekshiring)", 'error');
           return;
         }
         if (!data || !data.ok) {
           verifying = false;
           const reason = data && data.reason;
-          const m = reason === 'expired' ? 'Kod muddati tugagan — qaytadan boshlang.'
-                  : reason === 'locked'  ? "Juda ko'p urinish. Qaytadan boshlang."
-                  : reason === 'no_code' ? 'Avval botda raqamingizni yuboring.'
-                  : reason === 'phone_mismatch' ? "Raqam mos kelmadi. Botda to'g'ri raqamni yuboring."
+          const m = reason === 'no_code' ? "Bu raqam uchun kod yo'q. Avval botda “Raqamni yuborish”ni bosing (raqamingiz ro'yxatdagi bilan bir xil bo'lsin)."
+                  : reason === 'expired' ? 'Kod muddati tugagan. Botda yangi kod oling.'
+                  : reason === 'locked'  ? "Juda ko'p urinish. Botda yangi kod oling."
                   : "Kod noto'g'ri. Qayta tekshiring.";
           showMsg(m, 'error');
           clearBoxes();
@@ -266,17 +205,14 @@
         }
 
         // Tasdiqlandi ✓
-        if (poller) { clearInterval(poller); poller = null; }
-        hideMsg();
         $('#codeState').textContent = "Ro'yxatdan o'tkazilmoqda…";
-
-        pending.phone = data.phone || pending.phone || '';
+        pending.phone = data.phone || pending.phone;
         pending.phone_verified = true;
         try { sessionStorage.setItem('sotibber_pending_reg', JSON.stringify(pending)); } catch (e) {}
         window.location.replace('login.html?step=verified');
       }
 
-      // --- Katak (OTP) boshqaruvi ---
+      // Katak (OTP) boshqaruvi
       boxes.forEach((box, i) => {
         box.addEventListener('input', () => {
           box.value = box.value.replace(/\D/g, '').slice(0, 1);
@@ -306,9 +242,7 @@
         });
       });
 
-      $('#resendBtn').addEventListener('click', startSession);
-
-      startSession();
+      boxes[0].focus();
     })();
   </script>
 </body>
