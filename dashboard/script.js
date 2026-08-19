@@ -606,22 +606,35 @@
             ${['Barchasi'].concat(CATEGORIES).map((c) => `<button data-market-cat="${esc(c)}" class="market-cat whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition ${c === marketCategory ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${esc(c)}</button>`).join('')}
           </div>
 
-          <!-- Narx filtri + saralash -->
-          <div class="flex flex-wrap items-center gap-2">
-            <div class="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
-              <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg>
-              <input id="marketMin" type="number" inputmode="numeric" min="0" placeholder="dan" value="${marketMinPrice != null ? marketMinPrice : ''}" class="w-20 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500" />
-              <span class="text-slate-500">—</span>
-              <input id="marketMax" type="number" inputmode="numeric" min="0" placeholder="gacha" value="${marketMaxPrice != null ? marketMaxPrice : ''}" class="w-20 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500" />
-              <span class="text-xs text-slate-500">so'm</span>
+          <!-- Narx filtri + saralash (zamonaviy) -->
+          <div class="glass space-y-2.5 rounded-2xl p-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Saralash (segmented) -->
+              <div class="flex items-center gap-0.5 rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
+                ${[['default', 'Standart'], ['price-asc', 'Arzon ↑'], ['price-desc', 'Qimmat ↓'], ['comm-desc', 'Komissiya']].map(([v, l]) => `<button data-market-sort="${v}" class="msort-pill whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition ${marketSort === v ? 'btn-grad text-white' : 'text-slate-400 hover:text-white'}">${l}</button>`).join('')}
+              </div>
+              <!-- Narx oralig'i -->
+              <div class="flex flex-1 items-center gap-1.5 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10 transition focus-within:ring-violet-400/50 sm:max-w-[240px]">
+                <svg class="h-4 w-4 shrink-0 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M3 5a2 2 0 012-2h6l9 9a2 2 0 010 2.83l-6.17 6.17a2 2 0 01-2.83 0L3 13V5z"/></svg>
+                <input id="marketMin" type="number" inputmode="numeric" min="0" value="${marketMinPrice != null ? marketMinPrice : ''}" placeholder="0" class="w-full min-w-0 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-600" />
+                <span class="text-slate-600">–</span>
+                <input id="marketMax" type="number" inputmode="numeric" min="0" value="${marketMaxPrice != null ? marketMaxPrice : ''}" placeholder="∞" class="w-full min-w-0 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-600" />
+                <span class="shrink-0 text-[11px] font-medium text-slate-500">so'm</span>
+              </div>
+              <!-- Tozalash -->
+              <button data-market-clear title="Filtrni tozalash" class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-400 ring-1 ring-white/10 transition hover:bg-rose-500/15 hover:text-rose-300">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
             </div>
-            <select id="marketSort" class="fld rounded-xl px-3 py-2 text-sm outline-none">
-              <option value="default" class="bg-ink-800" ${marketSort === 'default' ? 'selected' : ''}>Saralash: standart</option>
-              <option value="price-asc" class="bg-ink-800" ${marketSort === 'price-asc' ? 'selected' : ''}>Narx: arzondan qimmatga</option>
-              <option value="price-desc" class="bg-ink-800" ${marketSort === 'price-desc' ? 'selected' : ''}>Narx: qimmatdan arzonga</option>
-              <option value="comm-desc" class="bg-ink-800" ${marketSort === 'comm-desc' ? 'selected' : ''}>Komissiya: yuqoridan</option>
-            </select>
-            <button data-market-clear class="rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10">Tozalash</button>
+            <!-- Tez tanlash -->
+            <div class="no-scrollbar flex gap-1.5 overflow-x-auto">
+              ${[['Barchasi', '', ''], ['100K gacha', '0', '100000'], ['100–300K', '100000', '300000'], ['300–500K', '300000', '500000'], ['500K+', '500000', '']].map(([l, mn, mx]) => {
+                const cm = marketMinPrice == null ? '' : String(marketMinPrice);
+                const cx = marketMaxPrice == null ? '' : String(marketMaxPrice);
+                const on = cm === mn && cx === mx;
+                return `<button data-price-preset data-min="${mn}" data-max="${mx}" class="mprice-pill whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition ${on ? 'bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${l}</button>`;
+              }).join('')}
+            </div>
           </div>
 
           <div id="marketGrid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5"></div>
@@ -930,6 +943,20 @@
           </div>
         </div>
       `);
+    }
+
+    // Saralash va narx-preset chiplarining faol holatini yangilaydi
+    function paintMarketFilters() {
+      $$('.msort-pill').forEach((b) => {
+        const on = b.dataset.marketSort === marketSort;
+        b.className = `msort-pill whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition ${on ? 'btn-grad text-white' : 'text-slate-400 hover:text-white'}`;
+      });
+      const cm = marketMinPrice == null ? '' : String(marketMinPrice);
+      const cx = marketMaxPrice == null ? '' : String(marketMaxPrice);
+      $$('.mprice-pill').forEach((b) => {
+        const on = String(b.dataset.min) === cm && String(b.dataset.max) === cx;
+        b.className = `mprice-pill whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition ${on ? 'bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/40' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}`;
+      });
     }
 
     function renderMarketGrid() {
@@ -2879,12 +2906,22 @@
         });
         return renderMarketGrid();
       }
+      const msortBtn = t.closest('[data-market-sort]');
+      if (msortBtn) { marketSort = msortBtn.dataset.marketSort; paintMarketFilters(); return renderMarketGrid(); }
+      const mpre = t.closest('[data-price-preset]');
+      if (mpre) {
+        marketMinPrice = mpre.dataset.min === '' ? null : Number(mpre.dataset.min);
+        marketMaxPrice = mpre.dataset.max === '' ? null : Number(mpre.dataset.max);
+        const mn = $('#marketMin'); if (mn) mn.value = marketMinPrice != null ? marketMinPrice : '';
+        const mx = $('#marketMax'); if (mx) mx.value = marketMaxPrice != null ? marketMaxPrice : '';
+        paintMarketFilters(); return renderMarketGrid();
+      }
       const mclr = t.closest('[data-market-clear]');
       if (mclr) {
         marketMinPrice = null; marketMaxPrice = null; marketSort = 'default';
         const mn = $('#marketMin'); if (mn) mn.value = '';
         const mx = $('#marketMax'); if (mx) mx.value = '';
-        const ms = $('#marketSort'); if (ms) ms.value = 'default';
+        paintMarketFilters();
         return renderMarketGrid();
       }
 
@@ -2968,15 +3005,13 @@
       const search = e.target.closest('#marketSearch');
       if (search) { marketQuery = search.value; renderMarketGrid(); return; }
       const mmin = e.target.closest('#marketMin');
-      if (mmin) { const v = mmin.value.trim(); marketMinPrice = v === '' ? null : Math.max(0, Number(v) || 0); renderMarketGrid(); return; }
+      if (mmin) { const v = mmin.value.trim(); marketMinPrice = v === '' ? null : Math.max(0, Number(v) || 0); paintMarketFilters(); renderMarketGrid(); return; }
       const mmax = e.target.closest('#marketMax');
-      if (mmax) { const v = mmax.value.trim(); marketMaxPrice = v === '' ? null : Math.max(0, Number(v) || 0); renderMarketGrid(); return; }
+      if (mmax) { const v = mmax.value.trim(); marketMaxPrice = v === '' ? null : Math.max(0, Number(v) || 0); paintMarketFilters(); renderMarketGrid(); return; }
     });
 
-    // Xabar fayli tanlanganda + bozor saralash
+    // Xabar fayli tanlanganda
     document.addEventListener('change', (e) => {
-      const msort = e.target.closest('#marketSort');
-      if (msort) { marketSort = msort.value; renderMarketGrid(); return; }
       const mf = e.target.closest('#msgFile');
       if (!mf) return;
       const f = mf.files && mf.files[0];
