@@ -603,7 +603,7 @@
             ${['Barchasi'].concat(CATEGORIES).map((c) => `<button data-market-cat="${esc(c)}" class="market-cat whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition ${c === marketCategory ? 'btn-grad text-white' : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'}">${esc(c)}</button>`).join('')}
           </div>
 
-          <div id="marketGrid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
+          <div id="marketGrid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5"></div>
         </div>`;
       },
 
@@ -830,30 +830,85 @@
     ========================================================= */
     function marketCard(p, i) {
       return `
-        <div class="glass glass-hover group overflow-hidden rounded-2xl transition hover:-translate-y-0.5">
-          ${productMedia(p.images, p.name)}
-          <div class="p-4">
-            <button data-market-detail="${i}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
-            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span class="flex items-center gap-1"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg>${esc(p.merchant)}</span>
-              ${p.category ? `<span class="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-slate-300">${esc(p.category)}</span>` : ''}
+        <div class="glass glass-hover group overflow-hidden rounded-xl transition hover:-translate-y-0.5">
+          ${productMedia(p.images, p.name, 'aspect-square')}
+          <div class="p-2.5">
+            <button data-market-detail="${i}" class="block w-full truncate text-left text-sm font-bold text-white hover:text-violet-300">${esc(p.name)}</button>
+            <div class="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500">
+              <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.store}</svg><span class="truncate">${esc(p.merchant)}</span>
             </div>
-            <p class="font-display mt-2 text-lg font-bold text-white">${uzs(p.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
-            <div class="mt-3 rounded-xl bg-emerald-500/10 px-3 py-2 text-center ring-1 ring-emerald-500/20">
-              <span class="text-sm font-medium text-emerald-300">Komissiya: </span>
-              <span class="font-display text-base font-bold text-emerald-300">${uzs(p.commission)} so'm</span>
+            <div class="mt-1.5 flex items-center justify-between gap-2">
+              <span class="font-display text-sm font-bold text-white">${uzs(p.price)} <span class="text-[10px] font-medium text-slate-500">so'm</span></span>
+              <span class="whitespace-nowrap text-[10px] text-slate-400">Sklad: <b class="text-slate-200">${p.stock}</b></span>
             </div>
-            <div class="mt-3 flex gap-2">
-              <button data-start-selling="${i}" class="btn-grad flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-95">
-                Sotishni boshlash
+            <div class="mt-1.5 flex items-center justify-between gap-1 rounded-lg bg-emerald-500/10 px-2 py-1 ring-1 ring-emerald-500/20">
+              <span class="text-[10px] font-medium text-emerald-300">Komissiya</span>
+              <span class="text-[11px] font-bold text-emerald-300">${uzs(p.commission)}</span>
+            </div>
+            <div class="mt-2 flex gap-1.5">
+              <button data-start-selling="${i}" class="btn-grad flex-1 rounded-lg py-1.5 text-[11px] font-bold text-white transition active:scale-95">Sotish</button>
+              <button data-market-stats="${i}" title="Statistika" class="grid w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.chart}</svg>
               </button>
-              <button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg>
+              <button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg>
               </button>
             </div>
-            <button data-market-detail="${i}" class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/10">Batafsil ma'lumot</button>
           </div>
         </div>`;
+    }
+
+    // Bozor mahsuloti statistikasi (sotib beruvchi uchun)
+    function marketStatsModal(idx) {
+      const p = marketProducts[idx];
+      if (!p) return;
+      const link = agentLinks.find((l) => l.product_id === p.id);
+      const inShop = !!link && !link.archived;
+      const mySold = link ? (Number(link.sales) || 0) : 0;
+      const perSale = Number(p.commission) || 0;
+      const stock = Number(p.stock) || 0;
+      const potential = perSale * stock;
+      const myEarned = mySold * perSale;
+
+      const stat = (label, value, sub, tint, ic) => `
+        <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+          <span class="grid h-9 w-9 place-items-center rounded-xl ${tint}"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic}</svg></span>
+          <p class="font-display mt-2 text-xl font-bold text-white">${value}</p>
+          <p class="text-xs text-slate-400">${label}</p>
+          ${sub ? `<p class="mt-0.5 text-[11px] text-slate-500">${sub}</p>` : ''}
+        </div>`;
+
+      openModal(`
+        <div>
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <div class="min-w-0">
+              <h3 class="truncate font-display text-lg font-bold text-white">${esc(p.name)}</h3>
+              <p class="text-xs text-slate-400">Bozor statistikasi</p>
+            </div>
+            <button type="button" data-close class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 hover:bg-white/10">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="space-y-4 p-6">
+            <div class="grid grid-cols-2 gap-3">
+              ${stat('Har sotuvdan', uzs(perSale) + " so'm", 'komissiya ' + (p.commissionPct != null ? p.commissionPct + '%' : ''), 'bg-emerald-500/15 text-emerald-300', icon.wallet)}
+              ${stat('Skladda', stock + ' ta', stock === 0 ? 'tugagan' : 'sotuvda', 'bg-amber-500/15 text-amber-300', icon.box)}
+              ${stat('Potentsial daromad', uzs(potential) + " so'm", 'butun sklad sotilsa', 'bg-violet-500/15 text-violet-300', '<path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>')}
+              ${stat("Do'koningizda", inShop ? 'Bor' : "Yo'q", inShop ? 'siz sotgansiz: ' + mySold + ' ta' : 'hali qo\'shmagansiz', inShop ? 'bg-blue-500/15 text-blue-300' : 'bg-white/10 text-slate-300', icon.shop)}
+            </div>
+            <div class="rounded-2xl bg-white/5 p-4 text-sm ring-1 ring-white/10">
+              <div class="flex justify-between py-1"><span class="text-slate-400">Narx</span><span class="font-semibold text-slate-100">${uzs(p.price)} so'm</span></div>
+              ${p.category ? `<div class="flex justify-between py-1"><span class="text-slate-400">Kategoriya</span><span class="text-slate-200">${esc(p.category)}</span></div>` : ''}
+              <div class="flex justify-between py-1"><span class="text-slate-400">Sotuvchi</span><span class="text-slate-200">${esc(p.merchant || 'Sotuvchi')}</span></div>
+              ${inShop ? `<div class="flex justify-between border-t border-white/10 pt-2"><span class="text-slate-400">Siz ishlagan komissiya (taxminan)</span><span class="font-bold text-emerald-300">${uzs(myEarned)} so'm</span></div>` : ''}
+            </div>
+          </div>
+          <div class="flex gap-3 border-t border-white/10 p-6">
+            <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
+            ${inShop ? '' : `<button data-start-selling="${idx}" class="btn-grad flex-1 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">Sotishni boshlash</button>`}
+          </div>
+        </div>
+      `);
     }
 
     function renderMarketGrid() {
@@ -2738,6 +2793,8 @@
       if (pd) return productDetailModal('seller', Number(pd.dataset.productDetail));
       const md = t.closest('[data-market-detail]');
       if (md) return productDetailModal('market', Number(md.dataset.marketDetail));
+      const mstat = t.closest('[data-market-stats]');
+      if (mstat) return marketStatsModal(Number(mstat.dataset.marketStats));
       const shd = t.closest('[data-shop-detail]');
       if (shd) return productDetailModal('shop', Number(shd.dataset.shopDetail));
 
