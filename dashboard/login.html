@@ -74,6 +74,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-config.js"></script>
   <script src="auth.js"></script>
+  <script src="uzphone.js?v=20260819-1"></script>
 </head>
 
 <body class="relative flex min-h-screen items-center justify-center overflow-hidden p-4 font-sans text-slate-200 antialiased">
@@ -379,7 +380,7 @@
           email,
           password,
           fullName: $('#regName').value.trim(),
-          phone: $('#regPhone').value.trim(),
+          phone: (window.uzPhoneDigits && window.uzPhoneDigits($('#regPhone').value) === 0) ? '' : $('#regPhone').value.trim(),
         });
         setLoading(e.target, false);
         if (error) return showMsg(window.SotibberAuth.translateError(error), 'error');

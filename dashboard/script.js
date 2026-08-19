@@ -2754,7 +2754,9 @@
         const user2 = window.__SOTIBBER_USER;
         if (!user2 || !window.sb) { toast('Tizimga qayta kiring'); return; }
         const full_name = $('#pfFullName').value.trim();
-        const phone = $('#pfPhoneInp').value.trim();
+        // Faqat +998 (raqamsiz) bo'lsa — bo'sh deb saqlaymiz
+        const phoneRaw = $('#pfPhoneInp').value.trim();
+        const phone = (window.uzPhoneDigits && window.uzPhoneDigits(phoneRaw) === 0) ? '' : phoneRaw;
         const btn = $('#profileForm button[type="submit"]'); btn.disabled = true;
         const { error } = await window.sb.from('profiles').upsert({ id: user2.id, full_name, phone }, { onConflict: 'id' });
         btn.disabled = false;

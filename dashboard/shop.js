@@ -331,7 +331,8 @@
       if (address) setAddresses([{ id: Date.now(), text: address }]);
     }
 
-    if (!name || !phone || !address) { toast('Ism, telefon va to\'liq manzilni (viloyat, tuman, uy) kiriting'); return; }
+    if (!name || !address) { toast('Ism va to\'liq manzilni (viloyat, tuman, uy) kiriting'); return; }
+    if (window.uzPhoneValid && !window.uzPhoneValid(phone)) { toast('Telefon raqamini to\'liq kiriting: +998 va 9 raqam'); return; }
 
     // Mijoz ma'lumotini keyingi safar uchun saqlaymiz
     writeLS(K.cust, { name, phone });
