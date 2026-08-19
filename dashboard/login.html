@@ -394,6 +394,28 @@
         goToDashboard();
       });
 
+      // Ro'yxatdan o'tishni YAKUNLAYDI (telefon tasdiqlangandan keyin ham,
+      // to'g'ridan-to'g'ri ham chaqiriladi). Muvaffaqiyatda rol tanlash chiqadi.
+      async function finalizeRegistration({ firstName, lastName, username, password, phone }) {
+        const email = usernameToEmail(username);
+        const { error } = await window.SotibberAuth.signUp({
+          email,
+          password,
+          fullName: (firstName + ' ' + lastName).trim(),
+          username,
+          phone: phone || '',
+        });
+        if (error) {
+          const msg = /already registered|already exists|duplicate/i.test(error.message || '')
+            ? 'Bu username band — boshqasini tanlang'
+            : window.SotibberAuth.translateError(error);
+          throw new Error(msg);
+        }
+        // Rol tanlaganda sessiya bo'lmasa (email tasdiqlash yoqiq bo'lsa),
+        // shu bilan avtomatik kirishga urinamiz (chooseRole ichida).
+        pendingCreds = { email, password };
+      }
+
       $('#registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         hideMsg();
@@ -408,28 +430,32 @@
         if (password.length < 6) return showMsg('Parol kamida 6 belgi bo\'lishi kerak', 'error');
         if (password !== password2) return showMsg('Parollar mos kelmadi', 'error');
 
-        const email = usernameToEmail(username);
-
-        setLoading(e.target, true);
-        const { error } = await window.SotibberAuth.signUp({
-          email,
-          password,
-          fullName: (firstName + ' ' + lastName).trim(),
-          username: cleanUser,
-          phone: (window.uzPhoneDigits && window.uzPhoneDigits($('#regPhone').value) === 0) ? '' : $('#regPhone').value.trim(),
-        });
-        setLoading(e.target, false);
-        if (error) {
-          const msg = /already registered|already exists|duplicate/i.test(error.message || '') ? 'Bu username band — boshqasini tanlang' : window.SotibberAuth.translateError(error);
-          return showMsg(msg, 'error');
-        }
-
-        // Ro'yxatdan o'tildi — endi DOIM rol tanlash ekranini ko'rsatamiz.
-        // Kiritilgan ma'lumotni saqlaymiz: rol tanlaganda sessiya bo'lmasa,
-        // shu bilan avtomatik kirishga urinamiz (chooseRole ичida).
-        pendingCreds = { email, password };
-        showRoleView();
+        // Ma'lumotni saqlaymiz va TELEGRAM tasdiqlash sahifasiga o'tamiz.
+        // Ro'yxatdan o'tish faqat raqam tasdiqlangach yakunlanadi.
+        const pending = { firstName, lastName, username: cleanUser, password };
+        try { sessionStorage.setItem('sotibber_pending_reg', JSON.stringify(pending)); } catch (err) {}
+        window.location.href = 'verify.html';
       });
+
+      // Telegram sahifasidan qaytish: ?step=verified — raqam tasdiqlangan,
+      // endi hisobni yaratamiz.
+      (async () => {
+        if (params.get('step') !== 'verified') return;
+        let pending = null;
+        try { pending = JSON.parse(sessionStorage.getItem('sotibber_pending_reg') || 'null'); } catch (e) {}
+        if (!pending || !pending.phone_verified) return;
+
+        activeTab = 'register';
+        paintTabs();
+        showMsg('Raqamingiz tasdiqlandi ✓ Hisob yaratilmoqda…', 'success');
+        try {
+          await finalizeRegistration(pending);
+          try { sessionStorage.removeItem('sotibber_pending_reg'); } catch (e) {}
+          showRoleView();
+        } catch (err) {
+          showMsg(err.message || 'Ro\'yxatdan o\'tishda xatolik', 'error');
+        }
+      })();
     })();
   </script>
 </body>

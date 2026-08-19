@@ -16,4 +16,9 @@
 window.SUPABASE_URL = 'https://fblnctyxbrglclnrixkb.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_mbzdhYUNTLoHltofwOmQVg_1BbAZXWs';
 
+// Telegram tasdiqlash boti — BotFather'dan olingan bot foydalanuvchi nomi
+// (@'siz). verify.html shu nomdan deep-link yasaydi: https://t.me/<username>?start=...
+// MUHIM: o'z botingiz nomiga almashtiring.
+window.TELEGRAM_BOT_USERNAME = 'sotibber_verify_bot';
+
 window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
