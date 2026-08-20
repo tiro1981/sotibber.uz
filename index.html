@@ -24,10 +24,10 @@
   <!-- Tailwind CSS (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Fonts: Inter (body) + Space Grotesk (display headings) -->
+  <!-- Fonts: Manrope (body) + Unbounded (display headings) — kirill qo'llab-quvvatlanadi -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Tailwind theme configuration -->
   <script>
@@ -35,8 +35,8 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            display: ['Space Grotesk', 'Inter', 'sans-serif'],
+            sans: ['Manrope', 'system-ui', 'sans-serif'],
+            display: ['Sora', 'Manrope', 'sans-serif'],
           },
           colors: {
             violet: { brand: '#7c3aed', deep: '#4f46e5' },
@@ -48,7 +48,7 @@
   </script>
 
   <!-- Custom styles -->
-  <link rel="stylesheet" href="/landing/style.css?v=20260818-7" />
+  <link rel="stylesheet" href="/landing/style.css?v=20260820-1" />
 </head>
 
 <body class="page-bg font-sans text-slate-200 antialiased">
@@ -130,19 +130,19 @@
         </span>
 
         <h1 data-i18n-html="hero_title" class="font-display mt-6 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
-          Sarmoyasiz biznesni
+          Sarmoyasiz boshlang,
           <br class="hidden sm:block" />
-          <span class="text-grad-violet">daromadga aylantiring.</span>
+          <span class="text-grad-violet">cheksiz soting.</span>
         </h1>
 
         <p data-i18n="hero_sub" class="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-400 sm:text-lg">
-          Sotuvchilar mahsulotini yuklaydi, sotib beruvchilar esa ijtimoiy tarmoqlarda
-          (Telegram, Instagram, TikTok) sotib, har bir buyurtmadan ulush oladi.
+          Sotuvchilar mahsulot yuklaydi, sotib beruvchilar esa Telegram, Instagram va
+          TikTok'da sotib, har bir buyurtmadan ulush ishlaydi. Ombor ham, boshlang'ich sarmoya ham kerak emas.
         </p>
 
         <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <button data-goto="register" class="btn-grad group inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition active:scale-95">
-            <span data-i18n="hero_start">Boshlash</span>
+            <span data-i18n="hero_start">Bepul boshlash</span>
             <svg class="h-4 w-4 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
           </button>
           <button data-goto="login" data-i18n="hero_login" class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur transition hover:border-white/30 hover:bg-white/10 active:scale-95">
@@ -258,7 +258,7 @@
       <h2 data-i18n-html="feat_title" class="font-display mt-5 text-3xl font-bold tracking-tight text-white sm:text-5xl">
         Savdoni <span class="text-grad-violet">soddalashtiruvchi</span> kuchli vositalar
       </h2>
-      <p data-i18n="feat_sub" class="mt-4 text-slate-400">Platformamiz mahsuldorligingizni oshiradi va kundalik ishingizni yengillashtiradi.</p>
+      <p data-i18n="feat_sub" class="mt-4 text-slate-400">Mahsulot yuklashdan to'lovni olishgacha — hammasi bitta oddiy platformada.</p>
     </div>
 
     <div class="reveal relative mt-14 grid gap-5 lg:grid-cols-2">
@@ -521,7 +521,7 @@
   </footer>
 
   <!-- ============================= JAVASCRIPT ============================= -->
-  <script src="/landing/script.js?v=20260818-6"></script>
+  <script src="/landing/script.js?v=20260820-1"></script>
 
   <!-- Messenjer havolalari: admin panelda kiritilgan linklarni Supabase'dan
        yuklab, footer tugmalariga qo'yamiz -->

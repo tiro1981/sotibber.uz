@@ -9,7 +9,7 @@ body {
 }
 
 /* Display font for headings */
-.font-display { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; letter-spacing: -0.01em; }
+.font-display { font-family: 'Sora', 'Manrope', system-ui, sans-serif; letter-spacing: -0.02em; }
 
 /* ---------- Page-wide ambient background (pure black + soft glow) ---------- */
 .page-bg {

@@ -27,16 +27,16 @@
 
     hero_badge:    { uz: "O'zbekistondagi #1 dropshipping platformasi", ru: 'Платформа дропшиппинга №1 в Узбекистане', en: "Uzbekistan's #1 dropshipping platform" },
     hero_title:    {
-      uz: 'Sarmoyasiz biznesni<br class="hidden sm:block" /><span class="text-grad-violet">daromadga aylantiring.</span>',
-      ru: 'Бизнес без вложений<br class="hidden sm:block" /><span class="text-grad-violet">превратите в доход.</span>',
-      en: 'Turn a no-investment business<br class="hidden sm:block" /><span class="text-grad-violet">into income.</span>',
+      uz: 'Sarmoyasiz boshlang,<br class="hidden sm:block" /><span class="text-grad-violet">cheksiz soting.</span>',
+      ru: 'Начните без вложений,<br class="hidden sm:block" /><span class="text-grad-violet">продавайте без границ.</span>',
+      en: 'Start with zero cost,<br class="hidden sm:block" /><span class="text-grad-violet">sell without limits.</span>',
     },
     hero_sub:      {
-      uz: "Sotuvchilar mahsulotini yuklaydi, sotib beruvchilar esa ijtimoiy tarmoqlarda (Telegram, Instagram, TikTok) sotib, har bir buyurtmadan ulush oladi.",
-      ru: 'Продавцы загружают товары, а реселлеры продают их в соцсетях (Telegram, Instagram, TikTok) и получают долю с каждого заказа.',
-      en: 'Sellers upload products, and resellers sell them on social media (Telegram, Instagram, TikTok), earning a share from every order.',
+      uz: "Sotuvchilar mahsulot yuklaydi, sotib beruvchilar esa Telegram, Instagram va TikTok'da sotib, har bir buyurtmadan ulush ishlaydi. Ombor ham, boshlang'ich sarmoya ham kerak emas.",
+      ru: 'Продавцы загружают товары, а реселлеры продают их в Telegram, Instagram и TikTok и зарабатывают долю с каждого заказа. Без склада и стартовых вложений.',
+      en: 'Sellers upload products; resellers sell them on Telegram, Instagram and TikTok and earn a share from every order. No warehouse, no upfront investment.',
     },
-    hero_start:    { uz: 'Boshlash', ru: 'Начать', en: 'Get started' },
+    hero_start:    { uz: 'Bepul boshlash', ru: 'Начать бесплатно', en: 'Start free' },
     hero_login:    { uz: 'Hisobga kirish', ru: 'Войти в аккаунт', en: 'Log in' },
 
     mock_panel:    { uz: 'Boshqaruv paneli', ru: 'Панель управления', en: 'Dashboard' },
@@ -58,7 +58,7 @@
       ru: 'Мощные инструменты, <span class="text-grad-violet">упрощающие</span> торговлю',
       en: 'Powerful tools that <span class="text-grad-violet">simplify</span> selling',
     },
-    feat_sub:      { uz: 'Platformamiz mahsuldorligingizni oshiradi va kundalik ishingizni yengillashtiradi.', ru: 'Наша платформа повышает продуктивность и облегчает ежедневную работу.', en: 'Our platform boosts your productivity and eases your daily work.' },
+    feat_sub:      { uz: "Mahsulot yuklashdan to'lovni olishgacha — hammasi bitta oddiy platformada.", ru: 'От загрузки товара до получения выплаты — всё на одной простой платформе.', en: 'From uploading a product to getting paid — everything on one simple platform.' },
     feat1_title:   { uz: 'Nol sarmoya bilan boshlash', ru: 'Старт без вложений', en: 'Start with zero investment' },
     feat1_desc:    { uz: "Sotib beruvchilar uchun mutlaqo bepul. Ombor, tovar yoki boshlang'ich kapital talab qilinmaydi — faqat telefoningiz kifoya.", ru: 'Полностью бесплатно для реселлеров. Не нужны склад, товар или стартовый капитал — достаточно телефона.', en: 'Completely free for resellers. No warehouse, inventory, or startup capital needed — just your phone.' },
     feat2_title:   { uz: 'Tayyor havolalar', ru: 'Готовые ссылки', en: 'Ready-made links' },
