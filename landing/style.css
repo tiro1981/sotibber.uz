@@ -161,21 +161,16 @@ body {
 }
 
 /* ---------- Dashboard mockup chart ---------- */
-/* Eski "draw" (bir marta chizish) animatsiyasi olib tashlandi.
-   Yangi: chiziq to'liq ko'rinadi va yumshoq porlab turadi (breathing glow),
-   nuqta esa chiziq bo'ylab sirg'anadi (index.html'dagi animateMotion). */
-.mock-line { animation: lineGlow 3.2s ease-in-out infinite; }
-@keyframes lineGlow {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(139, 92, 246, 0.25)); }
-  50%      { filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.6)); }
+/* Chiziq solid (statik) turadi; ustidan yorug' impuls uzluksiz yugurib
+   o'tadi (live-data effekti). pathLength=100 bilan uzunlikdan mustaqil. */
+.mock-line { }
+.mock-pulse {
+  stroke-dasharray: 9 91;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(196, 181, 253, 0.9));
+  animation: pulseRun 2.6s linear infinite;
 }
-.mock-dot {
-  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.7));
-  offset-path: path("M0,110 C60,90 90,60 140,70 C190,80 210,40 260,45 C320,52 340,20 400,30 C450,38 480,60 520,50");
-  offset-rotate: 0deg;
-  animation: ride 6.5s ease-in-out infinite;
-}
-@keyframes ride { 0%, 100% { offset-distance: 0%; } 50% { offset-distance: 100%; } }
+@keyframes pulseRun { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
 
 /* ---------- Animations ---------- */
 @keyframes floaty { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-14px);} }
@@ -207,5 +202,6 @@ section, header, footer { position: relative; z-index: 1; }
 .logo-mark:hover { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .orb, .mock-line, .mock-dot { animation: none !important; }
+  .orb, .mock-pulse { animation: none !important; }
+  .mock-pulse { display: none; }
 }
