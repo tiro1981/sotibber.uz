@@ -62,7 +62,7 @@
     feat1_title:   { uz: 'Nol sarmoya bilan boshlash', ru: 'Старт без вложений', en: 'Start with zero investment' },
     feat1_desc:    { uz: "Sotib beruvchilar uchun mutlaqo bepul. Ombor, tovar yoki boshlang'ich kapital talab qilinmaydi — faqat telefoningiz kifoya.", ru: 'Полностью бесплатно для реселлеров. Не нужны склад, товар или стартовый капитал — достаточно телефона.', en: 'Completely free for resellers. No warehouse, inventory, or startup capital needed — just your phone.' },
     feat2_title:   { uz: 'Tayyor havolalar', ru: 'Готовые ссылки', en: 'Ready-made links' },
-    feat2_desc:    { uz: "Telegram va Instagram uchun tayyor linklar. Xaridor bossa — to'g'ridan-to'g'ri shaxsiy do'koningizga o'tadi.", ru: 'Готовые ссылки для Telegram и Instagram. Покупатель нажимает — и попадает прямо в ваш магазин.', en: 'Ready links for Telegram and Instagram. When a buyer clicks, they go straight to your personal store.' },
+    feat2_desc:    { uz: "Telegram, Instagram, Facebook, TikTok va YouTube uchun tayyor shaxsiy do'kon havolasi. Xaridor bossa — to'g'ridan-to'g'ri do'koningizga o'tadi.", ru: 'Готовая персональная ссылка на магазин для Telegram, Instagram, Facebook, TikTok и YouTube. Покупатель нажимает — и попадает прямо в ваш магазин.', en: 'A ready personal store link for Telegram, Instagram, Facebook, TikTok and YouTube. When a buyer clicks, they land straight in your store.' },
     feat2_link1:   { uz: 'Link yaratish', ru: 'Создать ссылку', en: 'Create link' },
     feat2_link2:   { uz: "Do'kon topish", ru: 'Найти магазин', en: 'Find store' },
     feat2_link3:   { uz: 'Ulashildi', ru: 'Поделились', en: 'Shared' },
@@ -75,7 +75,7 @@
     feat4_b1:      { uz: 'Buyurtma tasdiqlandi', ru: 'Заказ подтверждён', en: 'Order confirmed' },
     feat4_b2:      { uz: "Balans to'ldirildi ✓", ru: 'Баланс пополнен ✓', en: 'Balance topped up ✓' },
     feat4_title:   { uz: "Ishonchli to'lovlar", ru: 'Надёжные выплаты', en: 'Reliable payments' },
-    feat4_desc:    { uz: "Muvaffaqiyatli buyurtmadan so'ng pullar darhol balansingizda aks etadi. Xavfsiz va shaffof hisob-kitob.", ru: 'После успешного заказа деньги сразу отражаются на балансе. Безопасные и прозрачные расчёты.', en: 'After a successful order, funds appear on your balance instantly. Safe and transparent settlements.' },
+    feat4_desc:    { uz: "Muvaffaqiyatli buyurtmadan so'ng ulush darhol Hamyoningizda. Bank kartangizga atigi 1% komissiya bilan yechib olasiz.", ru: 'После успешного заказа доля сразу в вашем Кошельке. Вывод на банковскую карту с комиссией всего 1%.', en: 'After a successful order, your share lands in your Wallet instantly. Withdraw to your bank card with just a 1% fee.' },
 
     how_title:     { uz: 'Qanday ishlaydi?', ru: 'Как это работает?', en: 'How it works?' },
     how_sub:       { uz: "Ikkala tomon uchun ham oddiy va foydali. O'zingizga mos rolni tanlang.", ru: 'Просто и выгодно для обеих сторон. Выберите подходящую роль.', en: 'Simple and beneficial for both sides. Choose the role that fits you.' },
@@ -116,7 +116,7 @@
     faq1_q:        { uz: "Sotibber.uz saytidan pul chiqarish qanday bo'ladi?", ru: 'Как вывести деньги с Sotibber.uz?', en: 'How do I withdraw money from Sotibber.uz?' },
     faq1_a:        { uz: "Siz sotgan mahsulotingizdan kelgan daromadni bank kartangizga atigi 1% komissiya bilan osongina yechib olasiz. Jarayon bir necha daqiqa davom etadi.", ru: 'Доход с проданного товара легко выводится на банковскую карту с комиссией всего 1%. Процесс занимает несколько минут.', en: 'You can easily withdraw earnings from your sold products to your bank card with only a 1% fee. The process takes a few minutes.' },
     faq2_q:        { uz: "Mahsulot nosoz yoki razmeri noto'g'ri bo'lsa nima bo'ladi?", ru: 'Что если товар бракованный или не того размера?', en: 'What if a product is defective or the wrong size?' },
-    faq2_a:        { uz: "Xaridor sotuvchi bilan to'g'ridan-to'g'ri bog'lanadi yoki platformamizning arbitraj tizimi orqali muammo adolatli hal qilinadi. Agentning obro'siga ziyon yetmaydi.", ru: 'Покупатель связывается с продавцом напрямую, либо вопрос решается справедливо через нашу систему арбитража. Репутация агента не страдает.', en: "The buyer contacts the seller directly, or the issue is resolved fairly through our arbitration system. The agent's reputation is not harmed." },
+    faq2_a:        { uz: "Xaridor sotuvchi bilan bevosita bog'lanadi. Kelishmovchilik bo'lsa, platformadagi 'Xabarlar' bo'limi orqali qo'llab-quvvatlashga murojaat qilinadi. Sotib beruvchining obro'siga ziyon yetmaydi.", ru: 'Покупатель связывается с продавцом напрямую. При разногласиях можно обратиться в поддержку через раздел «Сообщения». Репутация реселлера не страдает.', en: "The buyer contacts the seller directly. If there's a disagreement, you can reach support via the 'Messages' section. The reseller's reputation is not harmed." },
 
     cta_title:     { uz: 'Bugun boshlang — ertaga daromad oling', ru: 'Начните сегодня — зарабатывайте завтра', en: 'Start today — earn tomorrow' },
     cta_sub:       { uz: "Ro'yxatdan o'tish bepul. Bir necha daqiqada birinchi do'koningizni oching.", ru: 'Регистрация бесплатна. Откройте первый магазин за несколько минут.', en: 'Sign-up is free. Open your first store in a few minutes.' },
