@@ -160,17 +160,34 @@ body {
   background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
 }
 
-/* ---------- Dashboard mockup chart ---------- */
-/* Chiziq solid (statik) turadi; ustidan yorug' impuls uzluksiz yugurib
-   o'tadi (live-data effekti). pathLength=100 bilan uzunlikdan mustaqil. */
-.mock-line { }
-.mock-pulse {
-  stroke-dasharray: 9 91;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 5px rgba(196, 181, 253, 0.9));
-  animation: pulseRun 2.6s linear infinite;
+/* ---------- Dashboard mockup ---------- */
+/* Grafik chizig'i statik. Yangi animatsiya: butun karta bo'ylab diagonal
+   yorug'lik yaltirashi (sheen) davriy ravishda o'tib turadi. */
+.mock-sheen { position: relative; }
+.mock-sheen::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: -70%;
+  width: 45%;
+  height: 140%;
+  pointer-events: none;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(196, 181, 253, 0.16) 50%,
+    rgba(255, 255, 255, 0.06) 60%,
+    transparent 100%
+  );
+  animation: sheen 6s ease-in-out infinite;
 }
-@keyframes pulseRun { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes sheen {
+  0%   { left: -70%; }
+  45%  { left: 130%; }
+  100% { left: 130%; }
+}
 
 /* ---------- Animations ---------- */
 @keyframes floaty { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-14px);} }
@@ -202,6 +219,6 @@ section, header, footer { position: relative; z-index: 1; }
 .logo-mark:hover { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .orb, .mock-pulse { animation: none !important; }
-  .mock-pulse { display: none; }
+  .orb { animation: none !important; }
+  .mock-sheen::after { display: none; }
 }
