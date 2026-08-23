@@ -49,6 +49,12 @@ body > .min-h-screen { position: relative; z-index: 1; }
 }
 .glass-hover:hover { border-color: rgba(255,138,80,0.4); background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025)); }
 
+/* Profil dropdown menyusi — orqa fon to'q va shafof emas (menyu bandlari aniq ko'rinishi uchun) */
+#profileMenu {
+  background: #171420;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
 /* Asosiy gradient tugma — issiq iridescent */
 .btn-grad {
   background: linear-gradient(135deg, #ff8a3d 0%, #ff4d6a 48%, #8b5cf6 100%);
@@ -132,6 +138,7 @@ html[data-theme="light"] .glass {
   border: 1px solid rgba(15,23,42,0.08);
 }
 html[data-theme="light"] .glass-hover:hover { border-color: rgba(124,58,237,0.30); background: #fff; }
+html[data-theme="light"] #profileMenu { background: #ffffff; border: 1px solid rgba(15,23,42,0.10); }
 html[data-theme="light"] .fld { background: #fff; border: 1px solid rgba(15,23,42,0.14); color: #0f172a; }
 html[data-theme="light"] .fld::placeholder { color: #94a3b8; }
 html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(15,23,42,.18); }
