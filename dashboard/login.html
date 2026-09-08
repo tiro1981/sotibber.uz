@@ -361,11 +361,6 @@
         if (user) goToDashboard();
       })();
 
-      // Maxfiy admin kirishi — login maydoniga maxsus login/parol kiritilsa,
-      // Supabase'ga bormasdan to'g'ridan-to'g'ri admin panelга o'tadi.
-      const ADMIN_USER = 'tiro';
-      const ADMIN_PASS = 'tiro19';
-
       // Username'dan yashirin (ichki) email yasaymiz — Supabase auth email talab qiladi.
       function usernameToEmail(u) {
         const clean = String(u || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
@@ -378,11 +373,6 @@
 
         const loginVal = $('#loginUsername').value.trim();
         const passVal = $('#loginPassword').value;
-        if (loginVal.toLowerCase() === ADMIN_USER && passVal === ADMIN_PASS) {
-          try { sessionStorage.setItem('sotibber_admin', '1'); } catch (err) {}
-          window.location.href = 'admin.html';
-          return;
-        }
 
         setLoading(e.target, true);
         const { error } = await window.SotibberAuth.signIn({

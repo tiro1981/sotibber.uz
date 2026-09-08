@@ -677,31 +677,60 @@
         const shopDisplay = su.display || "Havola tayyorlanmoqda...";
         const activeLinks = agentLinks.filter((l) => !l.archived);
         const archivedLinks = agentLinks.filter((l) => l.archived);
+        // Sotilgan mahsulotlar — kamida bir marta sotilgani (sales > 0)
+        const soldLinks = agentLinks.filter((l) => (Number(l.sales) || 0) > 0);
         const totalSales = agentLinks.reduce((s, l) => s + l.sales, 0);
-        // Do'kondagi mahsulot kartasi (boshqaruv: arxivlash / olib tashlash)
+        // Do'kondagi mahsulot kartasi — "Mahsulotlar" panelidagi kartalar bilan
+        // bir xil ixcham o'lchamda (aspect-square rasm, p-2.5, kichik matn).
         const shopCard = (l, archived) => `
-          <div class="glass overflow-hidden rounded-2xl ${archived ? 'opacity-70' : 'glass-hover transition hover:-translate-y-0.5'}">
-            ${productMedia(l.images, l.product)}
-            <div class="p-4">
-              <button data-shop-detail="${agentLinks.indexOf(l)}" class="block w-full truncate text-left font-bold text-white hover:text-violet-300">${esc(l.product)}</button>
-              <p class="font-display mt-2 text-lg font-bold text-white">${uzs(l.price)} <span class="text-xs font-medium text-slate-500">so'm</span></p>
-              <div class="mt-2 flex items-center justify-between text-xs">
-                <span class="rounded-full bg-emerald-500/15 px-2.5 py-1 font-bold text-emerald-300">Ulush: ${uzs(l.commission)} so'm</span>
-                <span class="rounded-full bg-white/10 px-2.5 py-1 font-semibold text-slate-200">${l.sales} ta sotilgan</span>
+          <div class="glass ${archived ? 'opacity-70' : 'glass-hover'} group overflow-hidden rounded-xl transition hover:-translate-y-0.5">
+            <div class="relative">
+              ${productMedia(l.images, l.product, 'aspect-square')}
+              ${archived ? `<div class="absolute right-2 top-2 z-10"><span class="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-slate-200 backdrop-blur">Arxiv</span></div>` : ''}
+            </div>
+            <div class="p-2.5">
+              <button data-shop-detail="${agentLinks.indexOf(l)}" class="block w-full truncate text-left text-sm font-bold text-white hover:text-violet-300">${esc(l.product)}</button>
+              <div class="mt-1.5 flex items-center justify-between gap-2">
+                <span class="font-display text-sm font-bold text-white">${uzs(l.price)} <span class="text-[10px] font-medium text-slate-500">so'm</span></span>
+                <span class="whitespace-nowrap rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-slate-200">${l.sales} sotilgan</span>
               </div>
-              <div class="mt-3 flex gap-2">
+              <div class="mt-2 flex items-center justify-between gap-1 rounded-lg bg-emerald-500/10 px-2 py-1.5 ring-1 ring-emerald-500/20">
+                <span class="text-[10px] font-medium text-emerald-300">Ulush</span>
+                <span class="text-[11px] font-bold text-emerald-300">${uzs(l.commission)} so'm</span>
+              </div>
+              <div class="mt-2 flex gap-1.5">
                 ${archived ? `
-                  <button data-shop-unarchive="${l.product_id}" class="flex-1 rounded-xl bg-white/10 py-2.5 text-sm font-bold text-white transition hover:bg-white/15">Qaytarish</button>
-                  <button data-shop-remove="${l.product_id}" class="rounded-xl bg-rose-500/15 px-3 text-sm font-semibold text-rose-300 ring-1 ring-rose-500/25 transition hover:bg-rose-500/25">O'chirish</button>
-                ` : `
-                  <button data-shop-archive="${l.product_id}" class="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Arxivlash</button>
-                  <button data-copy="${esc(shopLink)}" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-violet-500/15 text-violet-300 transition hover:bg-violet-500/25" title="Do'kon havolasini nusxalash">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  <button data-shop-unarchive="${l.product_id}" class="flex-1 rounded-lg bg-white/10 py-1.5 text-[11px] font-bold text-white transition hover:bg-white/15">Qaytarish</button>
+                  <button data-shop-remove="${l.product_id}" title="O'chirish" class="grid w-8 flex-shrink-0 place-items-center rounded-lg bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/25 transition hover:bg-rose-500/25">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
-                  <button data-shop-remove="${l.product_id}" title="Do'kondan olib tashlash" class="grid w-11 flex-shrink-0 place-items-center rounded-xl bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/20 transition hover:bg-rose-500/20">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                ` : `
+                  <button data-shop-archive="${l.product_id}" class="flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10">Arxivlash</button>
+                  <button data-copy="${esc(shopLink)}" title="Do'kon havolasini nusxalash" class="grid w-8 flex-shrink-0 place-items-center rounded-lg bg-violet-500/15 text-violet-300 transition hover:bg-violet-500/25">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </button>
+                  <button data-shop-remove="${l.product_id}" title="Do'kondan olib tashlash" class="grid w-8 flex-shrink-0 place-items-center rounded-lg bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/20 transition hover:bg-rose-500/20">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 `}
+              </div>
+            </div>
+          </div>`;
+        // Sotilgan mahsulot kartasi — boshqaruvsiz, sotuv soni va ishlangan pul
+        const soldCard = (l) => `
+          <div class="glass glass-hover group overflow-hidden rounded-xl transition hover:-translate-y-0.5">
+            <div class="relative">
+              ${productMedia(l.images, l.product, 'aspect-square')}
+              <div class="absolute right-2 top-2 z-10"><span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white shadow backdrop-blur">${l.sales} sotilgan</span></div>
+            </div>
+            <div class="p-2.5">
+              <button data-shop-detail="${agentLinks.indexOf(l)}" class="block w-full truncate text-left text-sm font-bold text-white hover:text-violet-300">${esc(l.product)}</button>
+              <div class="mt-1.5 flex items-center justify-between gap-2">
+                <span class="font-display text-sm font-bold text-white">${uzs(l.price)} <span class="text-[10px] font-medium text-slate-500">so'm</span></span>
+              </div>
+              <div class="mt-2 flex items-center justify-between gap-1 rounded-lg bg-emerald-500/10 px-2 py-1.5 ring-1 ring-emerald-500/20">
+                <span class="text-[10px] font-medium text-emerald-300">Ishlangan</span>
+                <span class="text-[11px] font-bold text-emerald-300">${uzs((Number(l.commission) || 0) * (Number(l.sales) || 0))} so'm</span>
               </div>
             </div>
           </div>`;
@@ -750,7 +779,7 @@
           <!-- Faol mahsulotlar -->
           <div>
             <h3 class="font-display mb-3 font-bold text-white">Do'kondagi mahsulotlar</h3>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
               ${activeLinks.map((l) => shopCard(l, false)).join('') || `
               <div class="glass col-span-full flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
                 <span class="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400">
@@ -762,11 +791,30 @@
             </div>
           </div>
 
+          <!-- Sotilgan mahsulotlar — sotilgani shu bo'limga tushadi -->
+          <div>
+            <h3 class="font-display mb-3 flex items-center gap-2 font-bold text-white">
+              <svg class="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Sotilgan mahsulotlar
+              ${soldLinks.length ? `<span class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-300">${soldLinks.length}</span>` : ''}
+            </h3>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+              ${soldLinks.map((l) => soldCard(l)).join('') || `
+              <div class="glass col-span-full flex flex-col items-center justify-center rounded-2xl border-dashed py-14 text-center">
+                <span class="grid h-12 w-12 place-items-center rounded-full bg-emerald-500/10 text-emerald-300">
+                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+                <p class="mt-3 text-sm font-semibold text-slate-300">Hali sotilgan mahsulot yo'q</p>
+                <p class="mt-1 max-w-xs text-xs text-slate-500">Mahsulotingiz sotilganda shu yerda ko'rinadi</p>
+              </div>`}
+            </div>
+          </div>
+
           <!-- Arxivlangan mahsulotlar -->
           ${archivedLinks.length ? `
           <div>
             <h3 class="font-display mb-3 flex items-center gap-2 font-bold text-white">Arxivlangan <span class="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-slate-300">${archivedLinks.length}</span></h3>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
               ${archivedLinks.map((l) => shopCard(l, true)).join('')}
             </div>
           </div>` : ''}
