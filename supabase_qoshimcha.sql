@@ -412,3 +412,77 @@ create policy "Notif: admin yozadi"
 drop policy if exists "Notif: admin o'chiradi" on public.notifications;
 create policy "Notif: admin o'chiradi"
   on public.notifications for delete to anon using (true);
+
+-- =====================================================================
+-- 10) ELON LIMITI — har bir foydalanuvchi bir vaqtda 3 tagacha elon
+--
+--   Biznes qoidasi: bitta elon = bitta mahsulot. Ham sotuvchi, ham
+--   sotib beruvchi bir vaqtning o'zida faqat 3 ta FAOL elon joylashtira
+--   oladi. Bu limit ma'lumotlar bazasi darajasida majburlanadi — ya'ni
+--   veb-ilova (klient) chetlab o'tsa ham, insert rad etiladi.
+--
+--     • Sotuvchi (products): skladda mavjud (stock > 0) mahsulotlar
+--       elon o'rnini egallaydi. Mahsulot sotilib tugasa (stock = 0) yoki
+--       o'chirilsa — o'rin bo'shaydi.
+--     • Sotib beruvchi (affiliate_products): arxivlanmagan (archived =
+--       false) mahsulotlar o'rin egallaydi. Arxivlash yoki o'chirish
+--       o'rinni bo'shatadi.
+--
+--   Bu blokni bir necha marta ishga tushirsa ham xavfsiz (idempotent).
+-- =====================================================================
+
+-- Elon limitini bir joyda sozlash uchun konstanta funksiyasi
+create or replace function public.listing_limit()
+returns int language sql immutable as $$ select 3 $$;
+
+-- 10.1) Sotuvchi mahsulotlari (products) uchun tekshiruv
+create or replace function public.enforce_product_listing_limit()
+returns trigger language plpgsql as $$
+declare
+  active_count int;
+begin
+  -- Faqat yangi FAOL elon (stock > 0) qo'shil/yangilanayotganda tekshiramiz
+  if coalesce(NEW.stock, 0) > 0 then
+    select count(*) into active_count
+    from public.products
+    where seller_id = NEW.seller_id
+      and coalesce(stock, 0) > 0
+      and id <> NEW.id; -- update paytida o'zini hisobga olmaymiz
+    if active_count >= public.listing_limit() then
+      raise exception 'Elon joyi tolgan (% ta). Yangi mahsulot qoshish uchun avval bittasini soting yoki ochiring.', public.listing_limit()
+        using errcode = 'check_violation';
+    end if;
+  end if;
+  return NEW;
+end $$;
+
+drop trigger if exists trg_product_listing_limit on public.products;
+create trigger trg_product_listing_limit
+  before insert or update of stock on public.products
+  for each row execute function public.enforce_product_listing_limit();
+
+-- 10.2) Sotib beruvchi do'koni (affiliate_products) uchun tekshiruv
+create or replace function public.enforce_affiliate_listing_limit()
+returns trigger language plpgsql as $$
+declare
+  active_count int;
+begin
+  -- Faqat FAOL (archived = false) elon qo'shil/qaytarilganda tekshiramiz
+  if coalesce(NEW.archived, false) = false then
+    select count(*) into active_count
+    from public.affiliate_products
+    where affiliate_id = NEW.affiliate_id
+      and coalesce(archived, false) = false
+      and product_id <> NEW.product_id; -- update paytida o'zini hisobga olmaymiz
+    if active_count >= public.listing_limit() then
+      raise exception 'Dokon tolgan (% ta). Yangi mahsulot qoshish uchun bittasini arxivlang yoki olib tashlang.', public.listing_limit()
+        using errcode = 'check_violation';
+    end if;
+  end if;
+  return NEW;
+end $$;
+
+drop trigger if exists trg_affiliate_listing_limit on public.affiliate_products;
+create trigger trg_affiliate_listing_limit
+  before insert or update of archived on public.affiliate_products
+  for each row execute function public.enforce_affiliate_listing_limit();

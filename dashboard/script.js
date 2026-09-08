@@ -115,6 +115,17 @@
 
     // Mahsulot kategoriyalari
     const CATEGORIES = ['Elektronika', 'Kiyim-kechak', 'Poyabzal', "Go'zallik", "Uy-ro'zg'or", 'Oziq-ovqat', 'Bolalar', 'Sport', 'Aksessuar', 'Boshqa'];
+
+    // ── Elon limiti ──────────────────────────────────────────────
+    // Har bir foydalanuvchi bir vaqtning o'zida faqat 3 ta faol elon
+    // joylashtira oladi. Bitta elon = bitta mahsulot.
+    //  • Sotuvchi: skladida mavjud (stock > 0) mahsulotlari elon o'rnini egallaydi.
+    //    Slot bo'shashi uchun mahsulot sotilib tugashi (stock = 0) yoki o'chirilishi kerak.
+    //  • Sotib beruvchi: do'konidagi arxivlanmagan mahsulotlari elon o'rnini egallaydi.
+    //    Slot bo'shashi uchun mahsulot arxivlanishi yoki do'kondan olib tashlanishi kerak.
+    const LISTING_LIMIT = 3;
+    const sellerActiveCount = () => merchantProducts.filter((p) => Number(p.stock) > 0).length;
+    const resellerActiveCount = () => agentLinks.filter((l) => !l.archived).length;
     let marketQuery = '';
     let marketCategory = 'Barchasi';
     let marketMinPrice = null;   // narx filtri (dan)
@@ -392,18 +403,25 @@
         </div>`;
       },
 
-      products: () => `
+      products: () => {
+        const activeListings = sellerActiveCount();
+        const listingsFull = activeListings >= LISTING_LIMIT;
+        return `
         <div class="view-enter space-y-5">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 class="font-display text-lg font-bold text-white">Mahsulotlar (Sklad)</h2>
-              <p class="text-sm text-slate-400">Jami ${merchantProducts.length} ta mahsulot</p>
+              <p class="text-sm text-slate-400">Jami ${merchantProducts.length} ta mahsulot · <span class="font-semibold ${listingsFull ? 'text-rose-400' : 'text-emerald-300'}">Elon joyi: ${activeListings}/${LISTING_LIMIT}</span></p>
             </div>
-            <button data-action="add-product" class="btn-grad inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95">
+            <button data-action="add-product" ${listingsFull ? 'aria-disabled="true"' : ''} class="btn-grad inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95 ${listingsFull ? 'cursor-not-allowed opacity-50' : ''}">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
               Yangi mahsulot qo'shish
             </button>
           </div>
+          ${listingsFull ? `<div class="flex items-start gap-2 rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200 ring-1 ring-rose-500/20">
+            <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M4.93 19h14.14a2 2 0 001.74-3l-7.07-12a2 2 0 00-3.48 0l-7.07 12a2 2 0 001.74 3z"/></svg>
+            <span>Elon joyingiz to'lgan (${LISTING_LIMIT} ta). Yangi mahsulot qo'shish uchun mavjud mahsulotlardan birini soting (sklad tugashi) yoki o'chiring.</span>
+          </div>` : ''}
 
           <!-- Product cards grid (ixcham) -->
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
@@ -437,7 +455,8 @@
                 <p class="mt-1 max-w-xs text-xs text-slate-500">Birinchi mahsulotingizni qo'shish uchun yuqoridagi tugmani bosing</p>
               </div>`}
           </div>
-        </div>`,
+        </div>`;
+      },
 
       orders: () => {
         const tabs = ['Barchasi', 'Yangi', "Yo'lda", 'Yetkazildi', 'Rad etildi'];
@@ -603,7 +622,7 @@
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 class="font-display text-lg font-bold text-white">Mahsulotlar bozori</h2>
-              <p class="text-sm text-slate-400">Sotish uchun mahsulot tanlang va daromad qiling</p>
+              <p class="text-sm text-slate-400">Sotish uchun mahsulot tanlang va daromad qiling · <span class="font-semibold ${resellerActiveCount() >= LISTING_LIMIT ? 'text-rose-400' : 'text-emerald-300'}">Do'kon: ${resellerActiveCount()}/${LISTING_LIMIT}</span></p>
             </div>
             <div class="relative">
               <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
@@ -1113,7 +1132,7 @@
         images: p.images || [],
         badgeLine: `<span class="inline-flex items-center gap-2 text-xs text-slate-400">${badge(p.status)}<span>Sklad: <b class="text-slate-200">${p.stock}</b></span></span>`,
         commissionText: `${p.commission}% (${uzs(Math.round(p.price * p.commission / 100))} so'm)`,
-        action: null,
+        action: { label: "O'chirish", attr: `data-seller-delete="${idx}"`, cls: 'bg-rose-600 hover:bg-rose-700' },
       };
     }
 
@@ -1347,6 +1366,12 @@
         const user = window.__SOTIBBER_USER;
         if (!user || !window.sb) {
           toast('Tizimga kirilmagan. Sahifani yangilab, qayta kiring.');
+          return;
+        }
+
+        // Elon limiti: bir vaqtda faqat LISTING_LIMIT ta faol mahsulot
+        if (sellerActiveCount() >= LISTING_LIMIT) {
+          toast(`Elon joyi to'ldi (${LISTING_LIMIT}/${LISTING_LIMIT}). Yangi mahsulot qo'shish uchun avval bittasini soting yoki o'chiring.`);
           return;
         }
 
@@ -1808,11 +1833,33 @@
       const su = shopUrls();
       const link = su.full || "Do'kon havolasi tayyorlanmoqda...";
       const user = window.__SOTIBBER_USER;
-      const already = agentLinks.some((l) => l.product_id === p.id);
+      const existing = agentLinks.find((l) => l.product_id === p.id);
+      const already = !!existing && !existing.archived; // do'konda faol turibdi
+      const reactivate = !!existing && existing.archived;  // arxivda — qayta faollashtirish
+
+      // Elon limiti: do'konda bir vaqtda faqat LISTING_LIMIT ta faol mahsulot.
+      // Faol mahsulotni qayta ochish limitga kirmaydi; yangi yoki arxivdan qaytarish kiradi.
+      if (!already && resellerActiveCount() >= LISTING_LIMIT) {
+        toast(`Do'kon to'ldi (${LISTING_LIMIT}/${LISTING_LIMIT}). Yangi mahsulot qo'shish uchun do'koningizdagi bittasini arxivlang yoki olib tashlang.`);
+        return;
+      }
+
+      // Arxivlangan mahsulotni qayta faollashtiramiz (yangi yozuv qo'shmaymiz)
+      if (reactivate && user && window.sb && p.id) {
+        const { error } = await window.sb.from('affiliate_products')
+          .update({ archived: false }).eq('affiliate_id', user.id).eq('product_id', p.id);
+        if (error) {
+          console.error("Qayta faollashtirish:", error);
+          toast('Xatolik: ' + (error.message || 'qayta faollashtirib bo\'lmadi'));
+          return;
+        }
+        existing.archived = false;
+        if (state.panel === 'affiliate' && state.view === 'shop') renderView();
+      }
 
       // Supabase'ga (affiliate_products) yozamiz — do'kon web-ilovasida shu orqali
       // ko'rinadi. Yozuvni KUTAMIZ; muvaffaqiyatsiz bo'lsa — aniq xato beramiz.
-      if (!already && user && window.sb && p.id) {
+      if (!already && !reactivate && user && window.sb && p.id) {
         const { error } = await window.sb.from('affiliate_products')
           .insert({ affiliate_id: user.id, product_id: p.id });
         if (error && !/duplicate|unique|23505/i.test(error.message || '')) {
@@ -1826,7 +1873,7 @@
         }
       }
 
-      if (!already) {
+      if (!already && !reactivate) {
         agentLinks.push({
           product_id: p.id,
           product: p.name,
@@ -2544,6 +2591,26 @@
       renderView();
     }
 
+    // Sotuvchi o'z mahsulotini (elonini) o'chiradi — elon joyini bo'shatadi
+    async function deleteSellerProduct(idx) {
+      const p = merchantProducts[idx];
+      if (!p) return;
+      const user = window.__SOTIBBER_USER;
+      if (!user || !window.sb) { toast('Tizimga kirilmagan.'); return; }
+      if (!confirm(`"${p.name}" mahsulotini butunlay o'chirasizmi? Bu amalni qaytarib bo'lmaydi.`)) return;
+      const { error } = await window.sb.from('products').delete().eq('id', p.id).eq('seller_id', user.id);
+      if (error) {
+        console.error("Mahsulotni o'chirish:", error);
+        toast('Xatolik: mahsulotni o\'chirib bo\'lmadi');
+        return;
+      }
+      const at = merchantProducts.findIndex((x) => x.id === p.id);
+      if (at >= 0) merchantProducts.splice(at, 1);
+      closeModal();
+      toast(p.name + " o'chirildi ✓");
+      if (state.panel === 'seller' && state.view === 'products') renderView();
+    }
+
     async function archiveShopProduct(productId, archived) {
       const user = window.__SOTIBBER_USER;
       if (!user || !window.sb) return;
@@ -2845,7 +2912,13 @@
       const act = t.closest('[data-action]');
       if (act) {
         const a = act.dataset.action;
-        if (a === 'add-product') return addProductDrawer();
+        if (a === 'add-product') {
+          if (sellerActiveCount() >= LISTING_LIMIT) {
+            toast(`Elon joyi to'ldi (${LISTING_LIMIT}/${LISTING_LIMIT}). Yangi mahsulot qo'shish uchun avval bittasini soting yoki o'chiring.`);
+            return;
+          }
+          return addProductDrawer();
+        }
         if (a === 'create-shop-link') return createShopLink(act);
         if (a === 'withdraw') return withdrawModal('violet');
         if (a === 'wallet-withdraw') return withdrawModal('emerald');
@@ -2987,6 +3060,8 @@
       }
 
       // Start selling (affiliate marketplace)
+      const sdel = t.closest('[data-seller-delete]');
+      if (sdel) return deleteSellerProduct(Number(sdel.dataset.sellerDelete));
       const ss = t.closest('[data-start-selling]');
       if (ss) { closeModal(); return startSellingModal(Number(ss.dataset.startSelling)); }
 
