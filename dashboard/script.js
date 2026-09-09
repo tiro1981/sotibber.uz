@@ -125,7 +125,9 @@
     //    Slot bo'shashi uchun mahsulot arxivlanishi yoki do'kondan olib tashlanishi kerak.
     const LISTING_LIMIT = 3;
     const sellerActiveCount = () => merchantProducts.filter((p) => Number(p.stock) > 0).length;
-    const resellerActiveCount = () => agentLinks.filter((l) => !l.archived).length;
+    // Faol elon = arxivlanmagan VA hali sotilmagan (sotilsa yoki arxivlansa
+    // do'kondan chiqib, elon o'rnini bo'shatadi).
+    const resellerActiveCount = () => agentLinks.filter((l) => !l.archived && !((Number(l.sales) || 0) > 0)).length;
     let marketQuery = '';
     let marketCategory = 'Barchasi';
     let marketMinPrice = null;   // narx filtri (dan)
@@ -675,10 +677,12 @@
         const su = shopUrls();
         const shopLink = su.full;
         const shopDisplay = su.display || "Havola tayyorlanmoqda...";
-        const activeLinks = agentLinks.filter((l) => !l.archived);
-        const archivedLinks = agentLinks.filter((l) => l.archived);
-        // Sotilgan mahsulotlar — kamida bir marta sotilgani (sales > 0)
-        const soldLinks = agentLinks.filter((l) => (Number(l.sales) || 0) > 0);
+        // Sotilgan mahsulotlar — kamida bir marta sotilgani (sales > 0).
+        // Sotilgan mahsulot do'kondan (faol/arxiv) chiqib, faqat shu panelda qoladi.
+        const isSold = (l) => (Number(l.sales) || 0) > 0;
+        const activeLinks = agentLinks.filter((l) => !l.archived && !isSold(l));
+        const archivedLinks = agentLinks.filter((l) => l.archived && !isSold(l));
+        const soldLinks = agentLinks.filter(isSold);
         const totalSales = agentLinks.reduce((s, l) => s + l.sales, 0);
         // Do'kondagi mahsulot kartasi — "Mahsulotlar" panelidagi kartalar bilan
         // bir xil ixcham o'lchamda (aspect-square rasm, p-2.5, kichik matn).

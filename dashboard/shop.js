@@ -130,8 +130,15 @@
         .select('product_id, archived')
         .eq('affiliate_id', owner.id);
       if (apErr) throw apErr;
-      // Arxivlangan mahsulotlar do'konda ko'rinmaydi
-      const ids = (apRows || []).filter((r) => !r.archived).map((r) => r.product_id).filter(Boolean);
+      // Sotilgan mahsulotlar do'kondan olib tashlanadi — bu sotib beruvchi
+      // buyurtma olgan (sotgan) mahsulotlar. Ular endi do'konda ko'rinmaydi.
+      const soldIds = new Set();
+      try {
+        const { data: ord } = await sb.from('orders').select('product_id').eq('affiliate_id', owner.id);
+        (ord || []).forEach((o) => { if (o.product_id) soldIds.add(o.product_id); });
+      } catch (e) { /* buyurtmalarni o'qib bo'lmasa — hammasini ko'rsatamiz */ }
+      // Arxivlangan yoki sotilgan mahsulotlar do'konda ko'rinmaydi
+      const ids = (apRows || []).filter((r) => !r.archived && !soldIds.has(r.product_id)).map((r) => r.product_id).filter(Boolean);
       if (!ids.length) {
         products = [];
       } else {
