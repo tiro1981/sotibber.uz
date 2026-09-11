@@ -11,38 +11,12 @@
   <meta name="description" content="Sotibber.uz boshqaruv paneli — Sotuvchi va Sotib beruvchi panellari." />
 
   <!-- Tailwind CSS (CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/assets/tailwind-app.css" />
 
   <!-- Inter + Space Grotesk fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['Space Grotesk', 'Inter', 'sans-serif'] },
-          colors: {
-            indigo: { brand: '#4338CA', deep: '#312E81' },
-            violet: { brand: '#7c3aed', deep: '#4f46e5' },
-            ink: { 900: '#07060d', 800: '#0d0b18' },
-            emerald: { brand: '#059669' },
-          },
-          keyframes: {
-            slideIn: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } },
-            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-            fadeUp: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-          },
-          animation: {
-            slideIn: 'slideIn 0.3s cubic-bezier(0.16,1,0.3,1)',
-            fadeIn: 'fadeIn 0.2s ease',
-            fadeUp: 'fadeUp 0.35s ease both',
-          },
-        },
-      },
-    };
-  </script>
 
   <!-- Custom styles -->
   <link rel="stylesheet" href="style.css?v=20260819-3" />
