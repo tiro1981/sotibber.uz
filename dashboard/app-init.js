@@ -12,7 +12,7 @@
   'use strict';
 
   // Asset versiyasi — script.js keshini yangilash uchun. Har deployda oshiring.
-  var ASSET_V = '20260819-13';
+  var ASSET_V = '20260911-2';
 
   // bfcache guard: brauzer "orqaga/oldinga" bilan sahifani keshdan tiklaganda
   // skriptlar qayta ishlamaydi — natijada chiqib bo'lingandan keyin ham eski

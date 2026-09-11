@@ -965,9 +965,9 @@
               <button data-market-stats="${i}" title="Statistika" class="grid w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.chart}</svg>
               </button>
-              <button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
+              ${p.seller_id && p.seller_id !== ME ? `<button data-msg-seller="${i}" title="Sotuvchi bilan xabarlashish" class="grid w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg>
-              </button>
+              </button>` : ''}
             </div>
           </div>
         </div>`;
@@ -1244,7 +1244,7 @@
           </div>
           ${p.action ? `
           <div class="sticky bottom-0 flex gap-3 border-t border-white/10 bg-ink-900/60 p-6 backdrop-blur">
-            ${kind === 'market' && marketProducts[idx] && marketProducts[idx].seller_id ? `<button type="button" data-msg-seller="${idx}" title="Sotuvchi bilan xabarlashish" class="grid w-12 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg></button>` : ''}
+            ${kind === 'market' && marketProducts[idx] && marketProducts[idx].seller_id && marketProducts[idx].seller_id !== ME ? `<button type="button" data-msg-seller="${idx}" title="Sotuvchi bilan xabarlashish" class="grid w-12 flex-shrink-0 place-items-center rounded-xl bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">${icon.chat}</svg></button>` : ''}
             <button type="button" data-close class="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Yopish</button>
             <button type="button" ${p.action.attr} class="${p.action.cls} flex-1 rounded-xl py-3 text-sm font-bold text-white transition active:scale-95">${p.action.label}</button>
           </div>` : `
@@ -1961,12 +1961,6 @@
             <div class="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-4 py-3 ring-1 ring-emerald-500/20">
               <span class="text-sm font-medium text-emerald-300">Har bir sotuvdan olasiz</span>
               <span class="font-display text-base font-bold text-emerald-300">${uzs(p.commission)} so'm</span>
-            </div>
-
-            <p class="mt-5 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Tezkor ulashish</p>
-            <div class="mt-3 flex justify-center gap-3">
-              <a href="#" class="grid h-12 w-12 place-items-center rounded-2xl bg-sky-500/15 text-sky-300 transition hover:scale-105" aria-label="Telegram"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.5 20c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13.6 1.9 12c-1-.3-1-1 .2-1.5l18.2-7c.9-.3 1.6.2 1.6 1.8Z"/></svg></a>
-              <a href="#" class="grid h-12 w-12 place-items-center rounded-2xl bg-pink-500/15 text-pink-300 transition hover:scale-105" aria-label="Instagram"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
             </div>
           </div>
           <div class="border-t border-white/10 p-6">
