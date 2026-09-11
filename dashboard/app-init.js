@@ -192,194 +192,117 @@
     profile = await ensureShopNo(sb, profile);
     window.__SOTIBBER_PROFILE = profile;
 
-    // Sotuvchining o'z mahsulotlari
+    // script.js'ni oldindan (parallel) yuklashni boshlaymiz — ma'lumot
+    // yuklanayotganda skript ham keshga tushadi, natijada tezroq ochiladi.
     try {
-      const { data: myProducts, error } = await sb
-        .from('products')
-        .select('*')
-        .eq('seller_id', user.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      window.__SOTIBBER_PRODUCTS = (myProducts || []).map(mapProductRow);
-    } catch (e) {
-      console.error('Mahsulotlarni yuklashda xatolik:', e);
-      window.__SOTIBBER_PRODUCTS = [];
-    }
+      var _pl = document.createElement('link');
+      _pl.rel = 'preload'; _pl.as = 'script'; _pl.href = 'script.js?v=' + ASSET_V;
+      document.head.appendChild(_pl);
+    } catch (e) {}
 
-    // Bozor — barcha sotuvchilarning sklad mavjud mahsulotlari
-    try {
-      const { data: marketRows, error } = await sb
-        .from('products')
-        .select('*')
-        .gt('stock', 0)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      window.__SOTIBBER_MARKET_PRODUCTS = (marketRows || []).map((p) => {
-        const images = productImages(p);
-        return {
-          id: p.id,
-          name: p.name,
-          description: p.description || '',
-          category: p.category || '',
-          price: Number(p.price),
-          stock: p.stock,
-          seller_id: p.seller_id,
-          merchant: 'Sotuvchi',
-          commission: computeCommissionAmount(p.price, p.commission),
-          commissionPct: Number(p.commission),
-          color: p.color || 'from-violet-500/25 to-indigo-500/10',
-          images,
-          image: images[0] || null,
-        };
-      });
-    } catch (e) {
-      console.error('Bozorni yuklashda xatolik:', e);
-      window.__SOTIBBER_MARKET_PRODUCTS = [];
+    // --- Mustaqil ma'lumot yuklovchilar: hammasi PARALLEL ishlaydi ---
+    async function loadProducts() {
+      try {
+        const { data, error } = await sb.from('products').select('*').eq('seller_id', user.id).order('created_at', { ascending: false });
+        if (error) throw error;
+        window.__SOTIBBER_PRODUCTS = (data || []).map(mapProductRow);
+      } catch (e) { console.error('Mahsulotlarni yuklashda xatolik:', e); window.__SOTIBBER_PRODUCTS = []; }
     }
-
-    // Sotib beruvchining do'koni — qo'shgan mahsulotlari (affiliate_products).
-    // Embed (bog'lam) o'rniga ikki bosqichli so'rov — ishonchliroq.
-    try {
-      const { data: apRows, error: apErr } = await sb
-        .from('affiliate_products')
-        .select('product_id, created_at, archived')
-        .eq('affiliate_id', user.id)
-        .order('created_at', { ascending: false });
-      if (apErr) throw apErr;
-      const ids = (apRows || []).map((r) => r.product_id).filter(Boolean);
-      const prodById = {};
-      if (ids.length) {
-        const { data: prods, error: pErr } = await sb.from('products').select('*').in('id', ids);
-        if (pErr) throw pErr;
-        (prods || []).forEach((p) => { prodById[p.id] = p; });
-      }
-      window.__SOTIBBER_AGENT_LINKS = (apRows || [])
-        .map((r) => {
+    async function loadMarket() {
+      try {
+        const { data, error } = await sb.from('products').select('*').gt('stock', 0).order('created_at', { ascending: false });
+        if (error) throw error;
+        window.__SOTIBBER_MARKET_PRODUCTS = (data || []).map((p) => {
+          const images = productImages(p);
+          return { id: p.id, name: p.name, description: p.description || '', category: p.category || '', price: Number(p.price), stock: p.stock, seller_id: p.seller_id, merchant: 'Sotuvchi', commission: computeCommissionAmount(p.price, p.commission), commissionPct: Number(p.commission), color: p.color || 'from-violet-500/25 to-indigo-500/10', images, image: images[0] || null };
+        });
+      } catch (e) { console.error('Bozorni yuklashda xatolik:', e); window.__SOTIBBER_MARKET_PRODUCTS = []; }
+    }
+    async function loadAgentLinks() {
+      try {
+        const { data: apRows, error: apErr } = await sb.from('affiliate_products').select('product_id, created_at, archived').eq('affiliate_id', user.id).order('created_at', { ascending: false });
+        if (apErr) throw apErr;
+        const ids = (apRows || []).map((r) => r.product_id).filter(Boolean);
+        const prodById = {};
+        if (ids.length) {
+          const { data: prods, error: pErr } = await sb.from('products').select('*').in('id', ids);
+          if (pErr) throw pErr;
+          (prods || []).forEach((p) => { prodById[p.id] = p; });
+        }
+        window.__SOTIBBER_AGENT_LINKS = (apRows || []).map((r) => {
           const p = prodById[r.product_id];
           if (!p) return null;
           const images = productImages(p);
           const commissionPct = Number(p.commission) || 0;
-          return {
-            product_id: p.id,
-            product: p.name,
-            description: p.description || '',
-            category: p.category || '',
-            price: Number(p.price),
-            commission: computeCommissionAmount(p.price, commissionPct),
-            clicks: 0,
-            sales: 0,
-            slug: '',
-            archived: !!r.archived,
-            images,
-            image: images[0] || null,
-          };
-        })
-        .filter(Boolean);
-    } catch (e) {
-      console.error('Do\'kon mahsulotlarini yuklashda xatolik:', e);
-      window.__SOTIBBER_AGENT_LINKS = [];
+          return { product_id: p.id, product: p.name, description: p.description || '', category: p.category || '', price: Number(p.price), commission: computeCommissionAmount(p.price, commissionPct), clicks: 0, sales: 0, slug: '', archived: !!r.archived, images, image: images[0] || null };
+        }).filter(Boolean);
+      } catch (e) { console.error('Do\'kon mahsulotlarini yuklashda xatolik:', e); window.__SOTIBBER_AGENT_LINKS = []; }
+    }
+    async function loadSellerOrders() {
+      try {
+        const { data, error } = await sb.from('orders').select('*').eq('seller_id', user.id).order('created_at', { ascending: false });
+        if (error) throw error;
+        const rows = data || [];
+        const THREE_DAYS = 3 * 864e5;
+        const stale = rows.filter((o) => o.status === "Yo'lda" && o.shipped_at && (Date.now() - new Date(o.shipped_at).getTime() > THREE_DAYS));
+        if (stale.length) {
+          try { await sb.from('orders').update({ status: 'Yetkazildi' }).in('id', stale.map((o) => o.id)); stale.forEach((o) => { o.status = 'Yetkazildi'; }); }
+          catch (e2) { console.warn('Avto-yetkazishda xatolik:', e2); }
+        }
+        window.__SOTIBBER_ORDERS = rows.map(mapOrderRow);
+      } catch (e) { console.error('Buyurtmalarni yuklashda xatolik:', e); window.__SOTIBBER_ORDERS = []; }
+    }
+    async function loadSalesRaw() {
+      try { const { data, error } = await sb.from('orders').select('*').eq('affiliate_id', user.id).order('created_at', { ascending: false }); if (error) throw error; return data || []; }
+      catch (e) { console.error('Sotuvlarni yuklashda xatolik:', e); return []; }
+    }
+    async function loadMessages() {
+      try { const { data, error } = await sb.from('messages').select('*').or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`).order('created_at', { ascending: true }); if (error) throw error; window.__SOTIBBER_MESSAGES = data || []; }
+      catch (e) { console.error('Xabarlarni yuklashda xatolik:', e); window.__SOTIBBER_MESSAGES = []; }
+    }
+    async function loadNotifications() {
+      try { const { data, error } = await sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(50); if (error) throw error; window.__SOTIBBER_NOTIFICATIONS = data || []; }
+      catch (e) { console.error('Bildirishnomalarni yuklashda xatolik:', e); window.__SOTIBBER_NOTIFICATIONS = []; }
     }
 
-    // Sotuvchining buyurtmalari (orders) — seller_id = men
-    try {
-      const { data, error } = await sb.from('orders').select('*').eq('seller_id', user.id).order('created_at', { ascending: false });
-      if (error) throw error;
-      const rows = data || [];
-      // 3 kunlik avto-yetkazish: "Yo'lda" bo'lib 3 kundan oshgan buyurtmalar
-      // mijoz tasdiqlamasa, avtomatik "Yetkazildi" bo'ladi.
-      const THREE_DAYS = 3 * 864e5;
-      const stale = rows.filter((o) => o.status === "Yo'lda" && o.shipped_at && (Date.now() - new Date(o.shipped_at).getTime() > THREE_DAYS));
-      if (stale.length) {
-        try {
-          await sb.from('orders').update({ status: 'Yetkazildi' }).in('id', stale.map((o) => o.id));
-          stale.forEach((o) => { o.status = 'Yetkazildi'; });
-        } catch (e2) { console.warn('Avto-yetkazishda xatolik:', e2); }
-      }
-      window.__SOTIBBER_ORDERS = rows.map(mapOrderRow);
-    } catch (e) {
-      console.error('Buyurtmalarni yuklashda xatolik:', e);
-      window.__SOTIBBER_ORDERS = [];
-    }
+    // Barcha mustaqil so'rovlarni BIR VAQTDA yuboramiz (ketma-ket emas)
+    const _res = await Promise.all([
+      loadProducts(),      // 0
+      loadMarket(),        // 1
+      loadAgentLinks(),    // 2
+      loadSellerOrders(),  // 3
+      loadSalesRaw(),      // 4
+      loadMessages(),      // 5
+      loadNotifications()  // 6
+    ]);
+    const salesRaw = _res[4] || [];
 
-    // Sotib beruvchining sotuvlari (orders) — affiliate_id = men
+    // Sotuvlar — agent_links tayyor bo'lgach har mahsulotning sotuv sonini hisoblaymiz
     try {
-      const { data, error } = await sb.from('orders').select('*').eq('affiliate_id', user.id).order('created_at', { ascending: false });
-      if (error) throw error;
-      window.__SOTIBBER_SALES = (data || []).map(mapSaleRow);
-      // Do'kondagi har bir mahsulot uchun sotuvlar sonini hisoblaymiz
+      window.__SOTIBBER_SALES = salesRaw.map(mapSaleRow);
       const links = window.__SOTIBBER_AGENT_LINKS || [];
-      (data || []).forEach((o) => {
-        const l = links.find((x) => x.product_id === o.product_id);
-        if (l) l.sales += Number(o.quantity) || 1;
-      });
-    } catch (e) {
-      console.error('Sotuvlarni yuklashda xatolik:', e);
-      window.__SOTIBBER_SALES = [];
-    }
+      salesRaw.forEach((o) => { const l = links.find((x) => x.product_id === o.product_id); if (l) l.sales += Number(o.quantity) || 1; });
+    } catch (e) { window.__SOTIBBER_SALES = window.__SOTIBBER_SALES || []; }
 
-    // Sotuvchi: mahsulotlarimni KIM do'koniga qo'shgan (sotib beruvchilar) + sotilgani
+    // Sotib beruvchilar — mahsulotlar tayyor; ichki so'rovlar (profiles + orders) parallel
     try {
       const myIds = (window.__SOTIBBER_PRODUCTS || []).map((p) => p.id);
       if (myIds.length) {
         const { data: aps } = await sb.from('affiliate_products').select('affiliate_id, product_id, archived, created_at').in('product_id', myIds);
         const affIds = Array.from(new Set((aps || []).map((a) => a.affiliate_id).filter(Boolean)));
-        const profById = {};
-        if (affIds.length) {
-          const { data: profs } = await sb.from('profiles').select('id, full_name, shop_name, shop_no, instagram').in('id', affIds);
-          (profs || []).forEach((p) => { profById[p.id] = p; });
-        }
-        // Sotilgan soni: orders (seller_id = men) bo'yicha affiliate+product kesimida
-        const soldMap = {};
-        try {
-          const { data: ord } = await sb.from('orders').select('affiliate_id, product_id, quantity').eq('seller_id', user.id);
-          (ord || []).forEach((o) => { const k = o.affiliate_id + '|' + o.product_id; soldMap[k] = (soldMap[k] || 0) + (Number(o.quantity) || 1); });
-        } catch (e) { /* orders yo'q bo'lishi mumkin */ }
-        const prodNameById = {};
-        (window.__SOTIBBER_PRODUCTS || []).forEach((p) => { prodNameById[p.id] = p.name; });
+        const [profsRes, ordRes] = await Promise.all([
+          affIds.length ? sb.from('profiles').select('id, full_name, shop_name, shop_no, instagram').in('id', affIds) : Promise.resolve({ data: [] }),
+          sb.from('orders').select('affiliate_id, product_id, quantity').eq('seller_id', user.id)
+        ]);
+        const profById = {}; (profsRes.data || []).forEach((p) => { profById[p.id] = p; });
+        const soldMap = {}; (ordRes.data || []).forEach((o) => { const k = o.affiliate_id + '|' + o.product_id; soldMap[k] = (soldMap[k] || 0) + (Number(o.quantity) || 1); });
+        const prodNameById = {}; (window.__SOTIBBER_PRODUCTS || []).forEach((p) => { prodNameById[p.id] = p.name; });
         window.__SOTIBBER_MY_RESELLERS = (aps || []).map((a) => {
           const pr = profById[a.affiliate_id] || {};
-          return {
-            affiliate_id: a.affiliate_id,
-            product_id: a.product_id,
-            product_name: prodNameById[a.product_id] || 'Mahsulot',
-            name: pr.shop_name || pr.full_name || 'Sotib beruvchi',
-            instagram: pr.instagram || '',
-            shop_no: pr.shop_no || null,
-            archived: !!a.archived,
-            sold: soldMap[a.affiliate_id + '|' + a.product_id] || 0,
-          };
+          return { affiliate_id: a.affiliate_id, product_id: a.product_id, product_name: prodNameById[a.product_id] || 'Mahsulot', name: pr.shop_name || pr.full_name || 'Sotib beruvchi', instagram: pr.instagram || '', shop_no: pr.shop_no || null, archived: !!a.archived, sold: soldMap[a.affiliate_id + '|' + a.product_id] || 0 };
         });
-      } else {
-        window.__SOTIBBER_MY_RESELLERS = [];
-      }
-    } catch (e) {
-      console.error('Sotib beruvchilarni yuklashda xatolik:', e);
-      window.__SOTIBBER_MY_RESELLERS = [];
-    }
-
-    // Xabarlar — foydalanuvchi ishtirok etgan barcha xabarlar (sender yoki recipient)
-    try {
-      const { data, error } = await sb
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-        .order('created_at', { ascending: true });
-      if (error) throw error;
-      window.__SOTIBBER_MESSAGES = data || [];
-    } catch (e) {
-      console.error('Xabarlarni yuklashda xatolik:', e);
-      window.__SOTIBBER_MESSAGES = [];
-    }
-
-    // Bildirishnomalar (admin -> foydalanuvchilar)
-    try {
-      const { data, error } = await sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
-      if (error) throw error;
-      window.__SOTIBBER_NOTIFICATIONS = data || [];
-    } catch (e) {
-      console.error('Bildirishnomalarni yuklashda xatolik:', e);
-      window.__SOTIBBER_NOTIFICATIONS = [];
-    }
+      } else { window.__SOTIBBER_MY_RESELLERS = []; }
+    } catch (e) { console.error('Sotib beruvchilarni yuklashda xatolik:', e); window.__SOTIBBER_MY_RESELLERS = []; }
 
     await loadScript('script.js?v=' + ASSET_V);
   })();
