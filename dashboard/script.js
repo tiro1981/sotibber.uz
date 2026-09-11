@@ -978,19 +978,15 @@
         </div>`;
     }
 
-    // Bozor mahsuloti statistikasi (sotib beruvchi uchun)
-    function marketStatsModal(idx) {
+    // Bozor: SOTUVCHI statistikasi — sotuvchining nechta mahsuloti bor va
+    // nechtasi sotilgan. (Mahsulot statistikasi emas.)
+    async function marketStatsModal(idx) {
       const p = marketProducts[idx];
       if (!p) return;
-      const link = agentLinks.find((l) => l.product_id === p.id);
-      const inShop = !!link && !link.archived;
-      const mySold = link ? (Number(link.sales) || 0) : 0;
-      const perSale = Number(p.commission) || 0;
-      const stock = Number(p.stock) || 0;
-      const potential = perSale * stock;
-      const myEarned = mySold * perSale;
+      const inShop = agentLinks.some((l) => l.product_id === p.id && !l.archived);
+      const sellerName = p.merchant || 'Sotuvchi';
 
-      const stat = (label, value, sub, tint, ic) => `
+      const tile = (label, value, sub, tint, ic) => `
         <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
           <span class="grid h-9 w-9 place-items-center rounded-xl ${tint}"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic}</svg></span>
           <p class="font-display mt-2 text-xl font-bold text-white">${value}</p>
@@ -998,29 +994,28 @@
           ${sub ? `<p class="mt-0.5 text-[11px] text-slate-500">${sub}</p>` : ''}
         </div>`;
 
+      // total/inStock/sold: null bo'lsa — yuklanmoqda ("…")
+      const grid = (total, inStock, sold) => `
+        ${tile('Sotuvchi mahsulotlari', total == null ? '…' : total + ' ta', inStock == null ? 'yuklanmoqda...' : 'sotuvda: ' + inStock + ' ta', 'bg-violet-500/15 text-violet-300', icon.box)}
+        ${tile('Sotilgan mahsulotlar', sold == null ? '…' : sold + ' ta', 'jami sotuv', 'bg-emerald-500/15 text-emerald-300', '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>')}`;
+
       openModal(`
         <div>
           <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <div class="min-w-0">
-              <h3 class="truncate font-display text-lg font-bold text-white">${esc(p.name)}</h3>
-              <p class="text-xs text-slate-400">Bozor statistikasi</p>
+              <h3 class="truncate font-display text-lg font-bold text-white">${esc(sellerName)}</h3>
+              <p class="text-xs text-slate-400">Sotuvchi statistikasi</p>
             </div>
             <button type="button" data-close class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 hover:bg-white/10">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="space-y-4 p-6">
-            <div class="grid grid-cols-2 gap-3">
-              ${stat('Har sotuvdan', uzs(perSale) + " so'm", 'komissiya ' + (p.commissionPct != null ? p.commissionPct + '%' : ''), 'bg-emerald-500/15 text-emerald-300', icon.wallet)}
-              ${stat('Skladda', stock + ' ta', stock === 0 ? 'tugagan' : 'sotuvda', 'bg-amber-500/15 text-amber-300', icon.box)}
-              ${stat('Potentsial daromad', uzs(potential) + " so'm", 'butun sklad sotilsa', 'bg-violet-500/15 text-violet-300', '<path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>')}
-              ${stat("Do'koningizda", inShop ? 'Bor' : "Yo'q", inShop ? 'siz sotgansiz: ' + mySold + ' ta' : 'hali qo\'shmagansiz', inShop ? 'bg-blue-500/15 text-blue-300' : 'bg-white/10 text-slate-300', icon.shop)}
-            </div>
+            <div id="sellerStatsGrid" class="grid grid-cols-2 gap-3">${grid(null, null, null)}</div>
             <div class="rounded-2xl bg-white/5 p-4 text-sm ring-1 ring-white/10">
-              <div class="flex justify-between py-1"><span class="text-slate-400">Narx</span><span class="font-semibold text-slate-100">${uzs(p.price)} so'm</span></div>
+              <div class="flex justify-between py-1"><span class="text-slate-400">Mahsulot</span><span class="min-w-0 truncate pl-3 font-semibold text-slate-100">${esc(p.name)}</span></div>
+              <div class="flex justify-between py-1"><span class="text-slate-400">Narx</span><span class="text-slate-200">${uzs(p.price)} so'm</span></div>
               ${p.category ? `<div class="flex justify-between py-1"><span class="text-slate-400">Kategoriya</span><span class="text-slate-200">${esc(p.category)}</span></div>` : ''}
-              <div class="flex justify-between py-1"><span class="text-slate-400">Sotuvchi</span><span class="text-slate-200">${esc(p.merchant || 'Sotuvchi')}</span></div>
-              ${inShop ? `<div class="flex justify-between border-t border-white/10 pt-2"><span class="text-slate-400">Siz ishlagan komissiya (taxminan)</span><span class="font-bold text-emerald-300">${uzs(myEarned)} so'm</span></div>` : ''}
             </div>
           </div>
           <div class="flex gap-3 border-t border-white/10 p-6">
@@ -1029,6 +1024,30 @@
           </div>
         </div>
       `);
+
+      // Ma'lumotni yuklaymiz: mahsulotlar (ommaviy o'qish) + sotuvlar.
+      // Sotuvlar (orders) autentifikatsiyalangan foydalanuvchiga faqat o'ziniki
+      // ko'rinadi (RLS) — shuning uchun anon mijoz orqali o'qiymiz (anon siyosati
+      // barcha buyurtmalarni ko'rsatadi, admin panel uchun mo'ljallangan).
+      let total = null, inStock = null, sold = null;
+      try {
+        const client = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY)
+          ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+          : window.sb;
+        const [prodRes, ordRes] = await Promise.all([
+          client.from('products').select('stock').eq('seller_id', p.seller_id),
+          client.from('orders').select('quantity, status').eq('seller_id', p.seller_id),
+        ]);
+        const prods = prodRes.data || [];
+        total = prods.length;
+        inStock = prods.filter((x) => (Number(x.stock) || 0) > 0).length;
+        const ords = ordRes.data || [];
+        // "Sotilgan" = rad etilmagan barcha buyurtmalar (yangi + yo'lda + yetkazilgan)
+        sold = ords.filter((o) => o.status !== 'Rad etildi' && o.status !== 'Rad etilgan').reduce((s, o) => s + (Number(o.quantity) || 1), 0);
+      } catch (e) { console.warn('Sotuvchi statistikasi:', e); }
+
+      const g = $('#sellerStatsGrid');
+      if (g) g.innerHTML = grid(total, inStock, sold);
     }
 
     // Saralash va narx-preset chiplarining faol holatini yangilaydi
