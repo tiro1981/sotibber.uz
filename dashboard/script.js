@@ -944,6 +944,7 @@
        MARKET GRID (filterable — qidiruv bilan)
     ========================================================= */
     function marketCard(p, i) {
+      const inShop = agentLinks.some((l) => l.product_id === p.id && !l.archived);
       return `
         <div class="glass glass-hover group overflow-hidden rounded-xl transition hover:-translate-y-0.5">
           ${productMedia(p.images, p.name, 'aspect-square')}
@@ -961,7 +962,11 @@
               <span class="text-[11px] font-bold text-emerald-300">${uzs(p.commission)}</span>
             </div>
             <div class="mt-2 flex gap-1.5">
-              <button data-start-selling="${i}" class="btn-grad flex-1 rounded-lg py-1.5 text-[11px] font-bold text-white transition active:scale-95">Sotish</button>
+              ${inShop
+                ? `<button type="button" disabled class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-500/15 py-1.5 text-[11px] font-bold text-emerald-300 ring-1 ring-emerald-500/30 cursor-default">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Qo'shilgan
+                  </button>`
+                : `<button data-start-selling="${i}" class="btn-grad flex-1 rounded-lg py-1.5 text-[11px] font-bold text-white transition active:scale-95">Sotish</button>`}
               <button data-market-stats="${i}" title="Statistika" class="grid w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${icon.chart}</svg>
               </button>
@@ -1942,6 +1947,8 @@
         // Do'kon sahifasi ochiq bo'lsa — ro'yxatni darhol yangilaymiz
         if (state.panel === 'affiliate' && state.view === 'shop') renderView();
       }
+      // Bozor ochiq bo'lsa — "Sotish" tugmasi "Qo'shilgan"ga o'zgarishi uchun qayta chizamiz
+      if (state.panel === 'affiliate' && state.view === 'market') renderMarketGrid();
       openModal(`
         <div>
           <div class="flex flex-col items-center px-6 pt-8 text-center">
